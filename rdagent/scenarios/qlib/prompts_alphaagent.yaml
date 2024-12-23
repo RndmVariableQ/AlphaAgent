@@ -327,7 +327,7 @@ hypothesis2experiment:
     The former hypothesis and the corresponding feedbacks are as follows:
     {{ hypothesis_and_feedback }}
 
-    Allowed functions to build factor expression are: 
+    Allowed operators and functions to formulate factor are: 
     {{function_lib_description}}
 
     Please generate the new {{targets}} based on the information above.

@@ -7,7 +7,7 @@ benchmark: &benchmark SH000300
 
 data_handler_config: &data_handler_config
     start_time: 2012-01-01
-    end_time: 2024-11-25
+    end_time: 2024-12-01
     instruments: *market
     data_loader:
         class: NestedDataLoader
@@ -74,7 +74,7 @@ task:
             segments:
                 train: [2012-01-01, 2018-12-31]
                 valid: [2019-01-01, 2020-12-31]
-                test: [2021-01-01, 2024-11-25]
+                test: [2021-01-01, 2024-12-01]
     record: 
         - class: SignalRecord
           module_path: qlib.workflow.record_temp
