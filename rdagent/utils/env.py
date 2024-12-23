@@ -298,7 +298,7 @@ class DockerEnv(Env[DockerConf]):
         if env is None:
             env = {}
         client = docker.from_env()
-
+        # import pdb; pdb.set_trace()
         volumns = {}
         if local_path is not None:
             local_path = os.path.abspath(local_path)
@@ -406,6 +406,7 @@ class QTDockerEnv(DockerEnv):
         """
         super().prepare()
         qlib_data_path = next(iter(self.conf.extra_volumes.keys()))
+        # import pdb; pdb.set_trace()
         if not (Path(qlib_data_path) / "qlib_data" / "cn_data").exists():
             logger.info("We are downloading!")
             cmd = "python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --region cn --interval 1d --delete_old False"

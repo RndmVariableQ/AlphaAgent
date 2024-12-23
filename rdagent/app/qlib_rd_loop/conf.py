@@ -52,6 +52,33 @@ class FactorBasePropSetting(BasePropSetting):
 
     evolving_n: int = 10
     """Number of evolutions"""
+    
+
+class AlphaAgentFactorBasePropSetting(BasePropSetting):
+    model_config = ExtendedSettingsConfigDict(env_prefix="QLIB_FACTOR_", protected_namespaces=())
+
+    # 1) override base settings
+    scen: str = "rdagent.scenarios.qlib.experiment.factor_experiment.QlibFactorScenario"
+    """Scenario class for Qlib Factor"""
+
+    hypothesis_gen: str = "rdagent.scenarios.qlib.proposal.factor_proposal.AlphaAgentHypothesisGen"
+    """Hypothesis generation class"""
+
+    hypothesis2experiment: str = "rdagent.scenarios.qlib.proposal.factor_proposal.AlphaAgentHypothesis2FactorExpression"
+    """Hypothesis to experiment class"""
+
+    coder: str = "rdagent.scenarios.qlib.developer.factor_coder.QlibFactorCoSTEER"
+    # coder: str = "rdagent.scenarios.qlib.developer.factor_coder.QlibFactorParser"
+    """Coder class"""
+
+    runner: str = "rdagent.scenarios.qlib.developer.factor_runner.QlibFactorRunner"
+    """Runner class"""
+
+    summarizer: str = "rdagent.scenarios.qlib.developer.feedback.QlibFactorHypothesisExperiment2Feedback"
+    """Summarizer class"""
+
+    evolving_n: int = 10
+    """Number of evolutions"""
 
 
 class FactorFromReportPropSetting(FactorBasePropSetting):
@@ -73,3 +100,4 @@ class FactorFromReportPropSetting(FactorBasePropSetting):
 FACTOR_PROP_SETTING = FactorBasePropSetting()
 FACTOR_FROM_REPORT_PROP_SETTING = FactorFromReportPropSetting()
 MODEL_PROP_SETTING = ModelBasePropSetting()
+ALPHA_AGENT_FACTOR_PROP_SETTING = AlphaAgentFactorBasePropSetting()

@@ -108,6 +108,7 @@ class LoopBase:
                 name = self.steps[si]
                 func = getattr(self, name)
                 try:
+                    import pdb; pdb.set_trace()
                     self.loop_prev_out[name] = func(self.loop_prev_out)
                     # TODO: Fix the error logger.exception(f"Skip loop {li} due to {e}")
                 except self.skip_loop_error as e:
@@ -134,7 +135,7 @@ class LoopBase:
                     self.loop_idx += 1
                     self.loop_prev_out = {}
                     pbar.reset()  # reset the progress bar for the next loop
-
+                # import pdb; pdb.set_trace()
                 self.dump(self.session_folder / f"{li}" / f"{si}_{name}")  # save a snapshot after the session
 
     def dump(self, path: str | Path):

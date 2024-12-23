@@ -18,7 +18,7 @@ from rdagent.core.prompts import Prompts
 from rdagent.oai.llm_conf import LLM_SETTINGS
 from rdagent.oai.llm_utils import APIBackend
 
-implement_prompts = Prompts(file_path=Path(__file__).parent / "prompts.yaml")
+implement_prompts = Prompts(file_path=Path(__file__).parent / "prompts_alphaagent.yaml")
 
 
 class FactorMultiProcessEvolvingStrategy(MultiProcessEvolvingStrategy):
@@ -102,6 +102,7 @@ class FactorMultiProcessEvolvingStrategy(MultiProcessEvolvingStrategy):
             target_factor_task_information
         ][1]
 
+        import pdb; pdb.set_trace()
         system_prompt = (
             Environment(undefined=StrictUndefined)
             .from_string(
@@ -173,6 +174,33 @@ class FactorMultiProcessEvolvingStrategy(MultiProcessEvolvingStrategy):
         else:
             return ""  # return empty code if failed to get code after 10 attempts
 
+    def assign_code_list_to_evo(self, code_list, evo):
+        for index in range(len(evo.sub_tasks)):
+            if code_list[index] is None:
+                continue
+            if evo.sub_workspace_list[index] is None:
+                evo.sub_workspace_list[index] = FactorFBWorkspace(target_task=evo.sub_tasks[index])
+            evo.sub_workspace_list[index].inject_code(**{"factor.py": code_list[index]})
+        return evo
+
+
+class FactorParsingStrategy(MultiProcessEvolvingStrategy):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.num_loop = 0
+        self.haveSelected = False
+
+    def implement_one_task(
+        self,
+        target_task: FactorTask,
+        queried_knowledge: CoSTEERQueriedKnowledge,
+    ) -> str:
+        # Determine the task type and select the appropriate template
+        # 选择模板 -> 套用模板 -> 返回code
+        
+        import pdb; pdb.set_trace()
+        return rendered_code
+    
     def assign_code_list_to_evo(self, code_list, evo):
         for index in range(len(evo.sub_tasks)):
             if code_list[index] is None:

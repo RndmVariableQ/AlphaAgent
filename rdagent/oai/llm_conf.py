@@ -33,6 +33,7 @@ class LLMSettings(ExtendedBaseSettings):
 
     # Chat configs
     openai_api_key: str = ""  # TODO: simplify the key design.
+    openai_base_url: str = ""
     chat_openai_api_key: str = ""
     chat_azure_api_base: str = ""
     chat_azure_api_version: str = ""

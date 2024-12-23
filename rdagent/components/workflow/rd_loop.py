@@ -33,7 +33,6 @@ class RDLoop(LoopBase, metaclass=LoopMeta):
 
             self.hypothesis2experiment: Hypothesis2Experiment = import_class(PROP_SETTING.hypothesis2experiment)()
             logger.log_object(self.hypothesis2experiment, tag="hypothesis2experiment")
-
             self.coder: Developer = import_class(PROP_SETTING.coder)(scen)
             logger.log_object(self.coder, tag="coder")
             self.runner: Developer = import_class(PROP_SETTING.runner)(scen)

@@ -16,7 +16,7 @@ def generate_data_folder_from_qlib():
     template_path = Path(__file__).parent / "factor_data_template"
     qtde = QTDockerEnv()
     qtde.prepare()
-
+    import pdb; pdb.set_trace()
     # Run the Qlib backtest
     execute_log = qtde.run(
         local_path=str(template_path),
@@ -49,6 +49,7 @@ def generate_data_folder_from_qlib():
         Path(__file__).parent / "factor_data_template" / "README.md",
         Path(FACTOR_COSTEER_SETTINGS.data_folder_debug) / "README.md",
     )
+    
 
 
 def get_file_desc(p: Path, variable_list=[]) -> str:
@@ -149,6 +150,7 @@ def get_data_folder_intro(fname_reg: str = ".*", flags=0, variable_mapping=None)
         # get data folder intro does not imply that we are generating the data folder.
         generate_data_folder_from_qlib()
     content_l = []
+    
     for p in Path(FACTOR_COSTEER_SETTINGS.data_folder_debug).iterdir():
         if re.match(fname_reg, p.name, flags) is not None:
             if variable_mapping:

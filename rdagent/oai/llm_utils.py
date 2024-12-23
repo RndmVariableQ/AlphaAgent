@@ -325,6 +325,12 @@ class APIBackend:
                 or LLM_SETTINGS.openai_api_key
                 or os.environ.get("OPENAI_API_KEY")
             )
+            
+            self.base_url = (
+                LLM_SETTINGS.openai_base_url
+                or os.environ.get("OPENAI_BASE_URL")
+            )
+            
 
             self.chat_model = LLM_SETTINGS.chat_model if chat_model is None else chat_model
             self.chat_model_map = json.loads(LLM_SETTINGS.chat_model_map)
@@ -380,8 +386,8 @@ class APIBackend:
                         azure_endpoint=self.embedding_api_base,
                     )
             else:
-                self.chat_client = openai.OpenAI(api_key=self.chat_api_key)
-                self.embedding_client = openai.OpenAI(api_key=self.embedding_api_key)
+                self.chat_client = openai.OpenAI(api_key=self.chat_api_key, base_url=self.base_url)
+                self.embedding_client = openai.OpenAI(api_key=self.embedding_api_key, base_url=self.base_url)
 
         self.dump_chat_cache = LLM_SETTINGS.dump_chat_cache if dump_chat_cache is None else dump_chat_cache
         self.use_chat_cache = LLM_SETTINGS.use_chat_cache if use_chat_cache is None else use_chat_cache
@@ -543,6 +549,7 @@ class APIBackend:
         max_retry = LLM_SETTINGS.max_retry if LLM_SETTINGS.max_retry is not None else max_retry
         for i in range(max_retry):
             try:
+                # import pdb; pdb.set_trace()
                 if embedding:
                     return self._create_embedding_inner_function(**kwargs)
                 if chat_completion:
@@ -756,6 +763,10 @@ class APIBackend:
                         tag="llm_messages",
                     )
             if json_mode:
+                # 提取JSON部分
+                json_start = resp.find('{')
+                json_end = resp.rfind('}') + 1
+                resp = resp[json_start:json_end]
                 json.loads(resp)
         if self.dump_chat_cache:
             self.cache.chat_set(input_content_json, resp)

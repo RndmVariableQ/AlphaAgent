@@ -69,6 +69,7 @@ class RAGEvoAgent(EvoAgent):
                 queried_knowledge = self.rag.query(evo, self.evolving_trace)
 
             # 3. evolve
+            # import pdb; pdb.set_trace()
             evo = self.evolving_strategy.evolve(
                 evo=evo,
                 evolving_trace=self.evolving_trace,

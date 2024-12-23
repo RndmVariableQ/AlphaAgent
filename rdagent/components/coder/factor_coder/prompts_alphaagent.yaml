@@ -202,3 +202,45 @@ evaluator_final_decision_v1_user: |-
   {{ code_feedback }}
   --------------Factor value feedback:---------------
   {{ value_feedback }}
+
+
+function_lib_description: |-
+  ## Function library (arithmetic operators are also allowed)
+  - *RANK(A)*: Ranking of each element in the cross-sectional dimension of A. 
+  - *MAX(A, B)*: Maximum value between A and B. 
+  - *MIN(A, B)*: Minimum value between A and B. 
+  - *STD(A, n)*: Standard deviation of sequence A over the past n days. 
+  - *CORR(A, B, n)*: Correlation coefficient between sequences A and B over the past n days. 
+  - *COVARIANCE(A, B, n)*: Covariance between sequences A and B over the past n days. 
+  - *DELTA(A, n)*: Change in value of A over n periods. 
+  - *DELAY(A, n)*: Value of A delayed by n periods. 
+  - *PROD(A, n)*: Product of values in A over the past n days. Use `*` for general multiplication. 
+  - *COUNT(C, n)*: Count of samples satisfying condition C in the past n periods. Here, C is a logical expression, e.g., `OPEN > DELAY(OPEN, 1)`. 
+  - *LOG(A)*: Natural logarithm of each element in A. 
+  - *SQRT(A)*: Square root of each element in A. 
+  - *POW(A, n)*: Raise each element in A to the power of n. 
+  - *SIGN(A)*: Sign of each element in A, one of 1, 0, or -1. 
+  - *EXP(A)*: Exponential of each element in A. 
+  - *SUM(A, n)*: Sum of sequence A over the past n days. 
+  - *ABS(A)*: Absolute value of A. 
+  - *TS_RANK(A, n)*: Time-series rank of the last value of A in the past n days. 
+  - *TS_MIN(A, n)*: Minimum value of A in the past n days. 
+  - *TS_MAX(A, n)*: Maximum value of A in the past n days. 
+  - *TS_ZSCORE(A, n)*: Z-score for each sequence in A over the past n days. 
+  - *MEAN(A, n)*: Mean value of sequence A over the past n days. 
+  - *MEDIAN(A, n)*: Median value of sequence A over the past n days. 
+  - *SEQUENCE(n)*: A single-column sequence of length n, ranging from 1 to integer n. `SEQUENCE()` should always be nested in `REGBETA()` or `REGRESI()` as argument B. Instead, use `DECAYLINEAR()` when you want to assign linearly growing weights to a sequence. 
+  - *REGBETA(A, B, n)*: Regression coefficient of A on B using the past n samples, where A MUST be a multi-column sequence and B a single-column or multi-column sequence. 
+  - *REGRESI(A, B, n)*: Residual of regression of A on B using the past n samples, where A MUST be a multi-column sequence and B a single-column or multi-column sequence. 
+  - *SMA(A, n, m)*: Simple moving average of A over n periods with modifier m. 
+  - *SUMIF(A, n, C)*: Sum of A over the past n periods if condition C is met. Here, C is a logical expression. 
+  - *WMA(A, n)*: Weighted moving average of A over n periods, with weights decreasing from 0.9 to 0.9^(n). 
+  - *EMA(A, n)*: Exponential moving average of A over n periods, where the decay factor is 2/(n+1). 
+  - *DECAYLINEAR(A, d)*: Linearly weighted moving average of A over d periods, with weights increasing from 1 to d. 
+  - *FILTER(A, C)*: Filtering multi-column sequence A based on condition C. Here, C is presented in a logical expression form, with the same size as A. 
+  - *HIGHDAY(A, n)*: Number of days since the highest value of A in the past n days. 
+  - *LOWDAY(A, n)*: Number of days since the lowest value of A in the past n days. 
+  - *SUMAC(A, n)*: Cumulative sum of A over the past n days. 
+  - *(x)&(y)*: Logical operation "and". Both x and y are logical expressions. 
+  - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions. 
+  - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, turning out to be a multi-column sequence. y and z must match x in size. 

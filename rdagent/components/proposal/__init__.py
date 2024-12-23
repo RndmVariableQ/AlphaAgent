@@ -103,12 +103,11 @@ class LLMHypothesis2Experiment(Hypothesis2Experiment[Experiment]):
                 target_hypothesis=context["target_hypothesis"],
                 hypothesis_and_feedback=context["hypothesis_and_feedback"],
                 target_list=context["target_list"],
-                RAG=context["RAG"],
+                RAG=context["RAG"], 
             )
         )
 
         resp = APIBackend().build_messages_and_create_chat_completion(user_prompt, system_prompt, json_mode=json_flag)
-
         return self.convert_response(resp, trace)
 
 

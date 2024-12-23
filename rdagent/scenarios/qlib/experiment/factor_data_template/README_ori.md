@@ -15,14 +15,10 @@ NOTE: **key is always "data" for all hdf5 files **.
 
 # For different data, We have some basic knowledge for them
 
-## Daily data variables
+## Daily price and volume data
 $open: open price of the stock on that day.
 $close: close price of the stock on that day.
 $high: high price of the stock on that day.
 $low: low price of the stock on that day.
 $volume: volume of the stock on that day.
 $factor: factor value of the stock on that day.
-$amount: trading amount of the stock on that day.
-$turn: turnover rate of the stock on that day.
-$pettm: price-to-earnings ratio based on trailing twelve months of earnings.
-$pbmrq: Price-to-book ratio based on the most recent quarter's book value.
