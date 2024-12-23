@@ -39,7 +39,6 @@ def main(path=None, step_n=None):
 
     """
     if path is None:
-        import pdb; pdb.set_trace()
         model_loop = FactorRDLoop(FACTOR_PROP_SETTING)
     else:
         model_loop = FactorRDLoop.load(path)
