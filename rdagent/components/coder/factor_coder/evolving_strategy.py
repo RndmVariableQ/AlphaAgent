@@ -15,17 +15,20 @@ from rdagent.components.coder.CoSTEER.knowledge_management import (
 from rdagent.components.coder.factor_coder.config import FACTOR_COSTEER_SETTINGS
 from rdagent.components.coder.factor_coder.factor import FactorFBWorkspace, FactorTask
 from rdagent.core.prompts import Prompts
+from rdagent.core.template import CodeTemplate
 from rdagent.oai.llm_conf import LLM_SETTINGS
 from rdagent.oai.llm_utils import APIBackend
 
-implement_prompts = Prompts(file_path=Path(__file__).parent / "prompts_alphaagent.yaml")
 
+code_template = CodeTemplate(template_path=Path(__file__).parent / "template.jinjia2")
 
 class FactorMultiProcessEvolvingStrategy(MultiProcessEvolvingStrategy):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.num_loop = 0
         self.haveSelected = False
+        global implement_prompts
+        implement_prompts = Prompts(file_path=Path(__file__).parent / "prompts.yaml")
 
     def error_summary(
         self,
@@ -184,22 +187,138 @@ class FactorMultiProcessEvolvingStrategy(MultiProcessEvolvingStrategy):
         return evo
 
 
+
+
 class FactorParsingStrategy(MultiProcessEvolvingStrategy):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.num_loop = 0
         self.haveSelected = False
+        global implement_prompts
+        implement_prompts = Prompts(file_path=Path(__file__).parent / "prompts_alphaagent.yaml")
 
     def implement_one_task(
         self,
         target_task: FactorTask,
         queried_knowledge: CoSTEERQueriedKnowledge,
     ) -> str:
-        # Determine the task type and select the appropriate template
-        # 选择模板 -> 套用模板 -> 返回code
+        # 若首次执行：
+        #   选择模板 -> 套用模板 -> 返回code
+        # 若之前有报错：
+        #   
         
-        import pdb; pdb.set_trace()
-        return rendered_code
+        target_factor_task_information = target_task.get_task_information()
+
+        queried_similar_successful_knowledge = (
+            queried_knowledge.task_to_similar_task_successful_knowledge[target_factor_task_information]
+            if queried_knowledge is not None
+            else []
+        )  # A list, [success task implement knowledge]
+
+        if isinstance(queried_knowledge, CoSTEERQueriedKnowledgeV2):
+            queried_similar_error_knowledge = (
+                queried_knowledge.task_to_similar_error_successful_knowledge[target_factor_task_information]
+                if queried_knowledge is not None
+                else {}
+            )  # A dict, {{error_type:[[error_imp_knowledge, success_imp_knowledge],...]},...}
+        else:
+            queried_similar_error_knowledge = {}
+
+        queried_former_failed_knowledge = (
+            queried_knowledge.task_to_former_failed_traces[target_factor_task_information][0]
+            if queried_knowledge is not None
+            else []
+        )
+
+        queried_former_failed_knowledge_to_render = queried_former_failed_knowledge
+        
+        if len(queried_former_failed_knowledge) == 0:
+            rendered_code = code_template.render(
+                expression=target_task.factor_expression, 
+                factor_name=target_task.factor_name 
+            )
+            return rendered_code
+        
+        else:
+            latest_attempt_to_latest_successful_execution = queried_knowledge.task_to_former_failed_traces[
+                target_factor_task_information
+            ][1]
+
+            system_prompt = (
+                Environment(undefined=StrictUndefined)
+                .from_string(
+                    implement_prompts["evolving_strategy_factor_implementation_v1_system"],
+                )
+                .render(
+                    scenario=self.scen.get_scenario_all_desc(target_task, filtered_tag="feature"),
+                    queried_former_failed_knowledge=queried_former_failed_knowledge_to_render,
+                )
+            )
+            queried_similar_successful_knowledge_to_render = queried_similar_successful_knowledge
+            queried_similar_error_knowledge_to_render = queried_similar_error_knowledge
+            # 动态地防止prompt超长
+            for _ in range(10):  # max attempt to reduce the length of user_prompt
+                # 总结error（可选）
+                if (
+                    isinstance(queried_knowledge, CoSTEERQueriedKnowledgeV2)
+                    and FACTOR_COSTEER_SETTINGS.v2_error_summary
+                    and len(queried_similar_error_knowledge_to_render) != 0
+                    and len(queried_former_failed_knowledge_to_render) != 0
+                ):
+                    error_summary_critics = self.error_summary(
+                        target_task,
+                        queried_former_failed_knowledge_to_render,
+                        queried_similar_error_knowledge_to_render,
+                    )
+                else:
+                    error_summary_critics = None
+                # 构建user_prompt。开始写代码
+                user_prompt = (
+                    Environment(undefined=StrictUndefined)
+                    .from_string(
+                        implement_prompts["evolving_strategy_factor_implementation_v2_user"],
+                    )
+                    .render(
+                        factor_information_str=target_factor_task_information,
+                        queried_similar_successful_knowledge=queried_similar_successful_knowledge_to_render,
+                        queried_similar_error_knowledge=queried_similar_error_knowledge_to_render,
+                        error_summary_critics=error_summary_critics,
+                        latest_attempt_to_latest_successful_execution=latest_attempt_to_latest_successful_execution,
+                    )
+                    .strip("\n")
+                )
+                if (
+                    APIBackend().build_messages_and_calculate_token(user_prompt=user_prompt, system_prompt=system_prompt)
+                    < LLM_SETTINGS.chat_token_limit
+                ):
+                    break
+                elif len(queried_former_failed_knowledge_to_render) > 1:
+                    queried_former_failed_knowledge_to_render = queried_former_failed_knowledge_to_render[1:]
+                elif len(queried_similar_successful_knowledge_to_render) > len(
+                    queried_similar_error_knowledge_to_render,
+                ):
+                    queried_similar_successful_knowledge_to_render = queried_similar_successful_knowledge_to_render[:-1]
+                elif len(queried_similar_error_knowledge_to_render) > 0:
+                    queried_similar_error_knowledge_to_render = queried_similar_error_knowledge_to_render[:-1]
+            for _ in range(10):
+                try:
+                    expr = json.loads(
+                        APIBackend(
+                            use_chat_cache=FACTOR_COSTEER_SETTINGS.coder_use_cache
+                        ).build_messages_and_create_chat_completion(
+                            user_prompt=user_prompt, system_prompt=system_prompt, json_mode=True
+                        )
+                    )["expr"]
+                    
+                    import pdb; pdb.set_trace()
+                    rendered_code = code_template.render(
+                        expression=expr, 
+                        factor_name=target_task.factor_name 
+                    )
+                    return rendered_code
+                    
+                except json.decoder.JSONDecodeError:
+                    pass
     
     def assign_code_list_to_evo(self, code_list, evo):
         for index in range(len(evo.sub_tasks)):

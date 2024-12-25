@@ -11,7 +11,7 @@ class FactorCoSTEERSettings(CoSTEERSettings):
     data_folder_debug: str = "git_ignore_folder/factor_implementation_source_data_debug"
     """Path to the folder containing partial financial data (for debugging)"""
 
-    simple_background: bool = False
+    simple_background: bool = True
     """Whether to use simple background information for code feedback"""
 
     file_based_execution_timeout: int = 120

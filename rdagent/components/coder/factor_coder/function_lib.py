@@ -1,8 +1,5 @@
-"""
-定义解析式操作
-"""
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 def support_numpy(func):
     def wrapper(*args):
@@ -35,19 +32,20 @@ def DELTA(df:pd.DataFrame, p:int=1):
 
 @support_numpy
 def RANK(df:pd.DataFrame):
-    return df.rank(axis=1, pct=True)
+    return df.groupby('datetime').rank(pct=True)
 
 @support_numpy
 def TS_RANK(df:pd.DataFrame, p:int=5):
-    return df.rolling(p, min_periods=1).rank(pct=True)
+    import pdb; pdb.set_trace()
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).rank(pct=True))
 
 @support_numpy
 def TS_MAX(df:pd.DataFrame, p:int=5):
-    return df.rolling(p, min_periods=1).max()
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).max())
 
 @support_numpy
 def TS_MIN(df:pd.DataFrame, p:int=5):
-    return df.rolling(p, min_periods=1).min()
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).min())
 
 @support_numpy
 def MEAN(df:pd.DataFrame, p:int=5):

@@ -12,14 +12,16 @@ from rdagent.core.experiment import Experiment
 from rdagent.scenarios.qlib.experiment.factor_experiment import QlibFactorExperiment
 from rdagent.oai.llm_utils import APIBackend
 
-prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts.yaml")
 
 QlibFactorHypothesis = Hypothesis
+
 
 
 class QlibFactorHypothesisGen(FactorHypothesisGen):
     def __init__(self, scen: Scenario) -> Tuple[dict, bool]:
         super().__init__(scen)
+        global prompt_dict
+        prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts.yaml")
 
     def prepare_context(self, trace: Trace) -> Tuple[dict, bool]:
         hypothesis_and_feedback = (
@@ -89,12 +91,14 @@ class QlibFactorHypothesis2Experiment(FactorHypothesis2Experiment):
         for factor_name in response_dict:
             description = response_dict[factor_name]["description"]
             formulation = response_dict[factor_name]["formulation"]
+            # expression = response_dict[factor_name]["expression"]
             variables = response_dict[factor_name]["variables"]
             tasks.append(
                 FactorTask(
                     factor_name=factor_name,
                     factor_description=description,
                     factor_formulation=formulation,
+                    # factor_expression=expression,
                     variables=variables,
                 )
             )
@@ -123,12 +127,13 @@ class QlibFactorHypothesis2Experiment(FactorHypothesis2Experiment):
 
 
 
-prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts_alphaagent.yaml")
 
-
+# prompt_dict不能作为属性，因为后续整个类的实例要被转为pickle
 class AlphaAgentHypothesisGen(FactorHypothesisGen):
     def __init__(self, scen: Scenario) -> Tuple[dict, bool]:
         super().__init__(scen)
+        global prompt_dict
+        prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts_alphaagent.yaml")
 
     def prepare_context(self, trace: Trace) -> Tuple[dict, bool]:
         hypothesis_and_feedback = (
@@ -138,7 +143,7 @@ class AlphaAgentHypothesisGen(FactorHypothesisGen):
                 .render(trace=trace)
             )
             if len(trace.hist) > 0
-            else "No previous hypothesis and feedback available since it's the first round."
+            else "" # No previous hypothesis and feedback available since it's the first round.
         )
         context_dict = {
             "hypothesis_and_feedback": hypothesis_and_feedback,
@@ -163,6 +168,10 @@ class AlphaAgentHypothesisGen(FactorHypothesisGen):
 
 
 class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts_alphaagent.yaml")
+        
     def prepare_context(self, hypothesis: Hypothesis, trace: Trace) -> Tuple[dict | bool]:
         scenario = trace.scen.get_scenario_all_desc()
         experiment_output_format = prompt_dict["factor_experiment_output_format"]
@@ -201,7 +210,7 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
             .from_string(prompt_dict["hypothesis2experiment"]["system_prompt"])
             .render(
                 targets=self.targets,
-                scenario=trace.scen.get_scenario_all_desc(filtered_tag="hypothesis_and_experiment"),
+                scenario=trace.scen.background, # get_scenario_all_desc(filtered_tag="hypothesis_and_experiment"),
                 experiment_output_format=context["experiment_output_format"],
             )
         )
@@ -229,12 +238,14 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
         for factor_name in response_dict:
             description = response_dict[factor_name]["description"]
             formulation = response_dict[factor_name]["formulation"]
+            expression = response_dict[factor_name]["expression"]
             variables = response_dict[factor_name]["variables"]
             tasks.append(
                 FactorTask(
                     factor_name=factor_name,
                     factor_description=description,
                     factor_formulation=formulation,
+                    factor_expression=expression,
                     variables=variables,
                 )
             )

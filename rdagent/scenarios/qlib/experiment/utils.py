@@ -16,7 +16,6 @@ def generate_data_folder_from_qlib():
     template_path = Path(__file__).parent / "factor_data_template"
     qtde = QTDockerEnv()
     qtde.prepare()
-    import pdb; pdb.set_trace()
     # Run the Qlib backtest
     execute_log = qtde.run(
         local_path=str(template_path),

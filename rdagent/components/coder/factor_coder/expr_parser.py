@@ -282,3 +282,26 @@ def parse_expression(factor_expression):
     
     parsed_data_function = expr.parseString(factor_expression)[0]
     return parsed_data_function
+
+
+
+def parse_symbol(expr, columns):
+    replace_map = {}
+    replace_map.update({
+        "TRUE": "True",
+        "true": "True",
+        "FALSE": "False",
+        "false": "False",
+        "NAN": "np.nan",
+        "NaN": "np.nan",
+        "nan": "np.nan",
+        "NULL": "np.nan",
+        "null": "np.nan"
+    })
+    for col in columns:
+        replace_map.update({col: col.replace('$', '')})
+        replace_map.update({col.replace('$', '').upper(): col.replace('$', '')})
+
+    for var, var_df in replace_map.items():
+        expr = expr.replace(var, var_df)
+    return expr

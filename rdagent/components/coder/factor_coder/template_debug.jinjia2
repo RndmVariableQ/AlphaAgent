@@ -10,10 +10,22 @@ from rdagent.components.coder.factor_coder.function_lib import (
 )
 
 
+import pandas as pd
+import numpy as np
+from rdagent.components.coder.factor_coder.expr_parser import parse_expression, parse_symbol
+from rdagent.components.coder.factor_coder.function_lib import (
+    ABS, ADD, AND, CORR, COUNT, COVIANCE, DECAYLINEAR, DELAY, DELTA, DIVIDE, 
+    EMA, EXP, FILTER, HIGHDAY, LOG, LOWDAY, MAX, MEAN, MEDIAN, MIN, MULTIPLY, 
+    OR, POW, PROD, RANK, REGBETA, REGRESI, SEQUENCE, SIGN, SMA, SQRT, STD, 
+    SUBTRACT, SUM, SUMAC, SUMIF, TS_MAX, TS_MIN, TS_RANK, TS_ZSCORE, WMA, ZSCORE
+)
+
+
 def calculate_factor(expr: str, name: str):
     # Stock DataFrame
     # df.columns: ['$open', '$close', '$high', '$low', '$volume', '$amount', '$turn', '$pettm', '$pbmrq']
-    df = pd.read_hdf('./daily_pv.h5', key='data')
+    # df = pd.read_hdf('./daily_pv.h5', key='data')
+    df = pd.read_hdf('/home/tangziyi/RD-Agent/rdagent/scenarios/qlib/experiment/factor_data_template/daily_pv_all.h5', key='data')
     
     expr = parse_symbol(expr, df.columns)
     expr = parse_expression(expr)

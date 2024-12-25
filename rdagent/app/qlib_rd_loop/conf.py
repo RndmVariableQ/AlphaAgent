@@ -67,8 +67,8 @@ class AlphaAgentFactorBasePropSetting(BasePropSetting):
     hypothesis2experiment: str = "rdagent.scenarios.qlib.proposal.factor_proposal.AlphaAgentHypothesis2FactorExpression"
     """Hypothesis to experiment class"""
 
-    coder: str = "rdagent.scenarios.qlib.developer.factor_coder.QlibFactorCoSTEER"
-    # coder: str = "rdagent.scenarios.qlib.developer.factor_coder.QlibFactorParser"
+    # coder: str = "rdagent.scenarios.qlib.developer.factor_coder.QlibFactorCoSTEER"
+    coder: str = "rdagent.scenarios.qlib.developer.factor_coder.QlibFactorParser"
     """Coder class"""
 
     runner: str = "rdagent.scenarios.qlib.developer.factor_runner.QlibFactorRunner"

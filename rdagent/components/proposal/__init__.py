@@ -31,7 +31,6 @@ class LLMHypothesisGen(HypothesisGen):
 
     def gen(self, trace: Trace) -> Hypothesis:
         context_dict, json_flag = self.prepare_context(trace)
-
         system_prompt = (
             Environment(undefined=StrictUndefined)
             .from_string(prompt_dict["hypothesis_gen"]["system_prompt"])

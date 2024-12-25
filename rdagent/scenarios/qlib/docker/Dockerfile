@@ -10,7 +10,7 @@ RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && 
     build-essential \
     && rm -rf /var/lib/apt/lists/* 
 
-RUN git clone https://github.com/microsoft/qlib.git
+RUN git clone https://www.ghproxy.cn/https://github.com/microsoft/qlib.git
 
 WORKDIR /workspace/qlib
 

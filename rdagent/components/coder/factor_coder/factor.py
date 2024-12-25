@@ -25,6 +25,7 @@ class FactorTask(CoSTEERTask):
         factor_name,
         factor_description,
         factor_formulation,
+        factor_expression = None,
         *args,
         variables: dict = {},
         resource: str = None,
@@ -36,6 +37,7 @@ class FactorTask(CoSTEERTask):
         )
         self.factor_description = factor_description
         self.factor_formulation = factor_formulation
+        self.factor_expression = factor_expression
         self.variables = variables
         self.factor_resources = resource
         self.factor_implementation = factor_implementation
@@ -45,6 +47,7 @@ class FactorTask(CoSTEERTask):
         return f"""factor_name: {self.factor_name}
 factor_description: {self.factor_description}
 factor_formulation: {self.factor_formulation}
+factor_expression: {self.factor_expression}
 variables: {str(self.variables)}"""
 
     def get_task_information_and_implementation_result(self):
@@ -52,6 +55,7 @@ variables: {str(self.variables)}"""
             "factor_name": self.factor_name,
             "factor_description": self.factor_description,
             "factor_formulation": self.factor_formulation,
+            "factor_expression": self.factor_expression,
             "variables": str(self.variables),
             "factor_implementation": str(self.factor_implementation),
         }

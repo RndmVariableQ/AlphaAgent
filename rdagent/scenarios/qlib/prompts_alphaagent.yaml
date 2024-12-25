@@ -50,28 +50,19 @@ model_hypothesis_specification: |-
     6th Round Hypothesis (If fourth round didn't work):  The model should be a CNN. The CNN should have 5 convolutional layers. Use Leaky ReLU activation for all layers. Use dropout regularization with a rate of 0.3. (Reasoning: As regularisation rate of 0.5 didn't work, we only change a new regularisation and keep the other elements that worked. This means making changes in the current level.)    
 
 factor_hypothesis_specification: |-
+  
   1. **Type of Factor and Financial Trends:**
     - Define the type of factor introduced.
     - Explain the financial trends or market behaviors indicated by this factor.
     - Omit unnecessary or redundant details.
 
-  2. **Simple and Effective Factors First:**
-    - Start with factors that are simple and likely effective.
-    - Concisely explain why these factors are expected to work.
-    - Avoid complex or combined factors initially.
-
-  3. **Gradual Complexity Increase:**
-    - Introduce more complex factors as more experimental results are gathered.
-    - Discuss potential advantages and complexities.
-    - Combine factors only after simpler ones are tested and validated.
-
-  4. **New Directions and Optimizations:**
+  2. **New Directions and Optimizations:**
     - If a new direction is needed, explain why based on financial principles, economic theories, or market behaviors.
     - Suggest only one new direction at a time for clarity.
     - If a previous hypothesis did not surpass SOTA but seems optimizable, you may continue in the same direction.
     - Highlight that factors surpassing SOTA are included in the library to avoid re-implementation.
 
-  5. **1-3 Factors per Generation:**
+  3. **2-4 Factors per Generation:**
     - Ensure each generation produces 1-3 factors.
     - Balance simplicity and complexity to build a robust factor library.
 
@@ -117,19 +108,23 @@ function_lib_description: |-
   - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, turning out to be a multi-column sequence. y and z must match x in size. 
 
 factor_experiment_output_format: |-
-  The output should follow JSON format where factor formulation should be based on the function library. The schema is as follows:
+  The output should follow JSON format.
+  The factor expression should be strictly based on the function library (e.g. RANK(.)) and the variables provided in data (e.g., $open). 
+  The schema is as follows:
   {
       "factor name 1": {
           "description": "description of factor 1",
-          "formulation": "formulation of factor 1",
+          "formulation": "A LaTeX formula of factor 1",
+          "expression": "An expression of factor 1, based on functions and variable mentioned",
           "variables": {
               "variable or function name 1": "description of variable or function 1",
               "variable or function name 2": "description of variable or function 2"
           }
       },
       "factor name 2": {
-          "description": "description of factor 1",
-          "formulation": "formulation of factor 2",
+          "description": "description of factor 2",
+          "formulation": "A LaTeX formula of factor 2",
+          "expression": "An expression of factor 2, based on functions and variable mentioned",
           "variables": {
               "variable or function name 1": "description of variable or function 1",
               "variable or function name 2": "description of variable or function 2"
@@ -327,7 +322,19 @@ hypothesis2experiment:
     The former hypothesis and the corresponding feedbacks are as follows:
     {{ hypothesis_and_feedback }}
 
+    Allowed variables are: 
+    - $open: open price of the stock on that day.
+    - $close: close price of the stock on that day.
+    - $high: high price of the stock on that day.
+    - $low: low price of the stock on that day.
+    - $volume: volume of the stock on that day.
+    - $factor: factor value of the stock on that day.
+    - $amount: trading amount of the stock on that day.
+    - $turn: turnover rate of the stock on that day.
+    - $pettm: price-to-earnings ratio based on trailing twelve months of earnings.
+    - $pbmrq: Price-to-book ratio based on the most recent quarter's book value.
+
     Allowed operators and functions to formulate factor are: 
     {{function_lib_description}}
 
-    Please generate the new {{targets}} based on the information above.
+    Please generate the new {{targets}} in JSON format based on the information above.
