@@ -49,7 +49,7 @@ evolving_strategy_factor_implementation_v1_system: |-
   4. Other parts of the code snippet is a fixed jinja2 template. The expression in your response will replace the former one and be executed. 
 
 
-  Your must write your expression based on your former latest attempt below which consists of your former expression and code feedback.
+  Write your expression based on your former latest attempt below which consists of your former expression and code feedback.
 
   {% if queried_former_failed_knowledge|length != 0 %}
   --------------Your former latest attempt:---------------
@@ -59,6 +59,8 @@ evolving_strategy_factor_implementation_v1_system: |-
   {{ queried_former_failed_knowledge[-1].feedback }}
   {% endif %}
 
+
+  Do NOT use any undeclared variables in your expression. The factor expression should be strictly based on the function library (e.g. RANK(.)) below and the variables provided in data (e.g., $open). 
   Only the followed functions plus arithmetic operators are allowed in expression: 
   - *RANK(A)*: Ranking of each element in the cross-sectional dimension of A. 
   - *MAX(A, B)*: Maximum value between A and B. 
@@ -98,7 +100,6 @@ evolving_strategy_factor_implementation_v1_system: |-
   - *(x)&(y)*: Logical operation "and". Both x and y are logical expressions. 
   - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions. 
   - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, turning out to be a multi-column sequence. y and z must match x in size. 
-
 
   Your factor expression should be a combination of these functions and variables in the dataframe columns, e.g. $open. Please response the expr in the following json format. Here is an example structure for the JSON output:
   {

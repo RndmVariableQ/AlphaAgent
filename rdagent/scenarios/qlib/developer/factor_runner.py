@@ -98,6 +98,10 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
                 combined_factors = pd.concat([SOTA_factor, new_factors], axis=1).dropna()
             else:
                 combined_factors = new_factors
+                
+            if len(combined_factors.columns) >= 2:
+                pd.set_option('display.width', 1000)
+                logger.info(f"Factor correlation: \n\n{combined_factors.corr()}\n")
 
             # Sort and nest the combined factors under 'feature'
             combined_factors = combined_factors.sort_index()
@@ -112,7 +116,8 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
         result = exp.experiment_workspace.execute(
             qlib_config_name=f"conf.yaml" if len(exp.based_experiments) == 0 else "conf_baostock_combined.yaml"
         )
-
+        
+        logger.info("Backtesting results: \n{result.iloc[2:]}")
         exp.result = result
 
         return exp

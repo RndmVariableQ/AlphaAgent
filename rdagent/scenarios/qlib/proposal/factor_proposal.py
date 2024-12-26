@@ -16,6 +16,38 @@ from rdagent.oai.llm_utils import APIBackend
 QlibFactorHypothesis = Hypothesis
 
 
+class AlphaAgentHypothesis(Hypothesis):
+    """
+    AlphaAgentHypothesis extends the Hypothesis class to include a potential_direction,
+    which represents the initial idea or starting point for the hypothesis.
+    """
+
+    def __init__(
+        self,
+        hypothesis: str,
+        reason: str,
+        concise_reason: str,
+        concise_observation: str,
+        concise_justification: str,
+        concise_knowledge: str,
+        potential_direction: str = None,
+    ) -> None:
+        super().__init__(
+            hypothesis,
+            reason,
+            concise_reason,
+            concise_observation,
+            concise_justification,
+            concise_knowledge,
+        )
+        self.potential_direction: str = potential_direction
+        
+    def __str__(self) -> str:
+        return f"""Hypothesis:
+                {super().__str__()}
+                Potential direction: {self.potential_direction}
+                """
+
 
 class QlibFactorHypothesisGen(FactorHypothesisGen):
     def __init__(self, scen: Scenario) -> Tuple[dict, bool]:
@@ -128,23 +160,32 @@ class QlibFactorHypothesis2Experiment(FactorHypothesis2Experiment):
 
 
 
-# prompt_dict不能作为属性，因为后续整个类的实例要被转为pickle
+# prompt_dict不能作为属性，因为后续整个类的实例要被转为pickle，而prompt_dict不能转
 class AlphaAgentHypothesisGen(FactorHypothesisGen):
-    def __init__(self, scen: Scenario) -> Tuple[dict, bool]:
+    def __init__(self, scen: Scenario, potential_direction: str=None) -> Tuple[dict, bool]:
         super().__init__(scen)
+        self.potential_direction = potential_direction
         global prompt_dict
         prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts_alphaagent.yaml")
 
     def prepare_context(self, trace: Trace) -> Tuple[dict, bool]:
-        hypothesis_and_feedback = (
-            (
+        
+        if len(trace.hist) > 0:
+            hypothesis_and_feedback = (
+                    Environment(undefined=StrictUndefined)
+                    .from_string(prompt_dict["hypothesis_and_feedback"])
+                    .render(trace=trace)
+                )
+            
+        elif self.potential_direction is not None: 
+            hypothesis_and_feedback = (
                 Environment(undefined=StrictUndefined)
-                .from_string(prompt_dict["hypothesis_and_feedback"])
-                .render(trace=trace)
-            )
-            if len(trace.hist) > 0
-            else "" # No previous hypothesis and feedback available since it's the first round.
-        )
+                .from_string(prompt_dict["potential_direction_transformation"])
+                .render(potential_direction=self.potential_direction)
+            ) # 
+        else:
+            hypothesis_and_feedback = "No previous hypothesis and feedback available since it's the first round."
+            
         context_dict = {
             "hypothesis_and_feedback": hypothesis_and_feedback,
             "RAG": None,
@@ -155,7 +196,7 @@ class AlphaAgentHypothesisGen(FactorHypothesisGen):
 
     def convert_response(self, response: str) -> Hypothesis:
         response_dict = json.loads(response)
-        hypothesis = QlibFactorHypothesis(
+        hypothesis = AlphaAgentHypothesis(
             hypothesis=response_dict["hypothesis"],
             reason=response_dict["reason"],
             concise_reason=response_dict["concise_reason"],
@@ -164,6 +205,34 @@ class AlphaAgentHypothesisGen(FactorHypothesisGen):
             concise_knowledge=response_dict["concise_knowledge"],
         )
         return hypothesis
+    
+    # def gen(self, trace: Trace) -> Hypothesis:
+    #     context_dict, json_flag = self.prepare_context(trace)
+    #     system_prompt = (
+    #         Environment(undefined=StrictUndefined)
+    #         .from_string(prompt_dict["hypothesis_gen"]["system_prompt"])
+    #         .render(
+    #             targets=self.targets,
+    #             scenario=self.scen.get_scenario_all_desc(filtered_tag="hypothesis_and_experiment"),
+    #             hypothesis_output_format=context_dict["hypothesis_output_format"],
+    #             hypothesis_specification=context_dict["hypothesis_specification"],
+    #         )
+    #     )
+    #     user_prompt = (
+    #         Environment(undefined=StrictUndefined)
+    #         .from_string(prompt_dict["hypothesis_gen"]["user_prompt"])
+    #         .render(
+    #             targets=self.targets,
+    #             hypothesis_and_feedback=context_dict["hypothesis_and_feedback"],
+    #             RAG=context_dict["RAG"],
+    #         )
+    #     )
+
+    #     resp = APIBackend().build_messages_and_create_chat_completion(user_prompt, system_prompt, json_mode=json_flag)
+
+    #     hypothesis = self.convert_response(resp)
+
+    #     return hypothesis
 
 
 

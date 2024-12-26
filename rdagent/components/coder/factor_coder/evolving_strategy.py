@@ -205,7 +205,7 @@ class FactorParsingStrategy(MultiProcessEvolvingStrategy):
         # 若首次执行：
         #   选择模板 -> 套用模板 -> 返回code
         # 若之前有报错：
-        #   
+        #   提供报错信息、失败/成功案例给GPT -> 重写表达式
         
         target_factor_task_information = target_task.get_task_information()
 
@@ -310,7 +310,7 @@ class FactorParsingStrategy(MultiProcessEvolvingStrategy):
                         )
                     )["expr"]
                     
-                    import pdb; pdb.set_trace()
+                    # import pdb; pdb.set_trace()
                     rendered_code = code_template.render(
                         expression=expr, 
                         factor_name=target_task.factor_name 

@@ -354,6 +354,7 @@ def metrics_window(df: pd.DataFrame, R: int, C: int, *, height: int = 300, color
         lines = textwrap.wrap(text, width=60)
         return f"<span style='color: {color};'>{'<br>'.join(lines)}</span>"
     # import pdb; pdb.set_trace()
+    
     hover_texts = [
         hypothesis_hover_text(state.hypotheses[int(i[6:])], state.h_decisions[int(i[6:])])
         for i in df.index[2:]

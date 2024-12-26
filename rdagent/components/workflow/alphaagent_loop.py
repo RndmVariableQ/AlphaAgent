@@ -24,18 +24,18 @@ from rdagent.core.exception import FactorEmptyError
 class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
     skip_loop_error = (FactorEmptyError,)
     @measure_time
-    def __init__(self, PROP_SETTING: BaseFacSetting):
+    def __init__(self, PROP_SETTING: BaseFacSetting, potential_direction):
         with logger.tag("init"):
             scen: Scenario = import_class(PROP_SETTING.scen)()
             logger.log_object(scen, tag="scenario")
 
             ### 换成基于初始hypo的，生成完整的hypo
-            self.hypothesis_generator: HypothesisGen = import_class(PROP_SETTING.hypothesis_gen)(scen)
+            self.hypothesis_generator: HypothesisGen = import_class(PROP_SETTING.hypothesis_gen)(scen, potential_direction)
             logger.log_object(self.hypothesis_generator, tag="hypothesis generator")
 
             ### 换成一次生成10个因子
             self.factor_constructor: Hypothesis2Experiment = import_class(PROP_SETTING.hypothesis2experiment)()
-            logger.log_object(self.factor_constructor, tag="factor constructor")
+            logger.log_object(self.factor_constructor, tag="experiment generation")
 
             ### 加入代码执行中的 Variables / Functions
             self.coder: Developer = import_class(PROP_SETTING.coder)(scen)
@@ -54,9 +54,9 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
         """
         提出作为构建因子的基础的假设
         """
-        with logger.tag("prop"):  
+        with logger.tag("r"):  
             idea = self.hypothesis_generator.gen(self.trace)
-            logger.log_object(idea, tag="idea generation")
+            logger.log_object(idea, tag="hypothesis generation")
         return idea
 
     @measure_time
@@ -64,9 +64,9 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
         """
         基于假设构造多个不同的因子
         """
-        with logger.tag("cons"):  
+        with logger.tag("r"):  
             factor = self.factor_constructor.convert(prev_out["factor_propose"], self.trace)
-            logger.log_object(factor.sub_tasks, tag="factor construction")
+            logger.log_object(factor.sub_tasks, tag="experiment generation")
         return factor
 
     @measure_time
@@ -74,9 +74,9 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
         """
         根据因子表达式计算过去的因子表（因子值）
         """
-        with logger.tag("calc"):  # develop
+        with logger.tag("d"):  # develop
             factor = self.coder.develop(prev_out["factor_construct"])
-            logger.log_object(factor.sub_workspace_list, tag="factor calculation result")
+            logger.log_object(factor.sub_workspace_list, tag="coder result")
         return factor
     
 
@@ -85,7 +85,8 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
         """
         回测因子
         """
-        with logger.tag("bt"):  # evaluate and feedback
+        with logger.tag("ef"):  # evaluate and feedback
+            import pdb; pdb.set_trace()
             exp = self.runner.develop(prev_out["factor_calculate"])
             if exp is None:
                 logger.error(f"Factor extraction failed.")
@@ -96,6 +97,6 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
     @measure_time
     def feedback(self, prev_out: dict[str, Any]):
         feedback = self.summarizer.generate_feedback(prev_out["factor_backtest"], prev_out["factor_propose"], self.trace)
-        with logger.tag("fb"):  # evaluate and feedback
+        with logger.tag("ef"):  # evaluate and feedback
             logger.log_object(feedback, tag="feedback")
         self.trace.hist.append((prev_out["factor_propose"], prev_out["factor_backtest"], feedback))

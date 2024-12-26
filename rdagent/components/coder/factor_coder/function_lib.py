@@ -36,7 +36,6 @@ def RANK(df:pd.DataFrame):
 
 @support_numpy
 def TS_RANK(df:pd.DataFrame, p:int=5):
-    import pdb; pdb.set_trace()
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).rank(pct=True))
 
 @support_numpy

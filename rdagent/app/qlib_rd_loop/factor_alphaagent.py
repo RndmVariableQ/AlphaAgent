@@ -13,7 +13,7 @@ from rdagent.log import rdagent_logger as logger
 from rdagent.log.time import measure_time
 
 
-def main(path=None, step_n=None):
+def main(path=None, step_n=None, potential_direction=None):
     """
     Auto R&D Evolving loop for fintech factors.
 
@@ -21,11 +21,11 @@ def main(path=None, step_n=None):
 
     .. code-block:: python
 
-        dotenv run -- python rdagent/app/qlib_rd_loop/factor.py $LOG_PATH/__session__/1/0_propose  --step_n 1   # `step_n` is a optional paramter
+        dotenv run -- python rdagent/app/qlib_rd_loop/factor_alphaagent.py $LOG_PATH/__session__/1/0_propose  --step_n 1   # `step_n` is a optional paramter
 
     """
     if path is None:
-        model_loop = AlphaAgentLoop(ALPHA_AGENT_FACTOR_PROP_SETTING)
+        model_loop = AlphaAgentLoop(ALPHA_AGENT_FACTOR_PROP_SETTING, potential_direction)
     else:
         model_loop = AlphaAgentLoop.load(path)
     model_loop.run(step_n=step_n)

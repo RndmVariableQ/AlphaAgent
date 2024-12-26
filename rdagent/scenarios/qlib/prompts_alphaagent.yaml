@@ -1,3 +1,10 @@
+potential_direction_transformation: |-
+  It's the first round, the user provided a potential direction: "{{ potential_direction }}". Referring to it, you need to transform it into a hypothesis in formal language that is clear and actionable for factor generation. Consider the following aspects while formulating the hypothesis:
+  1. **Clarity**: Ensure the hypothesis is specific and unambiguous.
+  2. **Actionability**: The hypothesis should suggest a clear path for experimentation or investigation.
+  3. **Relevance**: Ensure the hypothesis is directly related to the potential direction provided by the user.
+
+
 hypothesis_and_feedback: |-
   {% for hypothesis, experiment, feedback in trace.hist[-10:] %}
   Hypothesis {{ loop.index }}: {{ hypothesis }}
@@ -108,9 +115,8 @@ function_lib_description: |-
   - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, turning out to be a multi-column sequence. y and z must match x in size. 
 
 factor_experiment_output_format: |-
-  The output should follow JSON format.
-  The factor expression should be strictly based on the function library (e.g. RANK(.)) and the variables provided in data (e.g., $open). 
-  The schema is as follows:
+  Do NOT use any undeclared variables. The factor expression should be strictly based on the function library (e.g. RANK(.)) and the variables provided in data (e.g., $open). 
+  The output should follow JSON format. The schema is as follows:
   {
       "factor name 1": {
           "description": "description of factor 1",
