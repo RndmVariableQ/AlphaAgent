@@ -27,7 +27,7 @@ def calculate_factor(expr: str, name: str):
     result.to_hdf('result.h5', key='data')
 
 if __name__ == '__main__':
-    # Input factor expression
+    # Input factor expression. Do NOT use the variable format like "df['$xxx']" in factor expressions. Instead, you should use "$xxx". 
     expr = "{{ expression }}"
     name = "{{ factor_name }}"
     calculate_factor(expr, name)

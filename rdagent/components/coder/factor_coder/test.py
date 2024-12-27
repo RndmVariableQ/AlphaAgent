@@ -7,7 +7,7 @@ with open('/home/tangziyi/RD-Agent/rdagent/components/coder/factor_coder/templat
 # Step 2: 渲染模板
 template = Template(template_content)
 rendered_code = template.render(
-    expression="EMA(df['$close'], 12) - EMA(df['$close'], 26) - EMA(EMA(df['$close'], 12) - EMA(df['$close'], 26), 9)", # "DELAY($high + $low / 2, 5)",
+    expression="MAX(POW($close, 3), $open)", # "DELAY($high + $low / 2, 5)",
     factor_name="FACTOR_1"
     )
 

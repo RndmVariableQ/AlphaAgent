@@ -14,7 +14,7 @@ from rdagent.oai.llm_utils import APIBackend
 
 
 QlibFactorHypothesis = Hypothesis
-
+alphaagent_prompt_dict = Prompts(file_path=Path(__file__).parent / "prompts_alphaagent.yaml")
 
 class AlphaAgentHypothesis(Hypothesis):
     """
@@ -48,12 +48,11 @@ class AlphaAgentHypothesis(Hypothesis):
                 Potential direction: {self.potential_direction}
                 """
 
+prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts.yaml")
 
 class QlibFactorHypothesisGen(FactorHypothesisGen):
     def __init__(self, scen: Scenario) -> Tuple[dict, bool]:
         super().__init__(scen)
-        global prompt_dict
-        prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts.yaml")
 
     def prepare_context(self, trace: Trace) -> Tuple[dict, bool]:
         hypothesis_and_feedback = (
@@ -157,30 +156,27 @@ class QlibFactorHypothesis2Experiment(FactorHypothesis2Experiment):
 
 
 
-
-
+alphaagent_prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts_alphaagent.yaml")
 
 # prompt_dict不能作为属性，因为后续整个类的实例要被转为pickle，而prompt_dict不能转
 class AlphaAgentHypothesisGen(FactorHypothesisGen):
     def __init__(self, scen: Scenario, potential_direction: str=None) -> Tuple[dict, bool]:
         super().__init__(scen)
         self.potential_direction = potential_direction
-        global prompt_dict
-        prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts_alphaagent.yaml")
 
     def prepare_context(self, trace: Trace) -> Tuple[dict, bool]:
         
         if len(trace.hist) > 0:
             hypothesis_and_feedback = (
                     Environment(undefined=StrictUndefined)
-                    .from_string(prompt_dict["hypothesis_and_feedback"])
+                    .from_string(alphaagent_prompt_dict["hypothesis_and_feedback"])
                     .render(trace=trace)
                 )
             
         elif self.potential_direction is not None: 
             hypothesis_and_feedback = (
                 Environment(undefined=StrictUndefined)
-                .from_string(prompt_dict["potential_direction_transformation"])
+                .from_string(alphaagent_prompt_dict["potential_direction_transformation"])
                 .render(potential_direction=self.potential_direction)
             ) # 
         else:
@@ -189,12 +185,12 @@ class AlphaAgentHypothesisGen(FactorHypothesisGen):
         context_dict = {
             "hypothesis_and_feedback": hypothesis_and_feedback,
             "RAG": None,
-            "hypothesis_output_format": prompt_dict["hypothesis_output_format"],
-            "hypothesis_specification": prompt_dict["factor_hypothesis_specification"],
+            "hypothesis_output_format": alphaagent_prompt_dict["hypothesis_output_format"],
+            "hypothesis_specification": alphaagent_prompt_dict["factor_hypothesis_specification"],
         }
         return context_dict, True
 
-    def convert_response(self, response: str) -> Hypothesis:
+    def convert_response(self, response: str) -> AlphaAgentHypothesis:
         response_dict = json.loads(response)
         hypothesis = AlphaAgentHypothesis(
             hypothesis=response_dict["hypothesis"],
@@ -206,49 +202,49 @@ class AlphaAgentHypothesisGen(FactorHypothesisGen):
         )
         return hypothesis
     
-    # def gen(self, trace: Trace) -> Hypothesis:
-    #     context_dict, json_flag = self.prepare_context(trace)
-    #     system_prompt = (
-    #         Environment(undefined=StrictUndefined)
-    #         .from_string(prompt_dict["hypothesis_gen"]["system_prompt"])
-    #         .render(
-    #             targets=self.targets,
-    #             scenario=self.scen.get_scenario_all_desc(filtered_tag="hypothesis_and_experiment"),
-    #             hypothesis_output_format=context_dict["hypothesis_output_format"],
-    #             hypothesis_specification=context_dict["hypothesis_specification"],
-    #         )
-    #     )
-    #     user_prompt = (
-    #         Environment(undefined=StrictUndefined)
-    #         .from_string(prompt_dict["hypothesis_gen"]["user_prompt"])
-    #         .render(
-    #             targets=self.targets,
-    #             hypothesis_and_feedback=context_dict["hypothesis_and_feedback"],
-    #             RAG=context_dict["RAG"],
-    #         )
-    #     )
+    def gen(self, trace: Trace) -> AlphaAgentHypothesis:
+        context_dict, json_flag = self.prepare_context(trace)
+        system_prompt = (
+            Environment(undefined=StrictUndefined)
+            .from_string(alphaagent_prompt_dict["hypothesis_gen"]["system_prompt"])
+            .render(
+                targets=self.targets,
+                scenario=self.scen.background,
+                hypothesis_output_format=context_dict["hypothesis_output_format"],
+                hypothesis_specification=context_dict["hypothesis_specification"],
+            )
+        )
+        user_prompt = (
+            Environment(undefined=StrictUndefined)
+            .from_string(alphaagent_prompt_dict["hypothesis_gen"]["user_prompt"])
+            .render(
+                targets=self.targets,
+                hypothesis_and_feedback=context_dict["hypothesis_and_feedback"],
+                RAG=context_dict["RAG"],
+                round=len(trace.hist)
+            )
+        )
 
-    #     resp = APIBackend().build_messages_and_create_chat_completion(user_prompt, system_prompt, json_mode=json_flag)
+        resp = APIBackend().build_messages_and_create_chat_completion(user_prompt, system_prompt, json_mode=json_flag)
 
-    #     hypothesis = self.convert_response(resp)
+        hypothesis = self.convert_response(resp)
 
-    #     return hypothesis
+        return hypothesis
 
 
 
 class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts_alphaagent.yaml")
         
     def prepare_context(self, hypothesis: Hypothesis, trace: Trace) -> Tuple[dict | bool]:
         scenario = trace.scen.get_scenario_all_desc()
-        experiment_output_format = prompt_dict["factor_experiment_output_format"]
-        function_lib_description = prompt_dict['function_lib_description']
+        experiment_output_format = alphaagent_prompt_dict["factor_experiment_output_format"]
+        function_lib_description = alphaagent_prompt_dict['function_lib_description']
         hypothesis_and_feedback = (
             (
                 Environment(undefined=StrictUndefined)
-                .from_string(prompt_dict["hypothesis_and_feedback"])
+                .from_string(alphaagent_prompt_dict["hypothesis_and_feedback"])
                 .render(trace=trace)
             )
             if len(trace.hist) > 0
@@ -276,7 +272,7 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
         context, json_flag = self.prepare_context(hypothesis, trace)
         system_prompt = (
             Environment(undefined=StrictUndefined)
-            .from_string(prompt_dict["hypothesis2experiment"]["system_prompt"])
+            .from_string(alphaagent_prompt_dict["hypothesis2experiment"]["system_prompt"])
             .render(
                 targets=self.targets,
                 scenario=trace.scen.background, # get_scenario_all_desc(filtered_tag="hypothesis_and_experiment"),
@@ -285,7 +281,7 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
         )
         user_prompt = (
             Environment(undefined=StrictUndefined)
-            .from_string(prompt_dict["hypothesis2experiment"]["user_prompt"])
+            .from_string(alphaagent_prompt_dict["hypothesis2experiment"]["user_prompt"])
             .render(
                 targets=self.targets,
                 target_hypothesis=context["target_hypothesis"],

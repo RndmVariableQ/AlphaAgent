@@ -113,6 +113,7 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
             with open(exp.experiment_workspace.workspace_path / "combined_factors_df.pkl", "wb") as f:
                 pickle.dump(combined_factors, f)
 
+        # import pdb; pdb.set_trace()
         result = exp.experiment_workspace.execute(
             qlib_config_name=f"conf.yaml" if len(exp.based_experiments) == 0 else "conf_baostock_combined.yaml"
         )

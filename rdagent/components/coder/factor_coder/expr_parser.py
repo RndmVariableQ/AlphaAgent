@@ -300,7 +300,7 @@ def parse_symbol(expr, columns):
     })
     for col in columns:
         replace_map.update({col: col.replace('$', '')})
-        replace_map.update({col.replace('$', '').upper(): col.replace('$', '')})
+        # replace_map.update({col.replace('$', '').upper(): col.replace('$', '')})
 
     for var, var_df in replace_map.items():
         expr = expr.replace(var, var_df)

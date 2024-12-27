@@ -1,6 +1,7 @@
 
 import pandas as pd
 import numpy as np
+import re
 from rdagent.components.coder.factor_coder.expr_parser import parse_expression, parse_symbol
 from rdagent.components.coder.factor_coder.function_lib import (
     ABS, ADD, AND, CORR, COUNT, COVIANCE, DECAYLINEAR, DELAY, DELTA, DIVIDE, 
@@ -32,10 +33,10 @@ def calculate_factor(expr: str, name: str):
 
     # replace 'var_name' by 'df['$var_name']
     for col in df.columns:
-        expr = expr.replace(col[1:], f"df[\'{col}\']")
-
+        expr = expr.replace(str(col[1:]), f"df[\'{col}\']")
     df[name] = eval(expr)
     result = df[name]
+    print(result)
     result.to_hdf('result.h5', key='data')
 
 if __name__ == '__main__':
