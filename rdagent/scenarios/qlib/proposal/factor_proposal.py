@@ -123,14 +123,14 @@ class QlibFactorHypothesis2Experiment(FactorHypothesis2Experiment):
         for factor_name in response_dict:
             description = response_dict[factor_name]["description"]
             formulation = response_dict[factor_name]["formulation"]
-            # expression = response_dict[factor_name]["expression"]
+            expression = response_dict[factor_name]["expression"]
             variables = response_dict[factor_name]["variables"]
             tasks.append(
                 FactorTask(
                     factor_name=factor_name,
                     factor_description=description,
                     factor_formulation=formulation,
-                    # factor_expression=expression,
+                    factor_expression=expression,
                     variables=variables,
                 )
             )

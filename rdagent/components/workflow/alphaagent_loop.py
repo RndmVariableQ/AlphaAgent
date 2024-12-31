@@ -86,7 +86,7 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
         回测因子
         """
         with logger.tag("ef"):  # evaluate and feedback
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
             exp = self.runner.develop(prev_out["factor_calculate"])
             if exp is None:
                 logger.error(f"Factor extraction failed.")

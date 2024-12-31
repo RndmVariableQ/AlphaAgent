@@ -482,11 +482,12 @@ def tasks_window(tasks: list[FactorTask | ModelTask]):
         tabs = st.tabs(tnames)
         for i, ft in enumerate(tasks):
             with tabs[i]:
-                # st.markdown(f"**Factor Name**: {ft.factor_name}")
+                st.markdown(f"**Factor Name**: {ft.factor_name}")
+                st.markdown(f"**Factor Expression**: {ft.factor_expression}")
                 st.markdown(f"**Description**: {ft.factor_description}")
                 st.latex("Formulation")
                 st.latex(ft.factor_formulation)
-
+                
                 mks = "| Variable | Description |\n| --- | --- |\n"
                 if isinstance(ft.variables, dict):
                     for v, d in ft.variables.items():
@@ -572,6 +573,15 @@ def feedback_window():
                 st.markdown("**Returns📈**")
                 fig = report_figure(fbr[0].content)
                 st.plotly_chart(fig)
+            if fbn := state.msgs[round]["ef.runner result"]:
+                st.markdown("**Runner Result Backtesting Table**")
+                runner_result_data = fbn[0].content
+                result = runner_result_data.result
+                result_df = pd.DataFrame(result) if isinstance(result, pd.Series) else pd.DataFrame(result)
+                result_df = result_df.reset_index()
+                result_df.columns = ["Metric", "Value"]
+                # 在前端显示动态表格
+                st.dataframe(result_df, use_container_width=True)  # 动态显示表格，可交互排序和搜索
             if fb := state.msgs[round]["ef.feedback"]:
                 st.markdown("**Hypothesis Feedback🔍**")
                 h: HypothesisFeedback = fb[0].content
@@ -823,19 +833,24 @@ if state.scenario is not None:
             round = 1
 
         show_times(round)
-        rf_c, d_c = st.columns([2, 2])
+        # rf_c, d_c = st.columns([2, 2])
+        r_c = st.container()
+        d_c = st.container()
+        f_c = st.container()
     elif isinstance(state.scenario, GeneralModelScenario):
         show_times(round)
 
-        rf_c = st.container()
+        r_c = st.container()
         d_c = st.container()
+        f_c = st.container()
         round = 1
     else:
         st.error("Unknown Scenario!")
         st.stop()
 
-    with rf_c:
+    with r_c:
         research_window()
+    with f_c:
         feedback_window()
 
     with d_c.container(border=True):
