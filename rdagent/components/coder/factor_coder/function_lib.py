@@ -94,12 +94,12 @@ def CORR(df1:pd.Series, df2: np.ndarray | pd.Series, p:int=5):
         result = result.reset_index(level=0, drop=True).sort_index()
         return result
 
-def COVIANCE(df1:pd.DataFrame, df2:pd.DataFrame, p:int=5):  
+def COVARIANCE(df1:pd.DataFrame, df2:pd.DataFrame, p:int=5):  
     if isinstance(df2, np.ndarray) and p != len(df2):
         p = len(df2)
-        def corr(window):
+        def cov(window):
             return np.cov(window, df2[:len(window)])
-        return df1.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=2).apply(corr, raw=True))
+        return df1.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=2).apply(cov, raw=True))
     else:
         def rolling_cov(group, df2, p):
             # 获取当前分组的 instrument

@@ -58,7 +58,7 @@ class AlphaAgentFactorBasePropSetting(BasePropSetting):
     model_config = ExtendedSettingsConfigDict(env_prefix="QLIB_FACTOR_", protected_namespaces=())
 
     # 1) override base settings
-    scen: str = "rdagent.scenarios.qlib.experiment.factor_experiment.QlibFactorScenario"
+    scen: str = "rdagent.scenarios.qlib.experiment.factor_experiment.QlibAlphaAgentScenario"
     """Scenario class for Qlib Factor"""
 
     hypothesis_gen: str = "rdagent.scenarios.qlib.proposal.factor_proposal.AlphaAgentHypothesisGen"
@@ -77,7 +77,7 @@ class AlphaAgentFactorBasePropSetting(BasePropSetting):
     summarizer: str = "rdagent.scenarios.qlib.developer.feedback.QlibFactorHypothesisExperiment2Feedback"
     """Summarizer class"""
 
-    evolving_n: int = 10
+    evolving_n: int = 5
     """Number of evolutions"""
 
 

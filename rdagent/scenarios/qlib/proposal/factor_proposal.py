@@ -209,7 +209,7 @@ class AlphaAgentHypothesisGen(FactorHypothesisGen):
             .from_string(alphaagent_prompt_dict["hypothesis_gen"]["system_prompt"])
             .render(
                 targets=self.targets,
-                scenario=self.scen.background,
+                scenario=self.scen.get_scenario_all_desc(filtered_tag="hypothesis_and_experiment"),
                 hypothesis_output_format=context_dict["hypothesis_output_format"],
                 hypothesis_specification=context_dict["hypothesis_specification"],
             )
@@ -314,7 +314,7 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
                     variables=variables,
                 )
             )
-
+        # import pdb; pdb.set_trace()
         exp = QlibFactorExperiment(tasks)
         exp.based_experiments = [QlibFactorExperiment(sub_tasks=[])] + [t[1] for t in trace.hist if t[2]]
 

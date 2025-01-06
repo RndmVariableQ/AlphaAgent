@@ -4,27 +4,24 @@ evaluator_code_feedback_v1_system: |-
   {{ scenario }}
   User will provide you the information of the factor.
 
-  Your job is to check whether user's code is align with the factor and the scenario.
-  The user will provide the source python code and the execution error message if execution failed.
-  The user might provide you the ground truth code for you to provide the critic. You should not leak the ground truth code to the user in any form but you can use it to provide the critic.
-
-  User has also compared the factor values calculated by the user's code and the ground truth code. The user will provide you some analyze result comparing two output. You may find some error in the code which caused the difference between the two output.
-
-  If the ground truth code is provided, your critic should only consider checking whether the user's code is align with the ground truth code since the ground truth is definitely correct.
-  If the ground truth code is not provided, your critic should consider checking whether the user's code is reasonable and correct.
-
-  Notice that your critics are not for user to debug the code. They are sent to the coding agent to correct the code. So don't give any following items for the user to check like "Please check the code line XXX".
-
-  You suggestion should not include any code, just some clear and short suggestions. Please point out very critical issues in your response, ignore non-important issues to avoid confusion. If no big issue found in the code, you can response "No critics found".
+  Your job is to check whether user's factor expression is align with the factor description. The factor expression was rendered into a python jinja2 template and then was executed. The user will provide the execution error message if execution failed. 
   
-  You should provide the suggestion to each of your critic to help the user improve the code. Please response the critic in the following format. Here is an example structure for the output:
-  critic 1: The critic message to critic 1
-  critic 2: The critic message to critic 2
+  Your comments should examine whether the user's factor expression conveys a meaning similar to that of the factor description. Minor discrepancies between the factor formulation and the expression are acceptable. E.g., differences in window size or the implementation of non-core elements are OK. There's no need to nitpick. 
+
+  Notice that your comments are not for user to debug the expression. They are sent to the coding agent to correct the expression. So don't give any following items for the user to check like "Please check the code line XXX".
+
+  You suggestion should not include any code, just some clear and short suggestions. Please point out very critical issues in your response, ignore non-important issues to avoid confusion. 
+  
+  If there is no big issue found in the expression, you need to response "No comment found" without any other comment.
+  
+  You should provide the suggestion to each of your comment to help the user improve the expression. Please response the comment in the following format. Here is an example structure for the output:
+  comment 1: The comment message 1
+  comment 2: The comment message 2
 
 evaluator_code_feedback_v1_user: |-
   --------------Factor information:---------------
   {{ factor_information }}
-  --------------Python code:---------------
+  --------------Factor Expression in the Python template:---------------
   {{ code }}
   --------------Execution feedback:---------------
   {{ execution_feedback }}
@@ -33,23 +30,21 @@ evaluator_code_feedback_v1_user: |-
   {{ value_feedback }}
   {% endif %}
   {% if gt_code is not none %}
-  --------------Ground truth Python code:---------------
-  {{ gt_code }}
   {% endif %}
 
 evolving_strategy_factor_implementation_v1_system: |-
   User is trying to implement some factors by writing factor expressions in the following scenario:
   {{ scenario }}
-  Your expression is expected to align the scenario in any form which means the user needs to get the exact factor values with your expression as expected.
+  Your expression is expected to align the factor descrption in any form which means the user needs to get the exact factor values with your expression as expected.
 
-  To help you write the correct code, the user might provide multiple information that helps you write the correct code:
-  1. The user might provide you the correct code to similar factors. Your should learn from these code to write the correct code.
-  2. The user might provide you the failed former code and the corresponding feedback to the code. The feedback contains to the execution, the code and the factor value. You should analyze the feedback and try to correct the latest code.
-  3. The user might provide you the suggestion to the latest fail code and some similar fail to correct pairs. Each pair contains the fail code with similar error and the corresponding corrected version code. You should learn from these suggestion to write the correct code.
+  To help you write the correct expressions, the user might provide multiple information that helps you write the correct expression:
+  1. The user might provide you the correct expression to similar factors. Your should learn from these expression to write the correct expression.
+  2. The user might provide you the failed former expression and the corresponding feedback to the expression. The feedback contains to the execution, the expression and the factor value. You should analyze the feedback and try to correct the latest expression.
+  3. The user might provide you the suggestion to the latest fail expression and some similar fail to correct pairs. Each pair contains the fail expression with similar error and the corresponding corrected version expression. You should learn from these suggestion to write the correct expression.
   4. Other parts of the code snippet is a fixed jinja2 template. The expression in your response will replace the former one and be executed. 
 
 
-  Write your expression based on your former latest attempt below which consists of your former expression and code feedback.
+  Correct or rewrite your expression based on your former latest attempt below which consists of your former expression and code feedback.
 
   {% if queried_former_failed_knowledge|length != 0 %}
   --------------Your former latest attempt:---------------
@@ -60,8 +55,7 @@ evolving_strategy_factor_implementation_v1_system: |-
   {% endif %}
 
 
-  Do NOT use any undeclared variables in your expression. The factor expression should be strictly based on the function library (e.g. RANK(.)) below and the variables provided in data (e.g., $open). 
-  Only the followed functions plus arithmetic operators are allowed in expression: 
+  Only the following operations are allowed in expression: 
   - *RANK(A)*: Ranking of each element in the cross-sectional dimension of A. 
   - *MAX(A, B)*: Maximum value between A and B. 
   - *MIN(A, B)*: Minimum value between A and B. 
@@ -97,13 +91,19 @@ evolving_strategy_factor_implementation_v1_system: |-
   - *HIGHDAY(A, n)*: Number of days since the highest value of A in the past n days. 
   - *LOWDAY(A, n)*: Number of days since the lowest value of A in the past n days. 
   - *SUMAC(A, n)*: Cumulative sum of A over the past n days. 
-  - *(x)&(y)*: Logical operation "and". Both x and y are logical expressions. 
+  - *(x)&&(y)*: Logical operation "and". Both x and y are logical expressions. 
   - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions. 
   - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, turning out to be a multi-column sequence. y and z must match x in size. 
 
-  Your factor expression should be a combination of these functions and variables in the dataframe columns, e.g. $open. Please response the expr in the following json format. Here is an example structure for the JSON output:
+  Note that:
+  - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression.
+  - Make sure your factor expression contain at least one variables within the dataframe columns (e.g. $open), combined with other operations. Do NOT use any undeclared variable (e.g. 'n', 'w_1') and undefined symbols (e.g., '='). 
+  
+  A factor expression example is: (0.3 * $pettm) + (0.2 * $pbmrq) + (0.2 * $turn) + (0.3 * (($close - $open) > 0 ? 1 : 0))
+
+  Please response the expr in the following json format. Here is the structure for the JSON output:
   {
-      "expr": "[YOUR_FACTOR_EXPRESSION]"
+      "expr": "[CORRECTED_FACTOR_EXPRESSION]"
   }
 
 
@@ -142,7 +142,7 @@ evolving_strategy_factor_implementation_v2_user: |-
   {% endfor %}
   {% endif %}
   {% if latest_attempt_to_latest_successful_execution is not none %}
-  You have tried to correct your former failed code but still met some errors. Here is the latest attempt to the latest successful execution, try not to get the same error to your new code:
+  You have tried to correct your former failed expression but still met some errors. Here is the latest attempt to the latest successful execution, try not to get the same error to your new code:
   =====Your latest attempt=====
   {{ latest_attempt_to_latest_successful_execution.implementation.code }}
   =====Feedback to your latest attempt=====
@@ -252,7 +252,7 @@ evaluator_final_decision_v1_user: |-
 
 
 function_lib_description: |-
-  ## Function library (arithmetic operators are also allowed)
+  (Do NOT use any undeclared variables (such as 'n') in your expression. Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the followed operations are allowed in expression: 
   - *RANK(A)*: Ranking of each element in the cross-sectional dimension of A. 
   - *MAX(A, B)*: Maximum value between A and B. 
   - *MIN(A, B)*: Minimum value between A and B. 

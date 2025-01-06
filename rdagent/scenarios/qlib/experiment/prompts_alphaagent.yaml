@@ -6,14 +6,15 @@ qlib_factor_background: |-
   1. Name: The name of the factor.
   2. Description: The description of the factor.
   3. Formulation: The formulation of the factor.
+  4. Expression: The executable expression of the factor.
   4. Variables: The variables or functions used in the formulation of the factor.
   The factor might not provide all the parts of the information above since some might not be applicable.
   Please specifically give all the hyperparameter in the factors like the window size, look back period, and so on. One factor should statically defines one output with a static source data. For example, last 10 days momentum and last 20 days momentum should be two different factors.
 
 qlib_factor_interface: |-
-  Your python code should follow the interface to better interact with the user's system.
-  Your python code should contain the following part: the import part, the function part, and the main part. You should write a main function name: "calculate_{function_name}" and call this function in "if __name__ == __main__" part. Don't write any try-except block in your python code. The user will catch the exception message and provide the feedback to you.
-  User will write your python code into a python file and execute the file directly with "python {your_file_name}.py". You should calculate the factor values and save the result into a HDF5(H5) file named "result.h5" in the same directory as your python file. The result file is a HDF5(H5) file containing a pandas dataframe. The index of the dataframe is the "datetime" and "instrument", and the single column name is the factor name,and the value is the factor value. The result file should be saved in the same directory as your python file.
+  Your factor expression should follow the interface to better interact with the user's system.
+  Your expression must at least one variables (e.g., '$open'). Other parts contain arithmetic operator ('+', '-', '*', '/'), logical operator ('&&', '||'), functions ('DELAY()', 'EXP()'), and conditional statement ('?:'). 
+  User will write your expression into a python template and execute the file directly with "python {your_file_name}.py". The factor values will be saved into a HDF5(H5) file named "result.h5" in the same directory as your python file. The result file is a HDF5(H5) file containing a pandas dataframe. The index of the dataframe is the "datetime" and "instrument", and the single column name is the factor name, and the value is the factor value. The result file should be saved in the same directory as your python file.
 
 qlib_factor_strategy: |-
   Ensure that for every step of data processing, the data format (including indexes) is clearly explained through comments.

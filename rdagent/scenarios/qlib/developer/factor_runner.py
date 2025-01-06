@@ -1,7 +1,7 @@
 import pickle
 from pathlib import Path
 from typing import List
-
+import os
 import pandas as pd
 from pandarallel import pandarallel
 
@@ -72,6 +72,7 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
 
     @cache_with_pickle(CachedRunner.get_cache_key, CachedRunner.assign_cached_result)
     def develop(self, exp: QlibFactorExperiment) -> QlibFactorExperiment:
+        
         """
         Generate the experiment by processing and combining factor data,
         then passing the combined data to Docker for backtest results.
@@ -86,12 +87,11 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
 
             # Process the new factors data
             new_factors = self.process_factor_data(exp)
-
             if new_factors.empty:
                 raise FactorEmptyError("No valid factor data found to merge.")
 
             # Combine the SOTA factor and new factors if SOTA factor exists
-            if SOTA_factor is not None and not SOTA_factor.empty:
+            if False: # SOTA_factor is not None and not SOTA_factor.empty:
                 new_factors = self.deduplicate_new_factors(SOTA_factor, new_factors)
                 if new_factors.empty:
                     raise FactorEmptyError("No valid factor data found to merge.")
@@ -110,15 +110,17 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
             combined_factors.columns = new_columns
 
             # Save the combined factors to the workspace
+            file_path = exp.experiment_workspace.workspace_path / "combined_factors_df.pkl"
+            if os.path.exists(file_path):
+                os.remove(file_path)
             with open(exp.experiment_workspace.workspace_path / "combined_factors_df.pkl", "wb") as f:
                 pickle.dump(combined_factors, f)
 
-        # import pdb; pdb.set_trace()
         result = exp.experiment_workspace.execute(
             qlib_config_name=f"conf.yaml" if len(exp.based_experiments) == 0 else "conf_baostock_combined.yaml"
         )
         
-        logger.info("Backtesting results: \n{result.iloc[2:]}")
+        logger.info(f"Backtesting results: \n{result.iloc[2:]}")
         exp.result = result
 
         return exp

@@ -88,9 +88,9 @@ class LocalEnv(Env[LocalConf]):
     """
 
     def prepare(self):
-        if not (Path("~/.qlib/qlib_data/my_data").expanduser().resolve().exists()):
+        if not (Path("~/.qlib/qlib_data/baostock_data").expanduser().resolve().exists()):
             self.run(
-                entry="python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/my_data --region cn",
+                entry="python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --region cn",
             )
         else:
             print("Data already exists. Download skipped.")
