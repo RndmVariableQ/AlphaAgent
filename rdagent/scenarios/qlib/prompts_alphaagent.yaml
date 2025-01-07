@@ -151,27 +151,26 @@ factor_experiment_output_format: |-
   Here is an example:
 
   {
-      "Price-Fund Flow Divergence": {
-          "description": "This factor measures the divergence between the rate of change in asset prices and the trading amount, which serves as a proxy for fund flows. This divergence is believed to signal potential market reversal points.",
-          "formulation": "DIV = \\frac{\\Delta (\\text{Close Price})}{\\text{Mean} (\\Delta (\\text{Close Price}), 10)} - \\frac{\\Delta (\\text{Trading Amount})}{\\text{Mean} (\\Delta (\\text{Trading Amount}), 10)}",
-          "expression": "(DELTA($close, 1) / MEAN(DELTA($close, 1), 10)) - (DELTA($amount, 1) / MEAN(DELTA($amount, 1), 10))",
+      "Candlestick-Volatility Factor": {
+          "description": "This factor integrates candlestick movement patterns with market volatility to enhance predictive accuracy for short-term price movements. The factor computes the normalized difference between the candlestick body size and the standard deviation of closing prices over a 10-day period.",
+          "formulation": "CVF = \\frac{\\text{ABS}($close - $open)}{\\text{STD}($close, 10)}",
+          "expression": "ABS($close - $open) / (STD($close, 10) + 1e-8)",
           "variables": {
               "$close": "Close price of the stock on that day.",
-              "$amount": "Trading amount of the stock on that day.",
-              "DELTA(A, n)": "Change in value of A over n periods.",
-              "MEAN(A, n)": "Mean value of sequence A over the past n days."
+              "$open": "Open price of the stock on that day.",
+              "ABS(A)": "Absolute value of A.",
+              "STD(A, n)": "Standard deviation of sequence A over the past n days."
           }
       },
-      "Normalized Price-Fund Flow Correlation": {
-          "description": "This factor calculates the normalized correlation between the rate of change in asset prices and the rate of change in trading amount (proxy for fund flows) over a 20-day window, identifying long-term divergence patterns.",
-          "formulation": "CORR_NORM = \\frac{\\text{CORR}(\\Delta(\\text{Close Price}), \\Delta(\\text{Trading Amount}), 20)}{\\text{STD}(\\text{CORR}(\\Delta(\\text{Close Price}), \\Delta(\\text{Trading Amount}), 20), 20)}",
-          "expression": "CORR(DELTA($close, 1), DELTA($amount, 1), 20) / STD(CORR(DELTA($close, 1), DELTA($amount, 1), 20), 20)",
+      "Candlestick-Volume Correlation Factor": {
+          "description": "This factor measures the correlation between the candlestick range (high - low) and the trading volume over a 20-day period, aiming to capture the relationship between price range and market participation.",
+          "formulation": "CVC = \\text{CORR}($high - $low, $volume, 20)",
+          "expression": "CORR($high - $low, $volume, 20)",
           "variables": {
-              "$close": "Close price of the stock on that day.",
-              "$amount": "Trading amount of the stock on that day.",
-              "CORR(A, B, n)": "Correlation coefficient between sequences A and B over the past n days.",
-              "DELTA(A, n)": "Change in value of A over n periods.",
-              "STD(A, n)": "Standard deviation of sequence A over the past n days."
+              "$high": "High price of the stock on that day.",
+              "$low": "Low price of the stock on that day.",
+              "$volume": "Volume of the stock on that day.",
+              "CORR(A, B, n)": "Correlation coefficient between sequences A and B over the past n days."
           }
       }
   }
@@ -403,10 +402,6 @@ hypothesis2experiment:
     - $high: high price of the stock on that day.
     - $low: low price of the stock on that day.
     - $volume: volume of the stock on that day.
-    - $amount: trading amount of the stock on that day.
-    - $turn: turnover rate of the stock on that day.
-    - $pettm: price-to-earnings ratio based on trailing twelve months of earnings.
-    - $pbmrq: Price-to-book ratio based on the most recent quarter's book value.
 
     Allowed operators and functions in factor expressions are: 
     {{function_lib_description}}

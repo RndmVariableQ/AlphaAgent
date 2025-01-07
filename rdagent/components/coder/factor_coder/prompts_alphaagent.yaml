@@ -35,7 +35,8 @@ evaluator_code_feedback_v1_user: |-
 evolving_strategy_factor_implementation_v1_system: |-
   User is trying to implement some factors by writing factor expressions in the following scenario:
   {{ scenario }}
-  Your expression is expected to align the factor descrption in any form which means the user needs to get the exact factor values with your expression as expected.
+
+  An executable factor expression is expected to align the factor descrption if it is possible to implement using available data and operations. 
 
   To help you write the correct expressions, the user might provide multiple information that helps you write the correct expression:
   1. The user might provide you the correct expression to similar factors. Your should learn from these expression to write the correct expression.
@@ -97,11 +98,12 @@ evolving_strategy_factor_implementation_v1_system: |-
 
   Note that:
   - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression.
-  - Make sure your factor expression contain at least one variables within the dataframe columns (e.g. $open), combined with other operations. Do NOT use any undeclared variable (e.g. 'n', 'w_1') and undefined symbols (e.g., '='). 
+  - Make sure your factor expression contain at least one variables within the dataframe columns (e.g. $open), combined with registered operations above. Do NOT use any undeclared variable (e.g. 'n', 'w_1') and undefined symbols (e.g., '=') in the expression. 
+  - Add a very small constant term (such as 1e-8) to the denominator to prevent division by zero
   
-  A factor expression example is: (0.3 * $pettm) + (0.2 * $pbmrq) + (0.2 * $turn) + (0.3 * (($close - $open) > 0 ? 1 : 0))
+  A factor expression example is: CORR($close/DELAY($close,1), LOG($volume/DELAY($volume, 1) + 1), 10) 
 
-  Please response the expr in the following json format. Here is the structure for the JSON output:
+  Please response the corrected expression in the following json format. Here is the structure for the JSON output:
   {
       "expr": "[CORRECTED_FACTOR_EXPRESSION]"
   }

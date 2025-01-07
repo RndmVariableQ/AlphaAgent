@@ -88,9 +88,9 @@ class LocalEnv(Env[LocalConf]):
     """
 
     def prepare(self):
-        if not (Path("~/.qlib/qlib_data/baostock_data").expanduser().resolve().exists()):
+        if not (Path("~/.qlib/qlib_data/us_data").expanduser().resolve().exists()):
             self.run(
-                entry="python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --region cn",
+                entry="python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/us_data --region us",
             )
         else:
             print("Data already exists. Download skipped.")
@@ -407,9 +407,9 @@ class QTDockerEnv(DockerEnv):
         super().prepare()
         qlib_data_path = next(iter(self.conf.extra_volumes.keys()))
         # import pdb; pdb.set_trace()
-        if not (Path(qlib_data_path) / "qlib_data" / "cn_data").exists():
+        if not (Path(qlib_data_path) / "qlib_data" / "us_data").exists():
             logger.info("We are downloading!")
-            cmd = "python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --region cn --interval 1d --delete_old False"
+            cmd = "python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/us_data --region us --interval 1d --delete_old False"
             self.run(entry=cmd)
         else:
             logger.info("Data already exists. Download skipped.")

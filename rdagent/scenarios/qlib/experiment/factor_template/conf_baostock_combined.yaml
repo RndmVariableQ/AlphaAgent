@@ -1,10 +1,3 @@
-# qlib_init:
-#     provider_uri: "~/.qlib/qlib_data/baostock_data"
-#     region: cn
-
-# market: &market csi500
-# benchmark: &benchmark SH000905
-
 qlib_init:
     provider_uri: "~/.qlib/qlib_data/us_data"
     region: us
@@ -14,7 +7,7 @@ benchmark: &benchmark SPX
 
 data_handler_config: &data_handler_config
     start_time: 2015-01-01
-    end_time: 2024-12-30
+    end_time: 2024-12-31
     instruments: *market
     data_loader:
         class: NestedDataLoader
@@ -23,7 +16,7 @@ data_handler_config: &data_handler_config
                 - class: qlib.contrib.data.loader.QlibDataLoader
                   kwargs:
                     config:
-                        feature: ["$close - $open", "$volume", "($high - $low)/$close"] # "$high", "$low", "$close", "$volume"
+                        feature: ["$close-$open",  "$volume / Mean($volume, 20)", "($high - $low)/Ref($close, 1)", "$close/Ref($close, 1)-1"] # "$high", "$low", "$close", "$volume"
                         label: 
                             - ["Ref($close, -2)/Ref($close, -1) - 1"]
                             - ["LABEL0"]
@@ -32,9 +25,6 @@ data_handler_config: &data_handler_config
                     config: "combined_factors_df.pkl"
 
     learn_processors:
-        # - class: DropCol
-        #   kwargs:
-        #       col_list: ["$open", "$high", "$low", "$close", "$volume"]
         - class: Fillna
           kwargs:
               fields_group: feature
@@ -46,9 +36,6 @@ data_handler_config: &data_handler_config
           kwargs:
               fields_group: label
     infer_processors: 
-        # - class: DropCol
-        #   kwargs:
-        #       col_list: ["$open", "$high", "$low", "$close", "$volume"]
         - class: Fillna
           kwargs:
               fields_group: feature
@@ -66,14 +53,14 @@ port_analysis_config: &port_analysis_config
             n_drop: 5
     backtest:
         start_time: 2021-01-01
-        end_time: 2024-12-30
+        end_time: 2024-12-31
         account: 100000000
         benchmark: *benchmark
         exchange_kwargs:
             limit_threshold: 0.095
             deal_price: open
-            open_cost: 0.0005
-            close_cost: 0.0015
+            open_cost: 0.0
+            close_cost: 0.0005
             min_cost: 5
 
 task:
@@ -90,17 +77,6 @@ task:
             max_depth: 8
             num_leaves: 210
             num_threads: 20
-    # model:
-    #     class: XGBModel
-    #     module_path: qlib.contrib.model.xgboost
-    #     kwargs:
-    #         eval_metric: rmse
-    #         colsample_bytree: 0.8879
-    #         eta: 0.0421
-    #         max_depth: 6
-    #         n_estimators: 647
-    #         subsample: 0.8789
-    #         nthread: 20
     dataset:
         class: DatasetH
         module_path: qlib.data.dataset
@@ -110,12 +86,9 @@ task:
                 module_path: qlib.contrib.data.handler
                 kwargs: *data_handler_config
             segments:
-                # train: [2019-01-01, 2022-06-30]
-                # valid: [2022-07-01, 2022-12-31]
-                # test: [2023-01-01, 2024-12-30]
                 train: [2015-01-01, 2019-12-31]
                 valid: [2020-01-01, 2020-12-31]
-                test: [2021-01-01, 2022-12-30]
+                test: [2021-01-01, 2024-12-31]
     record: 
         - class: SignalRecord
           module_path: qlib.workflow.record_temp

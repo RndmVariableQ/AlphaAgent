@@ -13,7 +13,7 @@ from rdagent.components.coder.factor_coder.function_lib import (
 
 def calculate_factor(expr: str, name: str):
     # Stock DataFrame
-    # df.columns: ['$open', '$close', '$high', '$low', '$volume', '$amount', '$turn', '$pettm', '$pbmrq']
+    # df.columns: ['$open', '$close', '$high', '$low', '$volume']
     df = pd.read_hdf('./daily_pv.h5', key='data')
     
     expr = parse_symbol(expr, df.columns)

@@ -16,7 +16,7 @@ class QlibFBWorkspace(FBWorkspace):
     def execute(self, qlib_config_name: str = "conf.yaml", run_env: dict = {}, *args, **kwargs) -> str:
         qtde = QTDockerEnv()
         qtde.prepare()
-
+        
         # Run the Qlib backtest
         execute_log = qtde.run(
             local_path=str(self.workspace_path),

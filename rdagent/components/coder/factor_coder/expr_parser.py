@@ -16,8 +16,8 @@ sys.setrecursionlimit(4000)  # 设置更高的递归深度限制
 var = Word(alphas, alphanums + "_")
 
 # 定义数字的正则表达式
-# 正则表达式匹配整数和小数，可以有正负号
-number_pattern = r"[+-]?(\d+(\.\d*)?|\.\d+)"
+# 正则表达式匹配整数和小数，可以有正负号，以及科学计数法
+number_pattern = r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?"
 number = Regex(number_pattern)
 
 # 定义操作符
