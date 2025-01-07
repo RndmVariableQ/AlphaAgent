@@ -28,7 +28,7 @@ def support_numpy(func):
 
 @support_numpy
 def DELTA(df:pd.DataFrame, p:int=1):
-    return df.diff(periods=p)
+    return df.groupby('instrument').transform(lambda x: x.diff(periods=p))
 
 @support_numpy
 def RANK(df:pd.DataFrame):
@@ -48,89 +48,76 @@ def TS_MIN(df:pd.DataFrame, p:int=5):
 
 @support_numpy
 def MEAN(df:pd.DataFrame, p:int=5):
-    return df.rolling(p, min_periods=1).mean()
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).mean())
 
 @support_numpy
 def MEDIAN(df:pd.DataFrame, p:int=5):
-    return df.rolling(p, min_periods=1).median()
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).median())
 
 @support_numpy
 def SUM(df:pd.DataFrame, p:int=5):
-    return df.rolling(p, min_periods=1).sum()
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 def MAX(x:pd.DataFrame, y:pd.DataFrame):
-    index = x.index if isinstance(x, pd.DataFrame) else y.index
-    columns = x.columns if isinstance(x, pd.DataFrame) else y.columns
-    return pd.DataFrame(np.maximum(x, y), index=index, columns=columns)
+    return np.maximum(x, y)
 
 def MIN(x:pd.DataFrame, y:pd.DataFrame):
-    index = x.index if isinstance(x, pd.DataFrame) else y.index
-    columns = x.columns if isinstance(x, pd.DataFrame) else y.columns
-    return pd.DataFrame(np.minimum(x, y), index=index, columns=columns)
+    return np.minimum(x, y)
 
 @support_numpy
 def ABS(df:pd.DataFrame):
-    return df.abs()
+    return df.groupby('instrument').transform(lambda x: x.abs())
 
 @support_numpy
 def DELAY(df:pd.DataFrame, p:int=1):
     assert p >= 0, ValueError("DELAY的时长不能小于0，否则将会造成数据窥测")
-    return df.shift(p)
+    return df.groupby('instrument').transform(lambda x: x.shift(p))
 
-def CORR(df1:pd.DataFrame, df2:pd.Series, p:int=5):
-    if not isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
-        df3 = df1
-        df1 = df2
-        df2 = df3
-        del df3
-    
-    if isinstance(df2, np.ndarray) and df2.shape[1] == 1:
-        # 适配df2 = BENCHMARKINDEX...的情况
-        if df2.shape[0] == df1.shape[0]:
-            df2 = pd.Series(df2[:,0], index=df1.index)
-        else: # 适配df2 = SEQUENCE(n), n < df1.shape[0]的情况
-            def corr(window):
-                return np.correlate(window, df2[:len(window), 0])
-            return df1.rolling(window=p, min_periods=2).apply(corr, raw=True)
-        
-    elif isinstance(df2, pd.DataFrame) and df2.values.shape[1] == 1:
-        df2 = pd.Series(df2.values[:,0], index=df1.index)
-    elif isinstance(df2, pd.Series) and len(df2.values.shape) == 2:
-        df2 = pd.Series(df2, index=df1.index)
-    return df1.rolling(int(p), min_periods=2).corr(df2)
+def CORR(df1:pd.Series, df2: np.ndarray | pd.Series, p:int=5):
+    if isinstance(df2, np.ndarray) and p != len(df2):
+        p = len(df2)
+        def corr(window):
+            return np.correlate(window, df2[:len(window)])
+        return df1.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=2).apply(corr, raw=True))
+    else:
+        def rolling_corr(group, df2, p):
+            # 获取当前分组的 instrument
+            instrument = group.name
+            # 从 df2 中提取对应的 instrument 数据
+            df2_group = df2.xs(instrument, level='instrument')
+            # 计算滚动相关性
+            return group.rolling(p, min_periods=2).corr(df2_group)
 
-def COVIANCE(df1:pd.DataFrame, df2:pd.DataFrame, p:int=5):  
-    if (not isinstance(df1, pd.DataFrame)) and isinstance(df2, pd.DataFrame):
-        df3 = df1
-        df1 = df2
-        df2 = df3
-        del df3
-    
-    if isinstance(df2, np.ndarray) and df2.shape[1] == 1:
-        # 适配df2 = BENCHMARKINDEX...的情况
-        if df2.shape[0] == df1.shape[0]:
-            df2 = pd.Series(df2[:,0], index=df1.index)
-        else: # 适配df2 = SEQUENCE(n), n < df1.shape[0]的情况
-            def cov(window):
-                return np.cov(window, df2[:len(window), 0])
-            return df1.rolling(window=p, min_periods=2).apply(cov, raw=True)
-        
-    elif isinstance(df2, pd.DataFrame) and df2.values.shape[1] == 1:
-        df2 = pd.Series(df2.values[:,0], index=df1.index)
-    elif isinstance(df2, pd.Series) and len(df2.values.shape) == 2:
-        df2 = pd.Series(df2, index=df1.index)
-    return df1.rolling(int(p), min_periods=2).cov(df2)
-    # if isinstance(df2, np.ndarray) and df2.shape[1] == 1:
-    #     df2 = pd.Series(df2[:,0], index=df1.index)
-    # elif isinstance(df2, pd.DataFrame) and df2.values.shape[1] == 1:
-    #     df2 = pd.Series(df2.values[:,0], index=df1.index)
-    # elif isinstance(df2, pd.Series) and len(df2.values.shape) == 2:
-    #     df2 = pd.Series(df2, index=df1.index)
-    # return df1.rolling(int(p), min_periods=1).cov(df2)
+        # 使用 groupby 和 apply 来计算每个 instrument 的滚动相关性
+        result = df1.groupby('instrument').apply(lambda x: rolling_corr(x, df2, p))
+        # 由于 apply 会改变索引结构，我们需要将其恢复为原始结构
+        result = result.reset_index(level=0, drop=True).sort_index()
+        return result
+
+def COVARIANCE(df1:pd.DataFrame, df2:pd.DataFrame, p:int=5):  
+    if isinstance(df2, np.ndarray) and p != len(df2):
+        p = len(df2)
+        def cov(window):
+            return np.cov(window, df2[:len(window)])
+        return df1.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=2).apply(cov, raw=True))
+    else:
+        def rolling_cov(group, df2, p):
+            # 获取当前分组的 instrument
+            instrument = group.name
+            # 从 df2 中提取对应的 instrument 数据
+            df2_group = df2.xs(instrument, level='instrument')
+            # 计算滚动相关性
+            return group.rolling(p, min_periods=2).cov(df2_group)
+
+        # 使用 groupby 和 apply 来计算每个 instrument 的滚动相关性
+        result = df1.groupby('instrument').apply(lambda x: rolling_cov(x, df2, p))
+        # 由于 apply 会改变索引结构，我们需要将其恢复为原始结构
+        result = result.reset_index(level=0, drop=True).sort_index()
+        return result
 
 @support_numpy
 def STD(df:pd.DataFrame, p:int=20):
-    return df.rolling(int(p), min_periods=1).std()
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).std())
 
 @support_numpy
 def SIGN(df: pd.DataFrame):
@@ -141,21 +128,15 @@ def SMA(df:pd.DataFrame, m:float=None, n:float=None):
     """
     Y_{i+1} = m/n*X_i + (1 - m/n)*Y_i
     """
-    if isinstance(df, np.ndarray):
-        df = pd.DataFrame(df)
-        if isinstance(m, int) and m >= 1 and n is None:
-            return df.rolling(m, min_periods=1).mean().values
-        else:
-            return df.ewm(alpha=n/m).mean().values
         
     if isinstance(m, int) and m >= 1 and n is None:
-        return df.rolling(m, min_periods=1).mean()
+        return df.groupby('instrument').transform(lambda x: x.rolling(m, min_periods=1).mean())
     else:
-        return df.ewm(alpha=n/m).mean()
+        return df.groupby('instrument').transform(lambda x: x.ewm(alpha=n/m).mean())
 
 @support_numpy
 def EMA(df:pd.DataFrame, p):
-    return df.ewm(span=int(p), min_periods=1).mean()
+    return df.groupby('instrument').transform(lambda x: x.ewm(span=int(p), min_periods=1).mean())
     
 @support_numpy
 def WMA(df:pd.DataFrame, p:int=20):
@@ -169,59 +150,32 @@ def WMA(df:pd.DataFrame, p:int=20):
         return (window * weights[:len(window)]).sum() / sum(weights[:len(window)])
 
     # 应用权重计算滑动WMA
-    return df.rolling(window=p, min_periods=1).apply(calculate_wma, raw=True)
+    return df.groupby('instrument').transform(lambda x: x.rolling(window=p, min_periods=1).apply(calculate_wma, raw=True))
 
 @support_numpy
 def COUNT(cond:pd.DataFrame, p:int=20):
-    return cond.rolling(p, min_periods=1).sum()
+    return cond.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 @support_numpy
 def SUMIF(df:pd.DataFrame, p:int, cond:pd.DataFrame):
-    return (df * cond).rolling(p, min_periods=1).sum()
+    return (df * cond).groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 @support_numpy
 def FILTER(df:pd.DataFrame, cond:pd.DataFrame):
     """
     Filtering A based on condition
     """
-    if isinstance(df, pd.DataFrame) and isinstance(cond, pd.DataFrame):
-        # 多列的dataframe df和只有一列的dataframe cond相乘
-        if len(df) == len(cond) and len(cond.columns) != len(df.columns) and len(cond.columns) == 1:
-            return df.mul(cond.iloc[:,0], axis=0)
-        
-        # 多列的dataframe df和同维度的cond相乘
-        elif len(df) == len(cond) and len(cond.columns) == len(df.columns):
-            return df.mul(cond)
-        
-    elif isinstance(df, pd.DataFrame) and isinstance(cond, np.ndarray):
-        # dataframe df与ndarray的cond相乘
-        if len(cond) == df.shape[0]:
-            return df.mul(cond, axis=0)
-        elif len(cond) == df.shape[1]:
-            return df.mul(cond, axis=1)
-    else:
-        raise ValueError(f'FILTER输入的条件数据格式不支持，接收到A的数据类型为{type(df)}, cond的数据类型为: {type(cond)}。')
+    return df.mul(cond)
     
+
 @support_numpy
 def PROD(df:pd.DataFrame, p:int=5):
     # 使用rolling方法创建一个滑动窗口，然后应用累乘
     if isinstance(p, int):
-        return df.rolling(p, min_periods=1).apply(lambda x: x.prod(), raw=True)
-    
-    # 两DF之积
-    elif isinstance(p, pd.DataFrame) and p.shape == df.shape:
-        return np.multiply(df, p)
-    
-    elif isinstance(p, np.ndarray):
-        if df.shape[0] == p.shape[0] and p.shape[1] == 1:
-            return np.multiply(df, p)
-        elif df.shape[0] != p.shape[0] and p.shape[1] == 1:
-            raise ValueError(f'PROD输入的条件数据格式不支持，接收到A的数据类型为{type(df)}, n的数据类型为: {type(p)}。应为: (DataFrame, int)')
-            # return df.rolling(p.shape[0]).apply(lambda x: np.multiply(x, p).sum(), raw=True)
-    
+        return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(lambda x: x.prod(), raw=True))
     else:
-        raise ValueError(f'PROD输入的条件数据格式不支持，接收到A的数据类型为{type(df)}, n的数据类型为: {type(p)}。应为: (DataFrame, int)')
-    
+        return df.mul(p)    
+
 @support_numpy
 def DECAYLINEAR(df:pd.DataFrame, p:int=5):
     assert isinstance(p, int), ValueError(f"DECAYLINEAR仅接收正整数参数n，接收到{type(p).__name__}")
@@ -231,31 +185,31 @@ def DECAYLINEAR(df:pd.DataFrame, p:int=5):
     def calculate_deycaylinear(window):
         return (window * decay_weights[:len(window)]).sum()
     
-    return df.rolling(p, min_periods=1).apply(calculate_deycaylinear, raw=True)
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(calculate_deycaylinear, raw=True))
 
 @support_numpy
 def HIGHDAY(df:pd.DataFrame, p:int=5):
     assert isinstance(p, int), ValueError(f"HIGHDAY仅接收正整数参数n，接收到{type(p).__name__}")
     def highday(window):
         return len(window) - window.argmax(axis=0)
-    return df.rolling(p, min_periods=1).apply(highday, raw=True)
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(highday, raw=True))
 
 @support_numpy
 def LOWDAY(df:pd.DataFrame, p:int=5):
     assert isinstance(p, int), ValueError(f"LOWDAY仅接收正整数参数n，接收到{type(p).__name__}")
     def lowday(window):
         return len(window) - window.argmin(axis=0)
-    return df.rolling(p, min_periods=1).apply(lowday, raw=True)
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(lowday, raw=True))
     
 
 def SEQUENCE(n):
     assert isinstance(n, int), ValueError(f"SEQUENCE(n)仅接收正整数参数n，接收到{type(n).__name__}")
-    return np.expand_dims(np.linspace(1, n, n, dtype=np.float32), -1)
+    return np.linspace(1, n, n, dtype=np.float32)
 
 @support_numpy
 def SUMAC(df:pd.DataFrame, p:int=10):
     assert isinstance(p, int), ValueError(f"SUMAC仅接收正整数参数n，接收到{type(p).__name__}")
-    return df.rolling(p, min_periods=1).sum()
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 
 def _REGBETA(A:pd.DataFrame, B:pd.DataFrame, p:int=5):
@@ -465,68 +419,28 @@ def LOG(df:pd.DataFrame):
 
 @support_numpy
 def POW(df:pd.DataFrame, n:int):
-    return df.apply(lambda x: np.power(x, n))
+    return np.power(df, n)
 
 @support_numpy
 def TS_ZSCORE(df: pd.DataFrame, p:int=5):
     assert isinstance(p, int), ValueError(f"TS_ZSCORE仅接收正整数参数n，接收到{type(p).__name__}")
-    assert isinstance(df, pd.DataFrame), ValueError(f"TS_ZSCORE仅接收pd.DataFrame作为A的类型，接收到{type(df).__name__}")
-    return (df - df.rolling(p, min_periods=1).min()) / df.rolling(p, min_periods=1).std()
+    # assert isinstance(df, pd.DataFrame), ValueError(f"TS_ZSCORE仅接收pd.DataFrame作为A的类型，接收到{type(df).__name__}")
+    return (df - df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).min())) / df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).std())
 
 ZSCORE = TS_ZSCORE
 
 def ADD(df1, df2):
-    if isinstance(df1, float) or isinstance(df2, float):
-        return np.add(df1, df2)
-    
-    if isinstance(df1, pd.DataFrame) and df1.shape[0] > df2.shape[0] and df2.shape[-1] == 1:
-        return df1.rolling(len(df2)).apply(lambda x: np.mean(np.add(x, df2[:,0])), raw=True)
-    
-    elif isinstance(df2, pd.DataFrame) and df2.shape[0] > df1.shape[0] and df1.shape[-1] == 1:
-        return df2.rolling(len(df1)).apply(lambda x: np.mean(np.add(df1[:,0], x)), raw=True)
-    
-    else:
-        return np.add(df1, df2)
+    return np.add(df1, df2)
         
         
 def SUBTRACT(df1, df2):
-    if isinstance(df1, float) or isinstance(df2, float):
-        return np.subtract(df1, df2)
-    
-    if isinstance(df1, pd.DataFrame) and df1.shape[0] > df2.shape[0] and df2.shape[-1] == 1:
-        return df1.rolling(len(df2)).apply(lambda x: np.mean(np.subtract(x, df2[:,0])), raw=True)
-
-    elif isinstance(df2, pd.DataFrame) and df2.shape[0] > df1.shape[0] and df1.shape[-1] == 1:
-        return df2.rolling(len(df1)).apply(lambda x: np.mean(np.subtract(df1[:,0], x)), raw=True)
-    
-    else:
-        return np.subtract(df1, df2)
+    return np.subtract(df1, df2)
     
 def MULTIPLY(df1, df2):
-    if isinstance(df1, float) or isinstance(df2, float):
-        return np.multiply(df1, df2)
-    
-    if isinstance(df1, pd.DataFrame) and df1.shape[0] > df2.shape[0] and df2.shape[-1] == 1:
-        return df1.rolling(len(df2)).apply(lambda x: np.mean(np.multiply(x, df2[:,0])), raw=True)
-
-    elif isinstance(df2, pd.DataFrame) and df2.shape[0] > df1.shape[0] and df1.shape[-1] == 1:
-        return df2.rolling(len(df1)).apply(lambda x: np.mean(np.multiply(df1[:,0], x)), raw=True)
-    
-    else:
-        return np.multiply(df1, df2)
+    return np.multiply(df1, df2)
     
 def DIVIDE(df1, df2):
-    if isinstance(df1, float) or isinstance(df2, float):
-        return np.divide(df1, df2)
-    
-    if isinstance(df1, pd.DataFrame) and df1.shape[0] > df2.shape[0] and df2.shape[-1] == 1:
-        return df1.rolling(len(df2)).apply(lambda x: np.mean(np.divide(x, df2[:,0])), raw=True)
-    
-    elif isinstance(df2, pd.DataFrame) and df2.shape[0] > df1.shape[0] and df1.shape[-1] == 1:
-        return df2.rolling(len(df1)).apply(lambda x: np.mean(np.divide(df1[:,0], x)), raw=True)
-    
-    else:
-        return np.divide(df1, df2)
+    return np.divide(df1, df2)
     
 def AND(df1, df2):
     return np.bitwise_and(df1.astype(np.bool_), df2.astype(np.bool_))

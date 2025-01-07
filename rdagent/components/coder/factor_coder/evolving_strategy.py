@@ -21,14 +21,14 @@ from rdagent.oai.llm_utils import APIBackend
 
 
 code_template = CodeTemplate(template_path=Path(__file__).parent / "template.jinjia2")
+implement_prompts = Prompts(file_path=Path(__file__).parent / "prompts.yaml")
 
 class FactorMultiProcessEvolvingStrategy(MultiProcessEvolvingStrategy):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.num_loop = 0
         self.haveSelected = False
-        global implement_prompts
-        implement_prompts = Prompts(file_path=Path(__file__).parent / "prompts.yaml")
+
 
     def error_summary(
         self,
@@ -188,14 +188,13 @@ class FactorMultiProcessEvolvingStrategy(MultiProcessEvolvingStrategy):
 
 
 
-
+alphaagent_implement_prompts = Prompts(file_path=Path(__file__).parent / "prompts_alphaagent.yaml")
 class FactorParsingStrategy(MultiProcessEvolvingStrategy):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.num_loop = 0
         self.haveSelected = False
-        global implement_prompts
-        implement_prompts = Prompts(file_path=Path(__file__).parent / "prompts_alphaagent.yaml")
+
 
     def implement_one_task(
         self,
@@ -247,7 +246,7 @@ class FactorParsingStrategy(MultiProcessEvolvingStrategy):
             system_prompt = (
                 Environment(undefined=StrictUndefined)
                 .from_string(
-                    implement_prompts["evolving_strategy_factor_implementation_v1_system"],
+                    alphaagent_implement_prompts["evolving_strategy_factor_implementation_v1_system"],
                 )
                 .render(
                     scenario=self.scen.get_scenario_all_desc(target_task, filtered_tag="feature"),
@@ -276,7 +275,7 @@ class FactorParsingStrategy(MultiProcessEvolvingStrategy):
                 user_prompt = (
                     Environment(undefined=StrictUndefined)
                     .from_string(
-                        implement_prompts["evolving_strategy_factor_implementation_v2_user"],
+                        alphaagent_implement_prompts["evolving_strategy_factor_implementation_v2_user"],
                     )
                     .render(
                         factor_information_str=target_factor_task_information,

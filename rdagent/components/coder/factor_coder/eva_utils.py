@@ -15,6 +15,7 @@ from rdagent.oai.llm_conf import LLM_SETTINGS
 from rdagent.oai.llm_utils import APIBackend
 
 evaluate_prompts = Prompts(file_path=Path(__file__).parent / "prompts.yaml")
+alphaagent_evaluate_prompts = Prompts(file_path=Path(__file__).parent / "prompts_alphaagent.yaml")
 
 
 class FactorEvaluator:
@@ -83,7 +84,7 @@ class FactorCodeEvaluator(FactorEvaluator):
 
         system_prompt = (
             Environment(undefined=StrictUndefined)
-            .from_string(evaluate_prompts["evaluator_code_feedback_v1_system"])
+            .from_string(alphaagent_evaluate_prompts["evaluator_code_feedback_v1_system"])
             .render(
                 scenario=(
                     self.scen.get_scenario_all_desc(
@@ -98,11 +99,12 @@ class FactorCodeEvaluator(FactorEvaluator):
         )
 
         execution_feedback_to_render = execution_feedback
+        # import pdb; pdb.set_trace()
         for _ in range(10):  # 10 times to split the content is enough
             user_prompt = (
                 Environment(undefined=StrictUndefined)
                 .from_string(
-                    evaluate_prompts["evaluator_code_feedback_v1_user"],
+                    alphaagent_evaluate_prompts["evaluator_code_feedback_v1_user"],
                 )
                 .render(
                     factor_information=factor_information,

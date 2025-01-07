@@ -10,7 +10,7 @@ import numpy as np
 from pyparsing import ParserElement
 ParserElement.enablePackrat()
 
-sys.setrecursionlimit(2500)  # 设置更高的递归深度限制
+sys.setrecursionlimit(4000)  # 设置更高的递归深度限制
 
 # 定义基本元素
 var = Word(alphas, alphanums + "_")
@@ -175,7 +175,9 @@ def parse_conditional_expression(s, loc, tokens):
 
     # 在逻辑表达式周围添加括号
     # A = f"({A})" if "||" in A or "&&" in A else A
-    return f"pd.DataFrame(np.where({A}, {B}, {C}), index=({A}).index, columns=({A}).columns)"
+    # print(A)
+    # print(B)
+    return f"np.where({A}, {B}, {C})" # , index=({A}).index, columns=({A}).columns)
 
 # 定义逻辑运算符的解析函数
 def parse_logical_expression(s, loc, tokens):
@@ -279,6 +281,7 @@ expr.setParseAction(parse_entire_expression) # check_parentheses_balance,
 def parse_expression(factor_expression):
     check_parentheses_balance(factor_expression)
     check_for_invalid_operators(factor_expression)
+    print("factor_expression: ", factor_expression)
     
     parsed_data_function = expr.parseString(factor_expression)[0]
     return parsed_data_function
@@ -300,8 +303,11 @@ def parse_symbol(expr, columns):
     })
     for col in columns:
         replace_map.update({col: col.replace('$', '')})
-        replace_map.update({col.replace('$', '').upper(): col.replace('$', '')})
+        # replace_map.update({col.replace('$', '').upper(): col.replace('$', '')})
 
     for var, var_df in replace_map.items():
         expr = expr.replace(var, var_df)
     return expr
+
+if __name__ == '__main__':
+    parse_expression("RANK(DELTA(Volume, 1)) / (1e-8 + 1)")

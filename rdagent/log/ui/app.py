@@ -26,7 +26,7 @@ from rdagent.log.ui.qlib_report_figure import report_figure
 from rdagent.scenarios.data_mining.experiment.model_experiment import DMModelScenario
 from rdagent.scenarios.general_model.scenario import GeneralModelScenario
 from rdagent.scenarios.kaggle.experiment.scenario import KGScenario
-from rdagent.scenarios.qlib.experiment.factor_experiment import QlibFactorScenario
+from rdagent.scenarios.qlib.experiment.factor_experiment import QlibFactorScenario, QlibAlphaAgentScenario
 from rdagent.scenarios.qlib.experiment.factor_from_report_experiment import (
     QlibFactorFromReportScenario,
 )
@@ -59,7 +59,7 @@ QLIB_SELECTED_METRICS = [
     "1day.excess_return_without_cost.max_drawdown",
 ]
 
-SIMILAR_SCENARIOS = (QlibModelScenario, DMModelScenario, QlibFactorScenario, QlibFactorFromReportScenario, KGScenario)
+SIMILAR_SCENARIOS = (QlibAlphaAgentScenario, QlibModelScenario, QlibModelScenario, DMModelScenario, QlibFactorScenario, QlibFactorFromReportScenario, KGScenario)
 
 
 def filter_log_folders(main_log_path):
@@ -346,6 +346,14 @@ def display_hypotheses(hypotheses: dict[int, Hypothesis], decisions: dict[int, b
 
 
 def metrics_window(df: pd.DataFrame, R: int, C: int, *, height: int = 300, colors: list[str] = None):
+    if len(df.columns) > R*C and R*C <= 8:
+        df = df[[
+            'IC', 'ICIR', 'Rank IC', 'Rank ICIR', 
+            '1day.excess_return_with_cost.mean',
+            '1day.excess_return_with_cost.annualized_return', 
+            '1day.excess_return_with_cost.information_ratio', 
+            '1day.excess_return_with_cost.max_drawdown'
+                 ][:R*C]]
     fig = make_subplots(rows=R, cols=C, subplot_titles=df.columns)
 
     def hypothesis_hover_text(h: Hypothesis, d: bool = False):
@@ -353,7 +361,6 @@ def metrics_window(df: pd.DataFrame, R: int, C: int, *, height: int = 300, color
         text = h.hypothesis
         lines = textwrap.wrap(text, width=60)
         return f"<span style='color: {color};'>{'<br>'.join(lines)}</span>"
-    # import pdb; pdb.set_trace()
     
     hover_texts = [
         hypothesis_hover_text(state.hypotheses[int(i[6:])], state.h_decisions[int(i[6:])])
@@ -362,6 +369,7 @@ def metrics_window(df: pd.DataFrame, R: int, C: int, *, height: int = 300, color
     ]
     if state.alpha158_metrics is not None:
         hover_texts = ["Baseline: alpha158"] + hover_texts
+    # import pdb; pdb.set_trace()
     for ci, col in enumerate(df.columns):
         row = ci // C + 1
         col_num = ci % C + 1
@@ -372,9 +380,9 @@ def metrics_window(df: pd.DataFrame, R: int, C: int, *, height: int = 300, color
                 name=col,
                 mode="lines+markers",
                 connectgaps=True,
-                marker=dict(size=10, color=colors[ci]) if colors else dict(size=10),
-                hovertext=hover_texts,
-                hovertemplate="%{hovertext}<br><br><span style='color: black'>%{x} Value:</span> <span style='color: blue'>%{y}</span><extra></extra>",
+                marker=dict(size=10, color=colors[col_num-1]) if colors else dict(size=10),
+                # hovertext=hover_texts,
+                # hovertemplate="%{hovertext}<br><br><span style='color: black'>%{x} Value:</span> <span style='color: blue'>%{y}</span><extra></extra>",
             ),
             row=row,
             col=col_num,
@@ -434,7 +442,7 @@ def summary_window():
                         fig.update_layout(xaxis_title="Loop Round", yaxis_title=None)
                         st.plotly_chart(fig)
                     else:
-                        metrics_window(df, 1, 4, height=300, colors=["red", "blue", "orange", "green"])
+                        metrics_window(df, 2, 4, height=600, colors=["red", "blue", "orange", "green"])
 
     elif isinstance(state.scenario, GeneralModelScenario):
         with st.container(border=True):
@@ -568,11 +576,25 @@ def feedback_window():
             ):
                 with st.expander("**Config⚙️**", expanded=True):
                     st.markdown(state.scenario.experiment_setting, unsafe_allow_html=True)
-
+            
             if fbr := state.msgs[round]["ef.Quantitative Backtesting Chart"]:
                 st.markdown("**Returns📈**")
-                fig = report_figure(fbr[0].content)
-                st.plotly_chart(fig)
+                num_fig = len(state.msgs[round]["ef.Quantitative Backtesting Chart"])
+                if num_fig > 1:
+                    for i in range(num_fig):
+                        if i == 0:
+                            # 使用 HTML 实现居中
+                            st.markdown(
+                                "<div style='text-align: center;'><strong>Baseline</strong></div>", 
+                                unsafe_allow_html=True
+                            )
+                        fig = report_figure(fbr[i].content)
+                        st.plotly_chart(fig)
+                        if i < num_fig - 1:  # 在图表之间添加分割线
+                            st.divider()
+                else:
+                    fig = report_figure(fbr[0].content)
+                    st.plotly_chart(fig)
             if fbn := state.msgs[round]["ef.runner result"]:
                 st.markdown("**Runner Result Backtesting Table**")
                 runner_result_data = fbn[0].content

@@ -1,21 +1,22 @@
 qlib_init:
-    provider_uri: "~/.qlib/qlib_data/my_data"
+    provider_uri: "~/.qlib/qlib_data/baostock_data"
     region: cn
 
-market: &market csi300
-benchmark: &benchmark SH000300
+market: &market csi500
+benchmark: &benchmark SH000905
 
 data_handler_config: &data_handler_config
     start_time: 2012-01-01
-    end_time: 2024-11-25
+    end_time: 2024-12-01
     instruments: *market
     data_loader:
         class: NestedDataLoader
         kwargs:
             dataloader_l:
-                - class: qlib.contrib.data.loader.Alpha158DL
+                - class: qlib.contrib.data.loader.QlibDataLoader
                   kwargs:
                     config:
+                        feature: ["$open", "$high", "$low", "$close", "$volume"]
                         label: 
                             - ["Ref($close, -2)/Ref($close, -1) - 1"]
                             - ["LABEL0"]
@@ -24,10 +25,23 @@ data_handler_config: &data_handler_config
                     config: "combined_factors_df.pkl"
 
     learn_processors:
+        - class: Fillna
+          kwargs:
+              fields_group: feature
         - class: DropnaLabel
         - class: CSZScoreNorm
           kwargs:
+              fields_group: feature
+        - class: CSRankNorm
+          kwargs:
               fields_group: label
+    infer_processors: 
+        - class: Fillna
+          kwargs:
+              fields_group: feature
+        - class: CSZScoreNorm
+          kwargs:
+              fields_group: feature
 
 port_analysis_config: &port_analysis_config
     strategy:
@@ -38,8 +52,8 @@ port_analysis_config: &port_analysis_config
             topk: 50
             n_drop: 5
     backtest:
-        start_time: 2021-01-01
-        end_time: 2024-11-25
+        start_time: 2022-01-01
+        end_time: 2024-12-31
         account: 100000000
         benchmark: *benchmark
         exchange_kwargs:
@@ -72,9 +86,9 @@ task:
                 module_path: qlib.contrib.data.handler
                 kwargs: *data_handler_config
             segments:
-                train: [2012-01-01, 2018-12-31]
-                valid: [2019-01-01, 2020-12-31]
-                test: [2021-01-01, 2024-11-25]
+                train: [2012-01-01, 2020-12-31]
+                valid: [2020-01-01, 2021-12-31]
+                test: [2022-01-01, 2024-12-31]
     record: 
         - class: SignalRecord
           module_path: qlib.workflow.record_temp
