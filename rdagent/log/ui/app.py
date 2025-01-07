@@ -597,13 +597,41 @@ def feedback_window():
                     st.plotly_chart(fig)
             if fbn := state.msgs[round]["ef.runner result"]:
                 st.markdown("**Runner Result Backtesting Table**")
+                # 获取结果数据
                 runner_result_data = fbn[0].content
                 result = runner_result_data.result
+                # 将结果转化为 DataFrame
                 result_df = pd.DataFrame(result) if isinstance(result, pd.Series) else pd.DataFrame(result)
                 result_df = result_df.reset_index()
                 result_df.columns = ["Metric", "Value"]
-                # 在前端显示动态表格
-                st.dataframe(result_df, use_container_width=True)  # 动态显示表格，可交互排序和搜索
+                # 按条件分类
+                without_cost_df = result_df[result_df["Metric"].str.contains("without_cost")]
+                with_cost_df = result_df[result_df["Metric"].str.contains("with_cost")]
+                rest_df = result_df[~result_df["Metric"].str.contains("without_cost|with_cost")]
+                # 精炼 Metric 列
+                without_cost_df["Metric"] = without_cost_df["Metric"].apply(lambda x: x.split(".")[-1].replace("_", " "))
+                with_cost_df["Metric"] = with_cost_df["Metric"].apply(lambda x: x.split(".")[-1].replace("_", " "))
+                rest_df["Metric"] = rest_df["Metric"].apply(lambda x: x.split(".")[-1].replace("_", " "))
+                # 渲染表格函数
+                def render_table(df, title):
+                    if not df.empty:
+                        st.markdown(f"### {title}")
+                        table_md = "| Metric | Value |\n| --- | --- |\n"
+                        for _, row in df.iterrows():
+                            table_md += f"| {row['Metric']} | {row['Value']} |\n"
+                        st.markdown(table_md)
+                # 渲染不同分类的表格
+                render_table(without_cost_df, "Excess Return Without Cost")
+                render_table(with_cost_df, "Excess Return With Cost")
+                render_table(rest_df, "Rest")
+
+                # runner_result_data = fbn[0].content
+                # result = runner_result_data.result
+                # result_df = pd.DataFrame(result) if isinstance(result, pd.Series) else pd.DataFrame(result)
+                # result_df = result_df.reset_index()
+                # result_df.columns = ["Metric", "Value"]
+                # # 在前端显示动态表格
+                # st.dataframe(result_df, height=result_df.shape[0] * 35 + 50, use_container_width=True)  # 动态显示表格，可交互排序和搜索
             if fb := state.msgs[round]["ef.feedback"]:
                 st.markdown("**Hypothesis Feedback🔍**")
                 h: HypothesisFeedback = fb[0].content
