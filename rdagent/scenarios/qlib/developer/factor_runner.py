@@ -108,6 +108,8 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
             combined_factors = combined_factors.loc[:, ~combined_factors.columns.duplicated(keep="last")]
             new_columns = pd.MultiIndex.from_product([["feature"], combined_factors.columns])
             combined_factors.columns = new_columns
+            
+            logger.info(f"Factor values this round: \n\n{combined_factors.tail()}\n\n")
 
             # Save the combined factors to the workspace
             file_path = exp.experiment_workspace.workspace_path / "combined_factors_df.pkl"

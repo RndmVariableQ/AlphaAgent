@@ -1,16 +1,16 @@
-# qlib_init:
-#     provider_uri: "~/.qlib/qlib_data/baostock_data"
-#     region: cn
-
-# market: &market csi500
-# benchmark: &benchmark SH000905
-
 qlib_init:
     provider_uri: "~/.qlib/qlib_data/us_data"
     region: us
 
 market: &market SP500
 benchmark: &benchmark SPX
+
+# qlib_init:
+#     provider_uri: "~/.qlib/qlib_data/baostock_data"
+#     region: cn
+
+# market: &market csi500
+# benchmark: &benchmark SH000905
 
 data_handler_config: &data_handler_config
     start_time: 2015-01-01
@@ -24,9 +24,6 @@ data_handler_config: &data_handler_config
                 label: 
                     - ["Ref($close, -2)/Ref($close, -1) - 1"]
                     - ["LABEL0"]
-                # - class: qlib.data.dataset.loader.StaticDataLoader
-                #   kwargs:
-                #     config: "combined_factors_df.pkl"
 
     learn_processors:
         - class: Fillna
@@ -40,9 +37,6 @@ data_handler_config: &data_handler_config
           kwargs:
               fields_group: label
     infer_processors: 
-        # - class: DropCol
-        #   kwargs:
-        #       col_list: ["$open", "$high", "$low", "$close", "$volume"]
         - class: Fillna
           kwargs:
               fields_group: feature
@@ -91,7 +85,7 @@ task:
     #         eval_metric: rmse
     #         colsample_bytree: 0.8879
     #         eta: 0.0421
-    #         max_depth: 6
+    #         max_depth: 8
     #         n_estimators: 647
     #         subsample: 0.8789
     #         nthread: 20
@@ -104,12 +98,9 @@ task:
                 module_path: qlib.contrib.data.handler
                 kwargs: *data_handler_config
             segments:
-                # train: [2019-01-01, 2022-06-30]
-                # valid: [2022-07-01, 2022-12-31]
-                # test: [2023-01-01, 2024-12-30]
                 train: [2015-01-01, 2019-12-31]
                 valid: [2020-01-01, 2020-12-31]
-                test: [2021-01-01, 2022-12-30]
+                test: [2021-01-01, 2024-12-30]
     record: 
         - class: SignalRecord
           module_path: qlib.workflow.record_temp
