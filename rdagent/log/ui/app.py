@@ -495,11 +495,11 @@ def tasks_window(tasks: list[FactorTask | ModelTask]):
                 st.markdown(f"**Description**: {ft.factor_description}")
                 st.latex("Formulation")
                 st.latex(ft.factor_formulation)
-                
+
                 mks = "| Variable | Description |\n| --- | --- |\n"
                 if isinstance(ft.variables, dict):
                     for v, d in ft.variables.items():
-                        mks += f"| ${v}$ | {d} |\n"
+                        mks += f"| ${v.replace('$', '')}$ | {d} |\n"
                     st.markdown(mks)
 
     elif isinstance(tasks[0], ModelTask):

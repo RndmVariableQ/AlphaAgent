@@ -16,7 +16,7 @@ data_handler_config: &data_handler_config
                 - class: qlib.contrib.data.loader.QlibDataLoader
                   kwargs:
                     config:
-                        feature: ["$close-$open",  "$volume / Mean($volume, 20)", "($high - $low)/Ref($close, 1)", "$close/Ref($close, 1)-1"] # "$high", "$low", "$close", "$volume"
+                        feature: ["$close-$open", "$volume / Mean($volume, 20)", "($high - $low)/Ref($close, 1)", "$close/Ref($close, 1)-1"] # "$high", "$low", "$close", "$volume"
                         label: 
                             - ["Ref($close, -2)/Ref($close, -1) - 1"]
                             - ["LABEL0"]
@@ -77,6 +77,17 @@ task:
             max_depth: 8
             num_leaves: 210
             num_threads: 20
+    # model:
+        # class: XGBModel
+        # module_path: qlib.contrib.model.xgboost
+        # kwargs:
+        #     eval_metric: rmse
+        #     colsample_bytree: 0.8879
+        #     eta: 0.0421
+        #     max_depth: 8
+        #     n_estimators: 647
+        #     subsample: 0.8789
+        #     nthread: 20
     dataset:
         class: DatasetH
         module_path: qlib.data.dataset

@@ -97,7 +97,7 @@ evolving_strategy_factor_implementation_v1_system: |-
   - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, turning out to be a multi-column sequence. y and z must match x in size. 
 
   Note that:
-  - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression.
+  - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression. Do not use undeclared functions (e.g., 'MACD()', 'RSI()') in the expression.
   - Make sure your factor expression contain at least one variables within the dataframe columns (e.g. $open), combined with registered operations above. Do NOT use any undeclared variable (e.g. 'n', 'w_1') and undefined symbols (e.g., '=') in the expression. 
   - Add a very small constant term (such as 1e-8) to the denominator to prevent division by zero
   
