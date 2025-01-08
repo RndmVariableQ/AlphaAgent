@@ -77,6 +77,7 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
         Generate the experiment by processing and combining factor data,
         then passing the combined data to Docker for backtest results.
         """
+        
         if exp.based_experiments and exp.based_experiments[-1].result is None:
             exp.based_experiments[-1] = self.develop(exp.based_experiments[-1])
 
@@ -113,8 +114,8 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
 
             # Save the combined factors to the workspace
             file_path = exp.experiment_workspace.workspace_path / "combined_factors_df.pkl"
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            # if os.path.exists(file_path):
+            #     os.remove(file_path)
             with open(exp.experiment_workspace.workspace_path / "combined_factors_df.pkl", "wb") as f:
                 pickle.dump(combined_factors, f)
 
