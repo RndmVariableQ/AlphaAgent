@@ -1,0 +1,2 @@
+factor_name	factor_expression
+MACD	"EMA(close,12)-EMA(close,26)"
