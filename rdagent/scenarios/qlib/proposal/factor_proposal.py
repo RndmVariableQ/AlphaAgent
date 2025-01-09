@@ -11,6 +11,8 @@ from rdagent.core.proposal import Hypothesis, Scenario, Trace
 from rdagent.core.experiment import Experiment
 from rdagent.scenarios.qlib.experiment.factor_experiment import QlibFactorExperiment
 from rdagent.oai.llm_utils import APIBackend
+import os
+import pandas as pd
 
 
 QlibFactorHypothesis = Hypothesis
@@ -230,6 +232,32 @@ class AlphaAgentHypothesisGen(FactorHypothesisGen):
         hypothesis = self.convert_response(resp)
 
         return hypothesis
+    
+    
+
+class EmptyHypothesisGen(FactorHypothesisGen):
+    def __init__(self, scen: Scenario) -> Tuple[dict, bool]:
+        super().__init__(scen)
+        
+    def convert_response(self, *args, **kwargs) -> AlphaAgentHypothesis: 
+        return super().convert_response(*args, **kwargs)  
+    
+    def prepare_context(self, *args, **kwargs) -> Tuple[dict | bool]:
+        return super().prepare_context(*args, **kwargs)
+
+    def gen(self, trace: Trace) -> AlphaAgentHypothesis:
+
+        hypothesis = AlphaAgentHypothesis(
+            hypothesis="",
+            reason="",
+            concise_reason="",
+            concise_observation="",
+            concise_justification="",
+            concise_knowledge="",
+        )
+
+        return hypothesis
+
 
 
 
@@ -334,3 +362,56 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
 
         exp.tasks = unique_tasks
         return exp
+
+
+
+class BacktestHypothesis2FactorExpression(FactorHypothesis2Experiment):
+    def __init__(self, factor_csv_path, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.factor_csv_path = factor_csv_path
+        
+    def convert_response(self, *args, **kwargs) -> FactorExperiment:
+        return super().convert_response(*args, **kwargs)
+        
+    def prepare_context(self, *args, **kwargs) -> Tuple[dict | bool]:
+        return super().prepare_context(*args, **kwargs)
+        
+    def convert(self, hypothesis: Hypothesis, trace: Trace) -> FactorExperiment:
+        if os.path.exists(self.factor_csv_path):
+            tasks = []
+            factor_df = pd.read_csv(self.factor_csv_path, index_col=None)
+            for index, (name, expr) in factor_df.iterrows():
+                tasks.append(
+                    FactorTask(
+                        factor_name=name,
+                        factor_description="",
+                        factor_formulation="",
+                        factor_expression=expr,
+                        variables="",
+                    )
+                )
+            
+            exp = QlibFactorExperiment(tasks)
+            exp.based_experiments = [QlibFactorExperiment(sub_tasks=[])] + [t[1] for t in trace.hist if t[2]]
+
+            unique_tasks = []
+
+            for task in tasks:
+                duplicate = False
+                for based_exp in exp.based_experiments:
+                    for sub_task in based_exp.sub_tasks:
+                        if task.factor_name == sub_task.factor_name:
+                            duplicate = True
+                            break
+                    if duplicate:
+                        break
+                if not duplicate:
+                    unique_tasks.append(task)
+
+            exp.tasks = unique_tasks
+            return exp
+            
+        else:
+            raise ValueError(f"csv文件{self.factor_csv_path}不存在")
+        
+    

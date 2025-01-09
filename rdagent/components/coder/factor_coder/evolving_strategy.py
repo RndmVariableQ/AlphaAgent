@@ -18,7 +18,8 @@ from rdagent.core.prompts import Prompts
 from rdagent.core.template import CodeTemplate
 from rdagent.oai.llm_conf import LLM_SETTINGS
 from rdagent.oai.llm_utils import APIBackend
-
+from rdagent.core.utils import multiprocessing_wrapper
+from rdagent.core.conf import RD_AGENT_SETTINGS
 
 code_template = CodeTemplate(template_path=Path(__file__).parent / "template.jinjia2")
 implement_prompts = Prompts(file_path=Path(__file__).parent / "prompts.yaml")
@@ -326,4 +327,64 @@ class FactorParsingStrategy(MultiProcessEvolvingStrategy):
             if evo.sub_workspace_list[index] is None:
                 evo.sub_workspace_list[index] = FactorFBWorkspace(target_task=evo.sub_tasks[index])
             evo.sub_workspace_list[index].inject_code(**{"factor.py": code_list[index]})
+        return evo
+    
+    
+    
+class FactorRunningStrategy(MultiProcessEvolvingStrategy):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.num_loop = 0
+        self.haveSelected = False
+
+
+    def implement_one_task(
+        self,
+        target_task: FactorTask,
+        queried_knowledge: CoSTEERQueriedKnowledge,
+    ) -> str:
+
+        rendered_code = code_template.render(
+            expression=target_task.factor_expression, 
+            factor_name=target_task.factor_name 
+        )
+        return rendered_code
+        
+    
+    def assign_code_list_to_evo(self, code_list, evo):
+        for index in range(len(evo.sub_tasks)):
+            if code_list[index] is None:
+                continue
+            if evo.sub_workspace_list[index] is None:
+                evo.sub_workspace_list[index] = FactorFBWorkspace(target_task=evo.sub_tasks[index])
+            evo.sub_workspace_list[index].inject_code(**{"factor.py": code_list[index]})
+        return evo
+    
+    
+    def evolve(
+        self,
+        *,
+        evo: EvolvingItem,
+        queried_knowledge: CoSTEERQueriedKnowledge | None = None,
+        **kwargs,
+    ) -> EvolvingItem:
+        # 1.找出需要evolve的task
+        to_be_finished_task_index = []
+        for index, target_task in enumerate(evo.sub_tasks):
+            to_be_finished_task_index.append(index)
+
+        result = multiprocessing_wrapper(
+            [
+                (self.implement_one_task, (evo.sub_tasks[target_index], queried_knowledge))
+                for target_index in to_be_finished_task_index
+            ],
+            n=RD_AGENT_SETTINGS.multi_proc_n,
+        )
+        code_list = [None for _ in range(len(evo.sub_tasks))]
+        for index, target_index in enumerate(to_be_finished_task_index):
+            code_list[target_index] = result[index]
+
+        evo = self.assign_code_list_to_evo(code_list, evo)
+        evo.corresponding_selection = to_be_finished_task_index
+
         return evo

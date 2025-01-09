@@ -87,14 +87,13 @@ class FactorBackTestBasePropSetting(BasePropSetting):
     scen: str = "rdagent.scenarios.qlib.experiment.factor_experiment.QlibAlphaAgentScenario"
     """Scenario class for Qlib Factor"""
 
-    hypothesis_gen: str = "rdagent.scenarios.qlib.proposal.factor_proposal.AlphaAgentHypothesisGen"
+    hypothesis_gen: str = "rdagent.scenarios.qlib.proposal.factor_proposal.EmptyHypothesisGen"
     """Hypothesis generation class"""
 
-    hypothesis2experiment: str = "rdagent.scenarios.qlib.proposal.factor_proposal.AlphaAgentHypothesis2FactorExpression"
+    hypothesis2experiment: str = "rdagent.scenarios.qlib.proposal.factor_proposal.BacktestHypothesis2FactorExpression"
     """Hypothesis to experiment class"""
 
-    # coder: str = "rdagent.scenarios.qlib.developer.factor_coder.QlibFactorCoSTEER"
-    coder: str = "rdagent.scenarios.qlib.developer.factor_coder.QlibFactorParser"
+    coder: str = "rdagent.scenarios.qlib.developer.factor_coder.QlibFactorCoder"
     """Coder class"""
 
     runner: str = "rdagent.scenarios.qlib.developer.factor_runner.QlibFactorRunner"
@@ -103,7 +102,7 @@ class FactorBackTestBasePropSetting(BasePropSetting):
     summarizer: str = "rdagent.scenarios.qlib.developer.feedback.QlibFactorHypothesisExperiment2Feedback"
     """Summarizer class"""
 
-    evolving_n: int = 5
+    evolving_n: int = 1
     """Number of evolutions"""
 
 
