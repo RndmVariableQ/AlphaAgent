@@ -1,26 +1,26 @@
-qlib_init:
-    provider_uri: "~/.qlib/qlib_data/us_data"
-    region: us
-
-market: &market SP500
-benchmark: &benchmark SPX
-
 # qlib_init:
-#     provider_uri: "~/.qlib/qlib_data/baostock_data"
-#     region: cn
+#     provider_uri: "~/.qlib/qlib_data/us_data"
+#     region: us
 
-# market: &market csi500
-# benchmark: &benchmark SH000905
+# market: &market SP500
+# benchmark: &benchmark SPX
+
+qlib_init:
+    provider_uri: "~/.qlib/qlib_data/baostock_data"
+    region: cn
+
+market: &market csi500
+benchmark: &benchmark SH000905
 
 data_handler_config: &data_handler_config
     start_time: 2015-01-01
-    end_time: 2024-12-31
+    end_time: 2024-12-30
     instruments: *market
     data_loader:
         class: qlib.contrib.data.loader.QlibDataLoader
         kwargs:
             config:
-                feature: ["$close-$open",  "$volume / Mean($volume, 20)", "($high - $low)/Ref($close, 1)", "$close/Ref($close, 1)-1"] # "$high", "$low", "$close", "$volume"
+                feature: ["($close-$open)/$open",  "$volume/Mean($volume, 20)", "($high-$low)/Ref($close, 1)", "$close/Ref($close, 1)-1"] # "$high", "$low", "$close", "$volume"
                 label: 
                     - ["Ref($close, -2)/Ref($close, -1) - 1"]
                     - ["LABEL0"]
@@ -50,19 +50,23 @@ port_analysis_config: &port_analysis_config
         module_path: qlib.contrib.strategy
         kwargs:
             signal: <PRED>
-            topk: 50
+            topk: 100
             n_drop: 5
     backtest:
         start_time: 2021-01-01
-        end_time: 2024-12-31
+        end_time: 2024-12-30
         account: 100000000
         benchmark: *benchmark
         exchange_kwargs:
             limit_threshold: 0.095
             deal_price: open
-            open_cost: 0.0
-            close_cost: 0.0005
+            open_cost: 0.0005
+            close_cost: 0.0015
             min_cost: 5
+            # open_cost: 0.0
+            # close_cost: 0.0005
+            # min_cost: 0
+
 
 task:
     model:
@@ -75,9 +79,22 @@ task:
             subsample: 0.8789
             lambda_l1: 205.6999
             lambda_l2: 580.9768
-            max_depth: 8
+            max_depth: 4
             num_leaves: 210
             num_threads: 20
+    # model:
+        # class: LGBModel
+        # module_path: qlib.contrib.model.gbdt
+        # kwargs:
+        #     loss: mse
+        #     colsample_bytree: 0.8879
+        #     learning_rate: 0.1
+        #     subsample: 0.8789
+        #     lambda_l1: 205.6999
+        #     lambda_l2: 580.9768
+        #     max_depth: 8
+        #     num_leaves: 210
+        #     num_threads: 20
     # model:
     #     class: XGBModel
     #     module_path: qlib.contrib.model.xgboost

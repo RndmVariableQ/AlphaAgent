@@ -1,3 +1,0 @@
-factor_name,factor_expression
-MACD,"EMA(close,12)-EMA(close,26)"
-MACD2,"EMA(close,8)-EMA(close,20)"

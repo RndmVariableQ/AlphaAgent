@@ -1,0 +1,8 @@
+factor_name,factor_expression
+Momentum-Volatility Integration Factor,"DELTA($close,15)/(STD($close, 10) + 1e-8)"
+Volume-Adjusted Momentum Factor11,"DELTA($close,20)/(STD($volume, 10) + 1e-8)"
+Volume-Momentum Balance Factor,"SUM($volume * DELTA($close,1),15) / (ABS(DELAY($close,15)) + 1e-8)"
+Volume-OBV Momentum Factor,"(SUM(SIGN($close - DELAY($close,1)) * $volume,15)/(ABS(DELAY($close,15)) + 1e-8)) * (DELTA($close,15)/(ABS(DELAY($close, 15)) + 1e-8))"
+RSI-Factor,"100 - (100 / (1 + SUMIF($close - DELAY($close, 1) > 0, 14, $close - DELAY($close, 1)) / SUMIF(DELAY($close, 1) - $close > 0, 14, DELAY($close, 1) - $close)))"
+Volatility-Enhanced Return Factor,"STD($close - $open, 14) / (MEAN($close - $open, 14) + 1e-8)"
+Return-Volatility Ratio Factor,"STD($close - $open, 20) / (ABS(MEAN($close - $open, 20)) + 1e-8)"

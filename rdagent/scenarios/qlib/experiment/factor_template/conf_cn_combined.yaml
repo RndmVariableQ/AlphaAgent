@@ -1,13 +1,13 @@
 qlib_init:
-    provider_uri: "~/.qlib/qlib_data/baostock_data"
-    region: cn
+    provider_uri: "~/.qlib/qlib_data/us_data"
+    region: us
 
-market: &market csi500
-benchmark: &benchmark SH000905
+market: &market SP500
+benchmark: &benchmark SPX
 
 data_handler_config: &data_handler_config
-    start_time: 2012-01-01
-    end_time: 2024-12-01
+    start_time: 2015-01-01
+    end_time: 2024-12-31
     instruments: *market
     data_loader:
         class: NestedDataLoader
@@ -16,7 +16,7 @@ data_handler_config: &data_handler_config
                 - class: qlib.contrib.data.loader.QlibDataLoader
                   kwargs:
                     config:
-                        feature: ["$open", "$high", "$low", "$close", "$volume"]
+                        feature: ["($close - $open) / $open", "$close / Ref($close, 1) - 1", "$volume / Mean($volume, 20)", "($high - $low) / Ref($close, 1)"] # "$high", "$low", "$close", "$volume"
                         label: 
                             - ["Ref($close, -2)/Ref($close, -1) - 1"]
                             - ["LABEL0"]
@@ -32,9 +32,12 @@ data_handler_config: &data_handler_config
         - class: CSZScoreNorm
           kwargs:
               fields_group: feature
-        - class: CSRankNorm
+        - class: CSZScoreNorm
           kwargs:
               fields_group: label
+        # - class: CSRankNorm
+        #   kwargs:
+        #       fields_group: label
     infer_processors: 
         - class: Fillna
           kwargs:
@@ -42,6 +45,9 @@ data_handler_config: &data_handler_config
         - class: CSZScoreNorm
           kwargs:
               fields_group: feature
+        - class: CSZScoreNorm
+          kwargs:
+              fields_group: label
 
 port_analysis_config: &port_analysis_config
     strategy:
@@ -52,16 +58,19 @@ port_analysis_config: &port_analysis_config
             topk: 50
             n_drop: 5
     backtest:
-        start_time: 2022-01-01
+        start_time: 2021-01-01
         end_time: 2024-12-31
         account: 100000000
         benchmark: *benchmark
         exchange_kwargs:
             limit_threshold: 0.095
-            deal_price: close
+            deal_price: open
             open_cost: 0.0005
             close_cost: 0.0015
-            min_cost: 5 # 0
+            min_cost: 5
+            # open_cost: 0.0
+            # close_cost: 0.0005
+            # min_cost: 0
 
 task:
     model:
@@ -70,13 +79,24 @@ task:
         kwargs:
             loss: mse
             colsample_bytree: 0.8879
-            learning_rate: 0.2
+            learning_rate: 0.1
             subsample: 0.8789
             lambda_l1: 205.6999
             lambda_l2: 580.9768
-            max_depth: 8
+            max_depth: 4
             num_leaves: 210
             num_threads: 20
+    # model:
+        # class: XGBModel
+        # module_path: qlib.contrib.model.xgboost
+        # kwargs:
+        #     eval_metric: rmse
+        #     colsample_bytree: 0.8879
+        #     eta: 0.0421
+        #     max_depth: 8
+        #     n_estimators: 647
+        #     subsample: 0.8789
+        #     nthread: 20
     dataset:
         class: DatasetH
         module_path: qlib.data.dataset
@@ -86,9 +106,9 @@ task:
                 module_path: qlib.contrib.data.handler
                 kwargs: *data_handler_config
             segments:
-                train: [2012-01-01, 2020-12-31]
-                valid: [2020-01-01, 2021-12-31]
-                test: [2022-01-01, 2024-12-31]
+                train: [2015-01-01, 2019-12-31]
+                valid: [2020-01-01, 2020-12-31]
+                test: [2021-01-01, 2024-12-31]
     record: 
         - class: SignalRecord
           module_path: qlib.workflow.record_temp

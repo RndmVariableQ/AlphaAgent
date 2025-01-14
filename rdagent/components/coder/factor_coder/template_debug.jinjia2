@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 import os
@@ -16,13 +15,17 @@ def calculate_factor(expr: str, name: str):
     # df.columns: ['$open', '$close', '$high', '$low', '$volume', '$amount', '$turn', '$pettm', '$pbmrq']
     df = pd.read_hdf('/home/tangziyi/RD-Agent/rdagent/scenarios/qlib/experiment/factor_data_template/daily_pv_all.h5', key='data')
     
+    print('expr: ', expr)
     expr = parse_symbol(expr, df.columns)
+    print('expr: ', expr)
     expr = parse_expression(expr)
 
+    print('expr: ', expr)
     # replace 'var_name' by 'df['$var_name']
     for col in df.columns:
         expr = expr.replace(col[1:], f"df[\'{col}\']")
-
+    
+    print('expr: ', expr)
     df[name] = eval(expr)
     result = df[name].astype(np.float64)
     print(result)
