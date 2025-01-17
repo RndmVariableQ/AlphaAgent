@@ -58,6 +58,7 @@ evolving_strategy_factor_implementation_v1_system: |-
 
   Only the following operations are allowed in expression: 
   - *RANK(A)*: Ranking of each element in the cross-sectional dimension of A. 
+  - *ZSCORE(A)*: Z-score of each element in the cross-sectional dimension of A. 
   - *MAX(A, B)*: Maximum value between A and B. 
   - *MIN(A, B)*: Minimum value between A and B. 
   - *STD(A, n)*: Standard deviation of sequence A over the past n days. 
@@ -92,6 +93,10 @@ evolving_strategy_factor_implementation_v1_system: |-
   - *HIGHDAY(A, n)*: Number of days since the highest value of A in the past n days. 
   - *LOWDAY(A, n)*: Number of days since the lowest value of A in the past n days. 
   - *SUMAC(A, n)*: Cumulative sum of A over the past n days. 
+  - *RSI(A, n)*: Relative Strength Index of sequence A over n periods. Measures momentum by comparing the magnitude of recent gains to recent losses.
+  - *BB_MIDDLE(A, n)*: Middle Bollinger Band, calculated as n-period simple moving average of sequence A.
+  - *BB_UPPER(A, n)*: Upper Bollinger Band, calculated as middle band plus two standard deviations of sequence A over n periods.
+  - *BB_LOWER(A, n)*: Lower Bollinger Band, calculated as middle band minus two standard deviations of sequence A over n periods.
   - *(x)&&(y)*: Logical operation "and". Both x and y are logical expressions. 
   - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions. 
   - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, turning out to be a multi-column sequence. y and z must match x in size. 
@@ -99,9 +104,6 @@ evolving_strategy_factor_implementation_v1_system: |-
   Note that:
   - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression. Do not use undeclared functions (e.g., 'MACD()', 'RSI()') in the expression.
   - Make sure your factor expression contain at least one variables within the dataframe columns (e.g. $open), combined with registered operations above. Do NOT use any undeclared variable (e.g. 'n', 'w_1') and undefined symbols (e.g., '=') in the expression. 
-  - Add a very small constant term (such as 1e-8) to the denominator to prevent division by zero
-  
-  A factor expression example is: CORR($close/DELAY($close,1), LOG($volume/DELAY($volume, 1) + 1), 10) 
 
   Please response the corrected expression in the following json format. Here is the structure for the JSON output:
   {
@@ -256,8 +258,7 @@ evaluator_final_decision_v1_user: |-
 function_lib_description: |-
   (Do NOT use any undeclared variables (such as 'n') in your expression. Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the followed operations are allowed in expression: 
   - *RANK(A)*: Ranking of each element in the cross-sectional dimension of A. 
-  - *MAX(A, B)*: Maximum value between A and B. 
-  - *MIN(A, B)*: Minimum value between A and B. 
+  - *ZSCORE(A)*: Z-score of each element in the cross-sectional dimension of A. 
   - *STD(A, n)*: Standard deviation of sequence A over the past n days. 
   - *CORR(A, B, n)*: Correlation coefficient between sequences A and B over the past n days. 
   - *COVARIANCE(A, B, n)*: Covariance between sequences A and B over the past n days. 
@@ -272,6 +273,8 @@ function_lib_description: |-
   - *EXP(A)*: Exponential of each element in A. 
   - *SUM(A, n)*: Sum of sequence A over the past n days. 
   - *ABS(A)*: Absolute value of A. 
+  - *MAX(A, B)*: Maximum value between A and B. 
+  - *MIN(A, B)*: Minimum value between A and B. 
   - *TS_RANK(A, n)*: Time-series rank of the last value of A in the past n days. 
   - *TS_MIN(A, n)*: Minimum value of A in the past n days. 
   - *TS_MAX(A, n)*: Maximum value of A in the past n days. 
@@ -290,6 +293,10 @@ function_lib_description: |-
   - *HIGHDAY(A, n)*: Number of days since the highest value of A in the past n days. 
   - *LOWDAY(A, n)*: Number of days since the lowest value of A in the past n days. 
   - *SUMAC(A, n)*: Cumulative sum of A over the past n days. 
-  - *(x)&(y)*: Logical operation "and". Both x and y are logical expressions. 
+  - *RSI(A, n)*: Relative Strength Index of sequence A over n periods. Measures momentum by comparing the magnitude of recent gains to recent losses.
+  - *BB_MIDDLE(A, n)*: Middle Bollinger Band, calculated as n-period simple moving average of sequence A.
+  - *BB_UPPER(A, n)*: Upper Bollinger Band, calculated as middle band plus two standard deviations of sequence A over n periods.
+  - *BB_LOWER(A, n)*: Lower Bollinger Band, calculated as middle band minus two standard deviations of sequence A over n periods.
+  - *(x)&&(y)*: Logical operation "and". Both x and y are logical expressions. 
   - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions. 
   - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, turning out to be a multi-column sequence. y and z must match x in size. 

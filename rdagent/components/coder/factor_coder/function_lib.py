@@ -425,9 +425,17 @@ def POW(df:pd.DataFrame, n:int):
 def TS_ZSCORE(df: pd.DataFrame, p:int=5):
     assert isinstance(p, int), ValueError(f"TS_ZSCORE仅接收正整数参数n，接收到{type(p).__name__}")
     # assert isinstance(df, pd.DataFrame), ValueError(f"TS_ZSCORE仅接收pd.DataFrame作为A的类型，接收到{type(df).__name__}")
-    return (df - df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).min())) / df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).std())
+    return (df - df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).mean())) / df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).std())
 
-ZSCORE = TS_ZSCORE
+@support_numpy
+def ZSCORE(df):
+    # 在每个时间截面上计算平均值和标准差
+    mean = df.groupby('datetime').mean()
+    std = df.groupby('datetime').std()
+    
+    # 计算z-score: (X - μ) / σ
+    zscore = (df - mean) / std
+    return zscore
 
 def ADD(df1, df2):
     return np.add(df1, df2)
@@ -447,3 +455,43 @@ def AND(df1, df2):
 
 def OR(df1, df2):
     return np.bitwise_or(df1.astype(np.bool_), df2.astype(np.bool_))
+
+
+def RSI(price_df, window=14):
+    # 计算价格变化
+    price_change = DELTA(price_df, 1)
+    
+    # 分别计算上涨和下跌（使用向量化操作）
+    up = (price_change > 0) * price_change
+    down = (price_change < 0) * ABS(price_change)
+    
+    # 计算EMA
+    avg_up = EMA(up, window)
+    avg_down = EMA(down, window)
+    
+    # 计算RSI
+    rsi = 100 - (100 / (1 + (avg_up / avg_down)))
+    return rsi
+
+def BB_MIDDLE(price_df, window=20):
+    # 计算中轨(移动平均线)
+    middle_band = SMA(price_df, window)
+    return middle_band
+
+def BB_UPPER(price_df, window=20):
+    # 计算中轨
+    middle_band = BB_MIDDLE(price_df, window)
+    # 计算标准差
+    std = STD(price_df, window)
+    # 计算上轨
+    upper_band = middle_band + 2 * std
+    return upper_band
+
+def BB_LOWER(price_df, window=20):
+    # 计算中轨
+    middle_band = BB_MIDDLE(price_df, window)
+    # 计算标准差
+    std = STD(price_df, window)
+    # 计算下轨
+    lower_band = middle_band - 2 * std
+    return lower_band

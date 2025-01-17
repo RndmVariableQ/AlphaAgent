@@ -1,9 +1,9 @@
 qlib_init:
-    provider_uri: "~/.qlib/qlib_data/us_data"
-    region: us
+    provider_uri: "~/.qlib/qlib_data/baostock_data"
+    region: cn
 
-market: &market SP500
-benchmark: &benchmark SPX
+market: &market csi500
+benchmark: &benchmark SH000905
 
 data_handler_config: &data_handler_config
     start_time: 2015-01-01
@@ -35,9 +35,6 @@ data_handler_config: &data_handler_config
         - class: CSZScoreNorm
           kwargs:
               fields_group: label
-        # - class: CSRankNorm
-        #   kwargs:
-        #       fields_group: label
     infer_processors: 
         - class: Fillna
           kwargs:
@@ -59,7 +56,7 @@ port_analysis_config: &port_analysis_config
             n_drop: 5
     backtest:
         start_time: 2021-01-01
-        end_time: 2024-12-31
+        end_time: 2024-12-30
         account: 100000000
         benchmark: *benchmark
         exchange_kwargs:
@@ -68,10 +65,6 @@ port_analysis_config: &port_analysis_config
             open_cost: 0.0005
             close_cost: 0.0015
             min_cost: 5
-            # open_cost: 0.0
-            # close_cost: 0.0005
-            # min_cost: 0
-
 task:
     model:
         class: LGBModel
@@ -86,17 +79,6 @@ task:
             max_depth: 4
             num_leaves: 210
             num_threads: 20
-    # model:
-        # class: XGBModel
-        # module_path: qlib.contrib.model.xgboost
-        # kwargs:
-        #     eval_metric: rmse
-        #     colsample_bytree: 0.8879
-        #     eta: 0.0421
-        #     max_depth: 8
-        #     n_estimators: 647
-        #     subsample: 0.8789
-        #     nthread: 20
     dataset:
         class: DatasetH
         module_path: qlib.data.dataset
@@ -108,7 +90,7 @@ task:
             segments:
                 train: [2015-01-01, 2019-12-31]
                 valid: [2020-01-01, 2020-12-31]
-                test: [2021-01-01, 2024-12-31]
+                test: [2021-01-01, 2024-12-30]
     record: 
         - class: SignalRecord
           module_path: qlib.workflow.record_temp

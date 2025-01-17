@@ -57,28 +57,49 @@ model_hypothesis_specification: |-
     6th Round Hypothesis (If fourth round didn't work):  The model should be a CNN. The CNN should have 5 convolutional layers. Use Leaky ReLU activation for all layers. Use dropout regularization with a rate of 0.3. (Reasoning: As regularisation rate of 0.5 didn't work, we only change a new regularisation and keep the other elements that worked. This means making changes in the current level.)    
 
 factor_hypothesis_specification: |-
-  
-  1. **Type of Factor and Financial Trends:**
-    - Define the type of factor introduced.
-    - Explain the financial trends or market behaviors indicated by this factor.
-    - Omit unnecessary or redundant details.
+  1. **Justification of Factor:**
+      - Explain the market behaviors indicated by this factor.
+      - Omit unnecessary or redundant details.
 
-  2. **New Directions and Optimizations:**
-    - If a new direction is needed, explain why based on financial principles, economic theories, or market behaviors.
-    - Suggest only one new direction at a time for clarity.
-    - If a previous hypothesis did not surpass SOTA but seems optimizable, you may continue in the same direction.
-    - Highlight that factors surpassing SOTA are included in the library to avoid re-implementation.
+  2. **Key Considerations in Factor Construction:**
+      - **Data Preprocessing and Standardization:**
+          - Avoid using raw prices and volumes directly due to scale differences
+          - Use relative changes or standardized data (e.g., RANK(), ZSCORE())
+          - Convert prices to returns (DELTA($close, 1)/$close) instead of price levels
+          - Transform volume into relative changes (DELTA($volume, 1)/$volume)
+
+      - **Time Series Processing:**
+          - Avoid forward-looking bias
+          - Use DELAY() to ensure only historical data is used
+          - Consider appropriate sample periods for indicators requiring historical data
+          - Choose suitable window sizes for moving averages (SMA, EMA, WMA)
+
+      - **Normalization and Stability:**
+          - Add small constants (e.g., 1e-8) to denominators to prevent division by zero
+          - Use STD() for volatility standardization
+          - Consider SIGN() to reduce impact of extreme values
+          - Apply MAX(MIN(x, upper), lower) for value truncation
+
+      - **Cross-sectional Treatment:**
+          - Apply RANK() or ZSCORE() for cross-sectional comparability
+          - Use FILTER() for outlier handling
+          - Ensure sufficient window length for correlation calculations
+
+      - **Robustness Considerations:**
+          - Validate factor stability across multiple time windows
+          - Consider MEDIAN() over MEAN() to reduce outlier impact
+          - Apply moving averages to smooth high-frequency variations
 
   3. **2-4 Factors per Generation:**
-    - Ensure each generation produces 2-4 factors.
-    - Balance simplicity and complexity to build a robust factor library.
-    - Note that each factor is independent. Please do NOT reference other factors within the factor expression. 
+      - Ensure each generation produces 2-4 factors.
+      - Balance simplicity and complexity to build a robust factor library.
+      - Note that each factor is independent. Please do NOT reference other factors within the factor expression.
+    
 
 function_lib_description: |-
   The followed operations are allowed in expression: 
   - *RANK(A)*: Ranking of each element in the cross-sectional dimension of A. 
-  - *MAX(A, B)*: Maximum value between A and B. 
-  - *MIN(A, B)*: Minimum value between A and B. 
+  - *ZSCORE(A)*: Z-score of each element in the cross-sectional dimension of A. 
   - *STD(A, n)*: Standard deviation of sequence A over the past n days. 
   - *CORR(A, B, n)*: Correlation coefficient between sequences A and B over the past n days. 
   - *COVARIANCE(A, B, n)*: Covariance between sequences A and B over the past n days. 
@@ -93,6 +114,8 @@ function_lib_description: |-
   - *EXP(A)*: Exponential of each element in A. 
   - *SUM(A, n)*: Sum of sequence A over the past n days. 
   - *ABS(A)*: Absolute value of A. 
+  - *MAX(A, B)*: Maximum value between A and B. 
+  - *MIN(A, B)*: Minimum value between A and B. 
   - *TS_RANK(A, n)*: Time-series rank of the last value of A in the past n days. 
   - *TS_MIN(A, n)*: Minimum value of A in the past n days. 
   - *TS_MAX(A, n)*: Maximum value of A in the past n days. 
@@ -111,7 +134,11 @@ function_lib_description: |-
   - *HIGHDAY(A, n)*: Number of days since the highest value of A in the past n days. 
   - *LOWDAY(A, n)*: Number of days since the lowest value of A in the past n days. 
   - *SUMAC(A, n)*: Cumulative sum of A over the past n days. 
-  - *(x)&(y)*: Logical operation "and". Both x and y are logical expressions. 
+  - *RSI(A, n)*: Relative Strength Index of sequence A over n periods. Measures momentum by comparing the magnitude of recent gains to recent losses.
+  - *BB_MIDDLE(A, n)*: Middle Bollinger Band, calculated as n-period simple moving average of sequence A.
+  - *BB_UPPER(A, n)*: Upper Bollinger Band, calculated as middle band plus two standard deviations of sequence A over n periods.
+  - *BB_LOWER(A, n)*: Lower Bollinger Band, calculated as middle band minus two standard deviations of sequence A over n periods.
+  - *(x)&&(y)*: Logical operation "and". Both x and y are logical expressions. 
   - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions. 
   - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, turning out to be a multi-column sequence. y and z must match x in size. 
 
@@ -120,7 +147,7 @@ function_lib_description: |-
   - Make sure your factor expression contain at least one variables within the dataframe columns (e.g. $open), combined with registered operations above. Do NOT use any undeclared variable (e.g. 'n', 'w_1') and undefined symbols (e.g., '=') in the expression. 
   - Add a very small constant term (such as 1e-8) to the denominator to prevent division by zero
 
-  A factor expression example is: (0.3 * $pettm) + (0.2 * $pbmrq) + (0.2 * $turn) + (0.3 * (($close - $open) > 0 ? 1 : 0))
+  A simplest factor expression example is: (($close- DELAY(close, 14)) / DELAY(close, 14))
 
 
 
@@ -130,49 +157,48 @@ factor_experiment_output_format: |-
   {
       "factor name 1": {
           "description": "description of factor 1",
-          "formulation": "A LaTeX formula of factor 1",
-          "expression": "An expression of factor 1, based on functions and variable mentioned",
           "variables": {
               "variable or function name 1": "description of variable or function 1",
               "variable or function name 2": "description of variable or function 2"
           }
+          "formulation": "A LaTeX formula of factor 1",
+          "expression": "An expression of factor 1, based on functions and variable mentioned",
       },
       "factor name 2": {
           "description": "description of factor 2",
-          "formulation": "A LaTeX formula of factor 2",
-          "expression": "An expression of factor 2, based on functions and variable mentioned",
           "variables": {
               "variable or function name 1": "description of variable or function 1",
               "variable or function name 2": "description of variable or function 2"
           }
+          "formulation": "A LaTeX formula of factor 2",
+          "expression": "An expression of factor 2, based on functions and variable mentioned",
       }
       # Don't add ellipsis (...) or any filler text that might cause JSON parsing errors here!
   }
 
   Here is an example:
-
   {
       "Candlestick-Volatility Factor": {
           "description": "This factor integrates candlestick movement patterns with market volatility to enhance predictive accuracy for short-term price movements. The factor computes the normalized difference between the candlestick body size and the standard deviation of closing prices over a 10-day period.",
-          "formulation": "CVF = \\frac{\\text{ABS}($close - $open)}{\\text{STD}($close, 10)}",
-          "expression": "ABS($close - $open) / (STD($close, 10) + 1e-8)",
           "variables": {
               "$close": "Close price of the stock on that day.",
               "$open": "Open price of the stock on that day.",
               "ABS(A)": "Absolute value of A.",
               "STD(A, n)": "Standard deviation of sequence A over the past n days."
           }
+          "formulation": "CVF = \\frac{\\text{ABS}($close - $open)}{\\text{STD}($close, 10)}",
+          "expression": "ABS($close - $open) / (STD($close, 10) + 1e-8)",
       },
       "Candlestick-Volume Correlation Factor": {
           "description": "This factor measures the correlation between the candlestick range (high - low) and the trading volume over a 20-day period, aiming to capture the relationship between price range and market participation.",
-          "formulation": "CVC = \\text{CORR}($high - $low, $volume, 20)",
-          "expression": "CORR($high - $low, $volume, 20)",
           "variables": {
               "$high": "High price of the stock on that day.",
               "$low": "Low price of the stock on that day.",
               "$volume": "Volume of the stock on that day.",
               "CORR(A, B, n)": "Correlation coefficient between sequences A and B over the past n days."
           }
+          "formulation": "CVC = \\text{CORR}($high - $low, $volume, 20)",
+          "expression": "CORR($high - $low, $volume, 20)",
       }
   }
 

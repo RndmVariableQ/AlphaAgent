@@ -7,7 +7,8 @@ from rdagent.components.coder.factor_coder.function_lib import (
     ABS, ADD, AND, CORR, COUNT, COVARIANCE, DECAYLINEAR, DELAY, DELTA, DIVIDE, 
     EMA, EXP, FILTER, HIGHDAY, LOG, LOWDAY, MAX, MEAN, MEDIAN, MIN, MULTIPLY, 
     OR, POW, PROD, RANK, REGBETA, REGRESI, SEQUENCE, SIGN, SMA, SQRT, STD, 
-    SUBTRACT, SUM, SUMAC, SUMIF, TS_MAX, TS_MIN, TS_RANK, TS_ZSCORE, WMA, ZSCORE
+    SUBTRACT, SUM, SUMAC, SUMIF, TS_MAX, TS_MIN, TS_RANK, TS_ZSCORE, WMA, ZSCORE,
+    RSI, BB_MIDDLE, BB_UPPER, BB_LOWER
 )
 
 
@@ -32,7 +33,6 @@ def calculate_factor(expr: str, name: str):
 
 if __name__ == '__main__':
     # Input factor expression. Do NOT use the variable format like "df['$xxx']" in factor expressions. Instead, you should use "$xxx". 
-    # expr Example: (0.3 * $pettm) + (0.2 * $pbmrq) + (0.2 * $turn) + (0.3 * (($close - $open) > 0 ? 1 : 0))
-    expr = "{{ expression }}"
-    name = "{{ factor_name }}"
+    expr = "{{ expression }}" # Your output factor expression will be filled in here
+    name = "{{ factor_name }}" # Your output factor name will be filled in here
     calculate_factor(expr, name)
