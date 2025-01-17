@@ -97,9 +97,9 @@ evolving_strategy_factor_implementation_v1_system: |-
   - *BB_MIDDLE(A, n)*: Middle Bollinger Band, calculated as n-period simple moving average of sequence A.
   - *BB_UPPER(A, n)*: Upper Bollinger Band, calculated as middle band plus two standard deviations of sequence A over n periods.
   - *BB_LOWER(A, n)*: Lower Bollinger Band, calculated as middle band minus two standard deviations of sequence A over n periods.
-  - *(x)&&(y)*: Logical operation "and". Both x and y are logical expressions. 
-  - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions. 
-  - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression. 
+  - *(x)&&(y)*: Logical operation "and". Both x and y are logical expressions, such as A > B. 
+  - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions, such as A > B. 
+  - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, such as A > B. 
 
   Note that:
   - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression. Do not use undeclared functions (e.g., 'MACD()', 'RSI()') in the expression.
@@ -297,6 +297,6 @@ function_lib_description: |-
   - *BB_MIDDLE(A, n)*: Middle Bollinger Band, calculated as n-period simple moving average of sequence A.
   - *BB_UPPER(A, n)*: Upper Bollinger Band, calculated as middle band plus two standard deviations of sequence A over n periods.
   - *BB_LOWER(A, n)*: Lower Bollinger Band, calculated as middle band minus two standard deviations of sequence A over n periods.
-  - *(x)&&(y)*: Logical operation "and". Both x and y are logical expressions. 
-  - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions. 
-  - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression. 
+  - *(x)&&(y)*: Logical operation "and". Both x and y are logical expressions, such as A > B. 
+  - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions, such as A > B. 
+  - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, such as A > B. 
