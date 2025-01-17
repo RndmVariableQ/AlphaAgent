@@ -140,7 +140,7 @@ function_lib_description: |-
   - *BB_LOWER(A, n)*: Lower Bollinger Band, calculated as middle band minus two standard deviations of sequence A over n periods.
   - *(x)&&(y)*: Logical operation "and". Both x and y are logical expressions. 
   - *(x)||(y)*: Logical operation "or". Both x and y are logical expressions. 
-  - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression, turning out to be a multi-column sequence. y and z must match x in size. 
+  - *(x)?(y):(z)*: Logical operation "If condition x holds, then y, otherwise z". x is a logical expression. 
 
   Note that:
   - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression. Do not use undeclared functions (e.g., 'MACD()', 'RSI()') in the expression.
