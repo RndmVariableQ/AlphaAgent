@@ -1,9 +1,0 @@
-factor_name,factor_expression
-Historical-Volatility-Volume-Price-Sentiment Factor,"(RANK(STD($close, 10)) + RANK(STD($volume, 10)) + RANK(ABS($close - $open)) + RANK(ABS($high - $low)) + RANK(CORR($close, $volume, 10))) / 5"
-Realized Volatility-ADX Hybrid Factor,"STD(($close - DELAY($close, 1)) / DELAY($close, 1), 20) / (MEAN(MAX($high - $low, MAX(ABS($high - DELAY($close, 1)), ABS($low - DELAY($close, 1)))), 14) + 1e-8) * ((SMA((MAX($high - DELAY($high, 1), $low - DELAY($low, 1))), 14, 1) - SMA((ABS($high - $low)), 14, 1)) / (SMA((MAX($high - DELAY($high, 1), $low - DELAY($low, 1))), 14, 1) + 1e-8))"
-Regret-Aversion-Sentiment-Macro-Macroeconomic-Trend Factor,"0.4 * RANK(SUMIF($close - $open, 20, $close > $open)) + 0.3 * RANK(EMA($volume, 15)) + 0.3 * RANK(TS_RANK(MAX($high - $low, 10), 20) + 1e-8)"
-Dynamic-Short-Term-Factor-V5,"(0.3 * RANK(SUM($close, 5))) + (0.4 * RANK(ABS($close - $open))) + (0.3 * RANK(SUM($volume, 5)))"
-Short-Term-Volume-Stability-Factor-V6,"TS_ZSCORE($volume, 5) * TS_ZSCORE(ABS($close - $open), 5) + 1e-8"
-Price-Volume-Dynamics-Factor-V6,"TS_RANK(DELTA($close, 5), 5) * TS_RANK($volume, 5) + 1e-8"
-Complex-Candlestick-Pattern-Factor-Optimized,"(EMA(RSI($close, 14), 10) + BB_UPPER($close, 20) - BB_LOWER($close, 20)) / ($close + 1e-8)"
-Alternative-Factor-Exploration,"(ZSCORE(RSI($close, 14)) + ZSCORE(BB_MIDDLE($close, 20))) / ($close + 1e-8)"

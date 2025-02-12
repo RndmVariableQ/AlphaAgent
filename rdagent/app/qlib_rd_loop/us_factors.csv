@@ -1,5 +1,0 @@
-factor_name,factor_expression
-Moving-Average-Trend-Reversal-Factor-3-Refined,"(0.3 * RANK($open)) + (0.2 * SUM($volume, 10)) + (0.2 * EMA($close, 20)) + (0.3 * (TS_RANK($high - $low, 5) > 0 ? 1 : 0))"
-Combined-Candlestick-Volume-Momentum-Factor,"(0.25 * SUM($volume, 5)) + (0.35 * EMA($close, 10)) + (0.4 * (TS_RANK($close - $open, 15) > 0 ? 1 : 0))"
-Amplitude-Risk Momentum Factor,"CORR($close - $open, $high - $low, 20)"
-Trading Volume Pattern Factor,"CORR($high - $low, $volume, 30)"

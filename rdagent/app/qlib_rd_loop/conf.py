@@ -74,7 +74,7 @@ class AlphaAgentFactorBasePropSetting(BasePropSetting):
     runner: str = "rdagent.scenarios.qlib.developer.factor_runner.QlibFactorRunner"
     """Runner class"""
 
-    summarizer: str = "rdagent.scenarios.qlib.developer.feedback.QlibFactorHypothesisExperiment2Feedback"
+    summarizer: str = "rdagent.scenarios.qlib.developer.feedback.AlphaAgentQlibFactorHypothesisExperiment2Feedback"
     """Summarizer class"""
 
     evolving_n: int = 5

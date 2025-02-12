@@ -113,7 +113,7 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
             logger.info(f"Factor values this round: \n\n{combined_factors.tail()}\n\n")
 
             # Save the combined factors to the workspace
-            file_path = exp.experiment_workspace.workspace_path / "combined_factors_df.pkl"
+            # file_path = exp.experiment_workspace.workspace_path / "combined_factors_df.pkl"
             # if os.path.exists(file_path):
             #     os.remove(file_path)
             with open(exp.experiment_workspace.workspace_path / "combined_factors_df.pkl", "wb") as f:

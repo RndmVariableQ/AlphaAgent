@@ -35,9 +35,6 @@ data_handler_config: &data_handler_config
         - class: CSZScoreNorm
           kwargs:
               fields_group: label
-        # - class: CSRankNorm
-        #   kwargs:
-        #       fields_group: label
     infer_processors: 
         - class: Fillna
           kwargs:
@@ -67,7 +64,7 @@ port_analysis_config: &port_analysis_config
             deal_price: open
             open_cost: 0.0
             close_cost: 0.0005
-            min_cost: 5
+            min_cost: 0
 
 task:
     model:

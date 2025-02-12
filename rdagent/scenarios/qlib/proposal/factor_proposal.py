@@ -13,7 +13,9 @@ from rdagent.scenarios.qlib.experiment.factor_experiment import QlibFactorExperi
 from rdagent.oai.llm_utils import APIBackend
 import os
 import pandas as pd
-
+from rdagent.log import rdagent_logger as logger
+from rdagent.components.coder.factor_coder.expr_parser_tree import match_alphazoo
+from rdagent.components.coder.factor_coder.expr_parser import parse_expression
 
 QlibFactorHypothesis = Hypothesis
 alphaagent_prompt_dict = Prompts(file_path=Path(__file__).parent / "prompts_alphaagent.yaml")
@@ -27,27 +29,27 @@ class AlphaAgentHypothesis(Hypothesis):
     def __init__(
         self,
         hypothesis: str,
-        reason: str,
-        concise_reason: str,
         concise_observation: str,
         concise_justification: str,
         concise_knowledge: str,
-        potential_direction: str = None,
+        concise_specification: str
     ) -> None:
         super().__init__(
             hypothesis,
-            reason,
-            concise_reason,
+            "",
+            "",
             concise_observation,
             concise_justification,
             concise_knowledge,
         )
-        self.potential_direction: str = potential_direction
+        self.concise_specification = concise_specification
         
     def __str__(self) -> str:
-        return f"""Hypothesis:
-                {super().__str__()}
-                Potential direction: {self.potential_direction}
+        return f"""Hypothesis: {self.hypothesis}
+                Concise Observation: {self.concise_observation}
+                Concise Justification: {self.concise_justification}
+                Concise Knowledge: {self.concise_knowledge}
+                concise Specification: {self.concise_specification}
                 """
 
 prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts.yaml")
@@ -124,14 +126,14 @@ class QlibFactorHypothesis2Experiment(FactorHypothesis2Experiment):
         for factor_name in response_dict:
             description = response_dict[factor_name]["description"]
             formulation = response_dict[factor_name]["formulation"]
-            expression = response_dict[factor_name]["expression"]
+            # expression = response_dict[factor_name]["expression"]
             variables = response_dict[factor_name]["variables"]
             tasks.append(
                 FactorTask(
                     factor_name=factor_name,
                     factor_description=description,
                     factor_formulation=formulation,
-                    factor_expression=expression,
+                    # factor_expression=expression,
                     variables=variables,
                 )
             )
@@ -182,7 +184,7 @@ class AlphaAgentHypothesisGen(FactorHypothesisGen):
                 .render(potential_direction=self.potential_direction)
             ) # 
         else:
-            hypothesis_and_feedback = "No previous hypothesis and feedback available since it's the first round."
+            hypothesis_and_feedback = "No previous hypothesis and feedback available since it's the first round. You are encouraged to propose an innovative hypothesis that diverges significantly from existing perspectives."
             
         context_dict = {
             "hypothesis_and_feedback": hypothesis_and_feedback,
@@ -196,11 +198,10 @@ class AlphaAgentHypothesisGen(FactorHypothesisGen):
         response_dict = json.loads(response)
         hypothesis = AlphaAgentHypothesis(
             hypothesis=response_dict["hypothesis"],
-            reason=response_dict["reason"],
-            concise_reason=response_dict["concise_reason"],
             concise_observation=response_dict["concise_observation"],
-            concise_justification=response_dict["concise_justification"],
             concise_knowledge=response_dict["concise_knowledge"],
+            concise_justification=response_dict["concise_justification"],
+            concise_specification=response_dict["concise_specification"],
         )
         return hypothesis
     
@@ -249,11 +250,10 @@ class EmptyHypothesisGen(FactorHypothesisGen):
 
         hypothesis = AlphaAgentHypothesis(
             hypothesis="",
-            reason="",
-            concise_reason="",
             concise_observation="",
             concise_justification="",
             concise_knowledge="",
+            concise_specification=""
         )
 
         return hypothesis
@@ -264,6 +264,8 @@ class EmptyHypothesisGen(FactorHypothesisGen):
 class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        self.alphazoo = pd.read_csv("factor_zoo/alpha101.csv", index_col=None)
         
     def prepare_context(self, hypothesis: Hypothesis, trace: Trace) -> Tuple[dict | bool]:
         scenario = trace.scen.get_scenario_all_desc()
@@ -317,10 +319,86 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
                 function_lib_description=context["function_lib_description"],
                 target_list=context["target_list"],
                 RAG=context["RAG"], 
+                expression_duplication=None
             )
         )
+        
+        # Detect duplicated sub-expressions
+        flag = False
+        expression_duplication_prompt = None
+        while True:
+            if flag:
+                break
+            resp = APIBackend().build_messages_and_create_chat_completion(user_prompt, system_prompt, json_mode=json_flag)
+            response_dict = json.loads(resp)
+            proposed_names = []
+            proposed_exprs = []
+            for i, factor_name in enumerate(response_dict):
+                expr = response_dict[factor_name]["expression"]
+                # 解析失败就重新生成
+                try:
+                    parse_expression(expr)
+                except:
+                    logger.info(f"Fail to parse expr: {expr}, retrying...")
+                    break
+                # evaluate complexity    
+                duplicated_subtree_size, duplicated_subtree, matched_alpha = match_alphazoo(expr, self.alphazoo)
+                logger.info(f"Expr: {expr}  Duplicated Size: {duplicated_subtree_size}  Duplicated Subtree: {duplicated_subtree}")
+                
+                # 重复性高则重新生成
+                if duplicated_subtree_size >= 5:
+                    if expression_duplication_prompt is not None:
+                        expression_duplication_prompt = '\n\n'.join([expression_duplication_prompt, 
+                        (Environment(undefined=StrictUndefined)
+                            .from_string(alphaagent_prompt_dict["expression_duplication"])
+                            .render(
+                                prev_expression=expr,
+                                duplicated_subtree_size=duplicated_subtree_size,
+                                duplicated_subtree=duplicated_subtree
+                            )
+                        )])
+                    else:
+                        expression_duplication_prompt = (
+                            Environment(undefined=StrictUndefined)
+                            .from_string(alphaagent_prompt_dict["expression_duplication"])
+                            .render(
+                                prev_expression=expr,
+                                duplicated_subtree_size=duplicated_subtree_size,
+                                duplicated_subtree=duplicated_subtree
+                            )
+                        )
+                    
+                    user_prompt = (
+                        Environment(undefined=StrictUndefined)
+                        .from_string(alphaagent_prompt_dict["hypothesis2experiment"]["user_prompt"])
+                        .render(
+                            targets=self.targets,
+                            target_hypothesis=context["target_hypothesis"],
+                            hypothesis_and_feedback=context["hypothesis_and_feedback"],
+                            function_lib_description=context["function_lib_description"],
+                            target_list=context["target_list"],
+                            RAG=context["RAG"], 
+                            expression_duplication=expression_duplication_prompt
+                        )
+                    )
+                    logger.info(f"Expr: {expr} has a duplicated subtree size: {duplicated_subtree_size}, retrying...")
+                    break
+                else:
+                    proposed_names.append(factor_name)
+                    proposed_exprs.append(expr)
+                    if i == len(response_dict) - 1:
+                        flag = True
+                    else:
+                        continue
+        
 
-        resp = APIBackend().build_messages_and_create_chat_completion(user_prompt, system_prompt, json_mode=json_flag)
+        # import pdb; pdb.set_trace()
+        new_factor = pd.DataFrame({
+                'factor_name': proposed_names,
+                'factor_expression': proposed_exprs
+            })
+        self.alphazoo = pd.concat([self.alphazoo, new_factor])
+                
         return self.convert_response(resp, trace)
     
 

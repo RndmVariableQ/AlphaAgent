@@ -1,6 +1,6 @@
 from pyparsing import Word, alphas, alphanums, infixNotation, opAssoc, oneOf, Optional, delimitedList, Forward, Group
 from pyparsing import ParseException
-from pyparsing import Regex
+from pyparsing import Regex, Combine, Literal
 import sys
 import re
 import numpy as np
@@ -10,10 +10,13 @@ import numpy as np
 from pyparsing import ParserElement
 ParserElement.enablePackrat()
 
-sys.setrecursionlimit(4000)  # 设置更高的递归深度限制
+sys.setrecursionlimit(5000)  # 设置更高的递归深度限制
 
 # 定义基本元素
-var = Word(alphas, alphanums + "_")
+var = (
+    Combine(Optional(Literal("$")) + Word(alphas, alphanums + "_"))
+).setName("variable")
+# var = Word(alphas, alphanums + "_")
 
 # 定义数字的正则表达式
 # 正则表达式匹配整数和小数，可以有正负号，以及科学计数法
@@ -258,6 +261,7 @@ def check_for_invalid_operators(expression):
     if invalid_operators:
         raise Exception(f"无效的运算符: \"{''.join(invalid_operators)}\"")
 
+
 # 现在更新 expr 的定义
 expr <<= infixNotation(operand, 
     [
@@ -310,4 +314,4 @@ def parse_symbol(expr, columns):
     return expr
 
 if __name__ == '__main__':
-    parse_expression("RANK(DELTA(Volume, 1)) / (1e-8 + 1)")
+    parse_expression("RANK(DELTA($open, 1) - DELTA($open, 1)) / (1e-8 + 1)")

@@ -1,0 +1,6 @@
+factor_name,factor_expression
+Microstructure_Adjusted_Momentum_5D,"(DELTA($close,5)/DELAY($close,5)) * (HIGHDAY($high,5)+1)/6 * SQRT(MEAN($volume,5))"
+Volatility_Regime_Adjusted_Alpha,"IFELSE(STD($close,20)<MEDIAN(STD($close,20),60), TS_ZSCORE($close,10), ZSCORE(DELTA($close,5)))"
+Liquidity_Sensitive_Reversal_3D,"CORR(RANK(DELTA($close,3)), RANK($volume/(TS_MAX($volume,10)+1e-8)),20) * TS_ZSCORE($close,10)"
+Smart_Volume_Cluster_Composite,"(STD($close,5)/(STD($close,20)+1e-8)) * ($volume > QUANTILE($volume,0.9,20))"
+Adaptive_Correlation_Weighted_Alpha,"ZSCORE(DELTA($close,5)) * (1 - ABS(CORR($close,$index_close,20)))"

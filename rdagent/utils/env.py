@@ -131,7 +131,7 @@ class DockerConf(ExtendedBaseSettings):
     # Sometime, we need maintain some extra data for the workspace.
     # And the extra data may be shared and the downloading can be time consuming.
     # So we just want to download it once.
-    network: str | None = "bridge"  # the network mode for the docker
+    network: str | None = "none"  # the network mode for the docker, none
     shm_size: str | None = None
     enable_gpu: bool = True  # because we will automatically disable GPU if not available. So we enable it by default.
     mem_limit: str | None = "48g"  # Add memory limit attribute

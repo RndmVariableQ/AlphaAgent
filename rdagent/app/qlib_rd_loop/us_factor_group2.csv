@@ -1,5 +1,0 @@
-factor_name,factor_expression
-Macro-Sentiment Factor,"0.2 * RANK($close) + 0.3 * TS_RANK($volume, 10) + 0.5 * ((MEAN($close, 5) - MEAN($close, 20)) + 1e-8)"
-Trading Volume Pattern Factor,"CORR($high - $low, $volume, 30)"
-Volume-Momentum Balance Factor,"SUM($volume*DELTA($close, 1), 15) / (ABS(DELAY($close, 15)) + 1e-8)"
-Candlestick-Pattern-Factor,"(HIGHDAY($close, 5) < 3) ? RANK(MEAN($close, 5)) : ((LOWDAY($close, 5) < 3) ? RANK(SUM($volume, 5)) : (TS_RANK($close, 5) + TS_RANK($open, 5) + 1e-8))"

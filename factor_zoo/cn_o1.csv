@@ -1,0 +1,4 @@
+factor_name,factor_expression
+Price-Volume_Cross-Correlation_(15-day),"CORR( LOG($close / DELAY($close, 1)), LOG($volume + 1) - LOG(DELAY($volume, 1) + 1), 15 )"
+Volatility_Weighted_10-20_Momentum,"(( $close - DELAY($close, 10)) / (DELAY($close, 10) + 1e-8)) / (STD($close, 20) + 1e-8)"
+High-Low_Range_Rank_(10-day),"TS_RANK($high - $low, 10)"

@@ -1,0 +1,7 @@
+factor_name,factor_expression
+Volatility_Scaled_Momentum_20D,"TS_ZSCORE(DELTA($close, 20), 20)"
+Volume_Threshold_Momentum_10D,"DELTA($close, 10) * ($volume > MEAN($volume, 20))"
+Residual_Momentum_20D,"REGRESI($close, SEQUENCE(20), 20)"
+Double_EMA_Crossover_5_20D,"EMA($close, 5) - EMA($close, 20)"
+Compounded_Liquidity_Z_20D,"ZSCORE($close) * SQRT(RANK($volume * $close))"
+Conditional_Bollinger_Reversion_20D_,"(($close > BB_UPPER($close, 20)) || ($close < BB_LOWER($close, 20))) ? ZSCORE($close) : 0"

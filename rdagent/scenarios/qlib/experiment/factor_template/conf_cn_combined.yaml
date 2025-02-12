@@ -16,7 +16,7 @@ data_handler_config: &data_handler_config
                 - class: qlib.contrib.data.loader.QlibDataLoader
                   kwargs:
                     config:
-                        feature: ["($close - $open) / $open", "$close / Ref($close, 1) - 1", "$volume / Mean($volume, 20)", "($high - $low) / Ref($close, 1)"] # "$high", "$low", "$close", "$volume"
+                        feature: ["($close - $open) / $open", "$close / Ref($close, 1) - 1", "$volume / Mean($volume, 20)", "($high - $low) / Ref($close, 1)"] # "$high", "$low", "$close", "$volume" ($close - $open) / $open", "$close / Ref($close, 1) - 1", "$volume / Mean($volume, 20)", "($high - $low) / Ref($close, 1)
                         label: 
                             - ["Ref($close, -2)/Ref($close, -1) - 1"]
                             - ["LABEL0"]
@@ -57,6 +57,8 @@ port_analysis_config: &port_analysis_config
     backtest:
         start_time: 2021-01-01
         end_time: 2024-12-30
+        # start_time: 2020-01-01
+        # end_time: 2024-12-30
         account: 100000000
         benchmark: *benchmark
         exchange_kwargs:
@@ -91,6 +93,9 @@ task:
                 train: [2015-01-01, 2019-12-31]
                 valid: [2020-01-01, 2020-12-31]
                 test: [2021-01-01, 2024-12-30]
+                # train: [2015-01-01, 2019-12-31]
+                # valid: [2020-01-01, 2020-12-31]
+                # test: [2020-01-01, 2024-12-30]
     record: 
         - class: SignalRecord
           module_path: qlib.workflow.record_temp

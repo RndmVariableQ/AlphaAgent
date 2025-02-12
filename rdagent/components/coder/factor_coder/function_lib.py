@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 
 def support_numpy(func):
     def wrapper(*args):
@@ -9,17 +10,11 @@ def support_numpy(func):
             new_args = (pd.DataFrame(args[0]), args[1])
             # 执行函数并转回NumPy数组
             result = func(*new_args)
-            result = result.values
-        elif len(args) == 1 and isinstance(args[0], np.ndarray):
-            new_args = (pd.DataFrame(args[0]),)
+        elif (len(args) == 2 and isinstance(args[1], np.ndarray) and not isinstance(args[0], np.ndarray)):
+            # 转换NumPy数组到DataFrame
+            new_args = (args[0], pd.DataFrame(args[1]))
             # 执行函数并转回NumPy数组
             result = func(*new_args)
-            result = result.values
-        elif len(args) == 1 and isinstance(args[0], int):
-            new_args = (pd.DataFrame([args[0]]),)
-            # 执行函数并转回NumPy数组
-            result = func(*new_args)
-            result = result.iloc[0, 0]
         else:
             result = func(*args)
         return result
@@ -47,16 +42,61 @@ def TS_MIN(df:pd.DataFrame, p:int=5):
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).min())
 
 @support_numpy
-def MEAN(df:pd.DataFrame, p:int=5):
+def TS_MEAN(df:pd.DataFrame, p:int=5):
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).mean())
 
+MEAN = TS_MEAN
+
 @support_numpy
-def MEDIAN(df:pd.DataFrame, p:int=5):
+def TS_MEDIAN(df:pd.DataFrame, p:int=5):
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).median())
+
+@support_numpy
+def PERCENTILE(df: pd.DataFrame, q: float, p: int = None):
+    """
+    计算给定数据的分位数。
+
+    参数:
+        df (pd.DataFrame): 输入数据，可以是 DataFrame 或 NumPy 数组。
+        q (float): 分位数，范围在 [0, 1] 之间。
+        p (int): 滚动窗口大小，如果提供，则计算滚动分位数。
+
+    返回:
+        pd.DataFrame: 包含分位数的 DataFrame。
+    """
+    assert 0 <= q <= 1, "分位数 q 必须在 [0, 1] 之间"
+    
+    if p is not None:
+        # 如果有滚动窗口大小，计算滚动分位数
+        return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).quantile(q))
+    else:
+        # 如果没有滚动窗口大小，直接计算分位数
+        return df.groupby('instrument').transform(lambda x: x.quantile(q))
 
 @support_numpy
 def SUM(df:pd.DataFrame, p:int=5):
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
+
+
+@support_numpy
+def TS_ARGMAX(df: pd.DataFrame, p: int = 5):
+    """
+    计算过去p天内最大值出现的位置距今天数
+    """
+    def rolling_argmax(window):
+        return len(window) - window.argmax() - 1
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(rolling_argmax, raw=True))
+
+@support_numpy 
+def TS_ARGMIN(df: pd.DataFrame, p: int = 5):
+    """
+    计算过去p天内最小值出现的位置距今天数
+    """
+    def rolling_argmin(window):
+        return len(window) - window.argmin() - 1
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(rolling_argmin, raw=True))
+
+
 
 def MAX(x:pd.DataFrame, y:pd.DataFrame):
     return np.maximum(x, y)
@@ -77,7 +117,20 @@ def CORR(df1:pd.Series, df2: np.ndarray | pd.Series, p:int=5):
     if isinstance(df2, np.ndarray) and p != len(df2):
         p = len(df2)
         def corr(window):
-            return np.correlate(window, df2[:len(window)])
+            x = window
+            y = df2[:len(window)]
+            # 计算均值
+            mean_x = np.mean(x)
+            mean_y = np.mean(y)
+            
+            # 计算协方差和标准差
+            cov = np.sum((x - mean_x) * (y - mean_y))
+            std_x = np.sqrt(np.sum((x - mean_x) ** 2))
+            std_y = np.sqrt(np.sum((y - mean_y) ** 2))
+            
+            # 计算相关系数
+            return cov / (std_x * std_y)
+        
         return df1.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=2).apply(corr, raw=True))
     else:
         def rolling_corr(group, df2, p):
@@ -120,6 +173,23 @@ def STD(df:pd.DataFrame, p:int=20):
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).std())
 
 @support_numpy
+def VAR(df: pd.DataFrame, p: int = 5, ddof: int = 1):
+    """
+    计算时间序列的滚动方差(Variance)
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 滚动窗口大小
+        ddof (int): delta degrees of freedom，用于计算无偏方差，默认为1
+        
+    返回:
+        pd.DataFrame: 滚动方差结果
+    """
+    return df.groupby('instrument').transform(
+        lambda x: x.rolling(p, min_periods=1).var(ddof=ddof)
+    )
+
+@support_numpy
 def SIGN(df: pd.DataFrame):
     return np.sign(df)
 
@@ -143,10 +213,6 @@ def WMA(df:pd.DataFrame, p:int=20):
     # 计算权重，最近的数据（i=0）有最大的权重
     weights = [0.9**i for i in range(p)][::-1]
     def calculate_wma(window):
-        # if len(window) < p:
-        #     w = weights[:len(window)]
-        # else:
-        #     w = weights
         return (window * weights[:len(window)]).sum() / sum(weights[:len(window)])
 
     # 应用权重计算滑动WMA
@@ -212,197 +278,189 @@ def SUMAC(df:pd.DataFrame, p:int=10):
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 
-def _REGBETA(A:pd.DataFrame, B:pd.DataFrame, p:int=5):
+
+def calculate_beta(y, x):
+    """计算回归系数（beta）"""
+    X = np.vstack([x, np.ones(len(x))]).T
+    beta, _ = np.linalg.lstsq(X, y, rcond=None)[0]
+    return beta
+
+def rolling_beta(df1_group, df2_group, p):
+    """对 df1 和 df2 的滚动窗口计算 beta"""
+    result = np.empty(len(df1_group))
+    result[:] = np.nan  # 初始化结果为 NaN
+
+    # 滚动计算 beta
+    for i in range(p - 1, len(df1_group)):
+        window_y = df1_group.iloc[i - p + 1 : i + 1].values
+        window_x = df2_group.iloc[:p].values if df1_group.shape != df2_group.shape else df2_group.iloc[i - p + 1 : i + 1].values
+        result[i] = calculate_beta(window_y, window_x)
+
+    # 返回与输入数据索引一致的 Series
+    return pd.Series(result, index=df1_group.index)
+
+
+def REGBETA(df1: pd.DataFrame, df2: pd.DataFrame, p: int = 5, n_jobs: int = -1):
     """
-    计算A的每一个列向量回归到向量B的系数
-    """
-    if len(B.shape) <= 1:
-        if len(B.shape) == 0:
-            B = np.array([B])
-        index = A.columns
-        A = np.array(A)[-len(B):].transpose(1, 0)
-        B = np.array(B)
-        assert len(B.shape) == 1, 'B必须为一个向量'
-        if p is not None:
-            A = A[:, -p:]
-            B = B[-p:]
-        
-        # 检查A和B的维度是否相同
-        if A.shape[1] != B.shape[0]:
-            raise ValueError("A 和 B 必须具有相同的维度")
-
-        # 计算回归系数
-        A_mean = np.mean(A, axis=1)
-        B_mean = np.mean(B, axis=0)
-        
-        numerator = np.sum((A - np.expand_dims(A_mean, 1)) * (B - B_mean), axis=1)
-        denominator = np.sum((A - np.expand_dims(A_mean, 1))**2, axis=1) 
-        
-        # if (denominator == 0).any():
-        #     raise ValueError("无法计算回归系数，因为分母为零")
-
-        beta = numerator / denominator
-        
-    elif len(B.shape) == 2: 
-        index = A.columns
-        A = np.array(A).transpose(1, 0)
-        B = np.array(B).transpose(1, 0)
-        if p is not None:
-            A = A[:, -p:]
-            B = B[:, -p:]
-        # 确保A和B的维度相同
-        if A.shape != B.shape:
-            raise ValueError("A 和 B 必须具有相同的维度")
-        
-        # 计算回归系数
-        A_mean = np.mean(A, axis=1)
-        B_mean = np.mean(B, axis=1)
-
-        numerator = np.sum((A - A_mean[:, np.newaxis]) * (B - B_mean[:, np.newaxis]), axis=1)
-        denominator = np.sum((A - A_mean[:, np.newaxis])**2, axis=1)
-        
-        # if (denominator == 0).any():
-        #     raise ValueError("无法计算回归系数，因为分母为零")
-        beta = numerator / denominator
+    计算 df1 和 df2 的滚动回归系数（beta）
     
-    return pd.Series(beta, index=index)
-
-
-def REGBETA(A:pd.DataFrame, B:pd.DataFrame, p:int=5):
-    """
-    使用滑动窗口计算A和B之间的regression beta值
-    """
-    assert isinstance(p, int), ValueError(f"REGBETA仅接收正整数参数n，接收到{type(p).__name__}")
-    assert isinstance(A, pd.DataFrame), ValueError(f"REGBETA仅接收pd.DataFrame作为A的类型，接收到{type(A).__name__}")
+    参数:
+        df1 (pd.DataFrame): 第一个 DataFrame，包含目标变量。
+        df2 (pd.DataFrame): 第二个 DataFrame，包含解释变量。
+        p (int): 滚动窗口大小。
+        n_jobs (int): 并行计算的 CPU 核心数。
     
-    index = A.index
-    columns = A.columns
-    
-    result = []
-    for i in range(1, len(A)+1):
-        A_window = A.iloc[max(0, i-p):i]
-        if i == 0:
-            beta = pd.Series(np.zeros_like(A_window))
-            result.append(beta)
-            continue
-        if len(B.shape) == 1:
-            B_window = B.iloc[:A_window.shape[0]]
-        # 第二维为1的矩阵
-        elif isinstance(B, np.ndarray) and len(B.shape) == 2 and B.shape[1] == 1:
-            if B.shape[0] == A.shape[0]:
-                B_window = B[max(0, i-p):i, 0]
-            else:
-                B_window = B[:A_window.shape[0], 0]
-        # 矩阵
-        elif B.shape == A.shape:
-            B_window = B.iloc[max(0, i-p):i]
-        else:
-            raise NotImplementedError("REGBETA()的第二个输入变量的形式不支持")
-            
-        beta = _REGBETA(A_window, B_window, p)
-        result.append(beta)
-        
-    return pd.DataFrame(result, index=index, columns=columns)
-
-
-def _REGRESI(A:pd.DataFrame, B:pd.DataFrame, p:int=5):
-    if len(B.shape) == 1:
-        index = A.columns
-        A = np.array(A)[-len(B):].transpose(1, 0)
-        B = np.array(B)
-        assert len(B.shape) == 1, 'B必须为一个向量'
-        if p is not None:
-            A = A[:, -p:]
-            B = B[-p:]
-
-        # 确保A和B的维度相同
-        if A.shape[1] != B.shape[0]:
-            raise ValueError("A 和 B 必须具有相同的维度")
-
-        # 计算回归系数
-        A_mean = np.mean(A, axis=1)
-        B_mean = np.mean(B, axis=0)
-        
-        numerator = np.sum((A - np.expand_dims(A_mean, 1)) * (B - B_mean), axis=1)
-        denominator = np.sum((A - np.expand_dims(A_mean, 1))**2, axis=1)
-        
-        # if (denominator == 0).any():
-        #     raise ValueError("无法计算回归系数，因为分母为零")
-
-        beta = numerator / denominator
-        
-        # 计算预测值
-        B_hat = A * beta[:, np.newaxis]
-        # 计算残差
-        residuals = np.sum(B - B_hat, axis=1)
-    
-    # 计算A的每一个列向量回归到矩阵B的每一个列向量的残差
-    elif len(B.shape) == 2: 
-        index = A.columns
-        A = np.array(A).transpose(1, 0)
-        B = np.array(B).transpose(1, 0)
-        if p is not None:
-            A = A[:, -p:]
-            B = B[:, -p:]
-            
-        # 确保A和B的维度相同
-        if A.shape != B.shape:
-            raise ValueError("A 和 B 必须具有相同的维度")
-        
-        # 计算回归系数
-        A_mean = np.mean(A, axis=1)
-        B_mean = np.mean(B, axis=1)
-        numerator = np.sum((A - A_mean[:, np.newaxis]) * (B - B_mean[:, np.newaxis]), axis=1)
-        denominator = np.sum((A - A_mean[:, np.newaxis])**2, axis=1)
-        
-        # if (denominator == 0).any():
-        #     raise ValueError("无法计算回归系数，因为分母为零")
-        
-        beta = numerator / denominator
-        # 计算预测值
-        B_hat = A * beta[:, np.newaxis]
-        residuals = np.sum(B - B_hat, axis=1)
-        
-    return pd.Series(residuals, index=index)
-
-
-def REGRESI(A:pd.DataFrame, B:pd.DataFrame, p:int=5):
+    返回:
+        pd.Series: 滚动回归系数结果。
     """
-    使用滑动窗口计算A和B之间的regression residual值
-    """
-    assert isinstance(p, int), ValueError(f"REGRESI仅接收正整数参数n，接收到{type(p).__name__}")
-    assert isinstance(A, pd.DataFrame), ValueError(f"REGRESI仅接收pd.DataFrame作为A的类型，接收到{type(A).__name__}")
-    index = A.index
-    columns = A.columns
+    assert not (isinstance(df2, np.ndarray) and isinstance(df1, np.ndarray)), "df1与df2不能同时是np.ndarray，至少有一个需要是dataframe，例如$close。"
+    if isinstance(df2, np.ndarray) or isinstance(df1, np.ndarray):
+        if isinstance(df1, np.ndarray):
+            df3 = df1
+            df1 = df2
+            df2 = df3
+            p = min(len(df2), p)
+            df2 = pd.Series(df2)
+        # 填充缺失值
+        df1 = df1.fillna(0)
+        
+        # 获取分组后的数据
+        df1_groups = list(df1.groupby('instrument'))
+        df2 = pd.Series(df2[:p])
+        
+        # 使用 joblib 进行并行计算
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(rolling_beta)(df1_group, df2, p)
+            for _, df1_group in df1_groups
+        )
+        
+        # 将结果合并为一个 Series，并确保索引一致
+        result = pd.concat(results)
+        result = result.sort_index()  # 按索引排序
+        return result
     
-    result = []
-    for i in range(1, len(A)+1):
-        A_window = A.iloc[max(0, i-p):i]
-        if i == 0:
-            beta = pd.Series(np.zeros_like(A_window))
-            result.append(beta)
-            continue
+    else:
+        # 确保 df1 和 df2 的索引一致
+        assert df1.index.equals(df2.index), "df1 和 df2 的索引必须对齐"
         
-        if len(B.shape) == 1:
-            B_window = B.iloc[:A_window.shape[0]]
-            
-        elif isinstance(B, np.ndarray) and len(B.shape) == 2 and B.shape[1] == 1:
-            if B.shape[0] == A.shape[0]:
-                B_window = B[max(0, i-p):i, 0]
-            else:
-                B_window = B[:A_window.shape[0], 0]
+        # 填充缺失值
+        df1 = df1.fillna(0)
+        df2 = df2.fillna(0)
         
-        elif B.shape == A.shape:
-            B_window = B.iloc[max(0, i-p):i]
-            
-        else:
-            raise NotImplementedError("REGRESI()的第二个输入变量的形式不支持")
-            
-        beta = _REGRESI(A_window, B_window, p)
-        result.append(beta)
+        # 获取分组后的数据
+        df1_groups = list(df1.groupby('instrument'))
+        df2_groups = list(df2.groupby('instrument'))
         
-    return pd.DataFrame(result, index=index, columns=columns)
+        # 确保分组顺序一致
+        if len(df1_groups) != len(df2_groups):
+            raise ValueError("df1 和 df2 的分组数量不一致，请检查数据。")
         
+        # 使用 joblib 进行并行计算
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(rolling_beta)(df1_group, df2_group, p)
+            for (_, df1_group), (_, df2_group) in zip(df1_groups, df2_groups)
+        )
+        
+        # 将结果合并为一个 Series，并确保索引一致
+        result = pd.concat(results)
+        result = result.sort_index()  # 按索引排序
+        return result
+
+
+
+def calculate_residuals(y, x):
+    """计算残差（实际值 - 预测值）"""
+    # 添加常数项以计算截距
+    X = np.vstack([x, np.ones(len(x))]).T
+    # 使用最小二乘法计算回归系数
+    beta, intercept = np.linalg.lstsq(X, y, rcond=None)[0]
+    # 计算预测值
+    y_pred = beta * x + intercept
+    # 计算残差（实际值 - 预测值）
+    residuals = y - y_pred
+    return residuals[-1]  # 返回最后一个残差值（滚动窗口的最新值）
+
+def rolling_residuals(df1_group, df2_group, p):
+    """对 df1 和 df2 的滚动窗口计算残差"""
+    result = np.empty(len(df1_group))
+    result[:] = np.nan  # 初始化结果为 NaN
+
+    # 滚动计算残差
+    for i in range(p - 1, len(df1_group)):
+        window_y = df1_group.iloc[i - p + 1 : i + 1].values
+        window_x = df2_group.iloc[:p].values if df1_group.shape != df2_group.shape else df2_group.iloc[i - p + 1 : i + 1].values
+        result[i] = calculate_residuals(window_y, window_x)
+
+    # 返回与输入数据索引一致的 Series
+    return pd.Series(result, index=df1_group.index)
+
+
+def REGRESI(df1: pd.DataFrame, df2: pd.DataFrame, p: int = 5, n_jobs: int = -1):
+    """
+    计算 df1 和 df2 的滚动残差
+    
+    参数:
+        df1 (pd.DataFrame): 第一个 DataFrame，包含目标变量。
+        df2 (pd.DataFrame): 第二个 DataFrame，包含解释变量。
+        p (int): 滚动窗口大小。
+        n_jobs (int): 并行计算的 CPU 核心数。
+    
+    返回:
+        pd.Series: 滚动残差结果。
+    """
+    
+    assert not (isinstance(df2, np.ndarray) and isinstance(df1, np.ndarray)), "df1与df2不能同时是np.ndarray，至少有一个需要是dataframe，例如$close。"
+    if isinstance(df2, np.ndarray) or isinstance(df1, np.ndarray):
+        if isinstance(df1, np.ndarray):
+            df3 = df1
+            df1 = df2
+            df2 = df3
+            p = min(len(df2), p)
+        # 填充缺失值
+        df1 = df1.fillna(0)
+        df2 = pd.Series(df2[:p])
+        
+        # 获取分组后的数据
+        df1_groups = list(df1.groupby('instrument'))
+        
+        # 使用 joblib 进行并行计算
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(rolling_residuals)(df1_group, df2, p)
+            for _, df1_group in df1_groups
+        )
+        
+        # 将结果合并为一个 Series，并确保索引一致
+        result = pd.concat(results)
+        result = result.sort_index()  # 按索引排序
+        return result
+    
+    else:
+        # 确保 df1 和 df2 的索引一致
+        assert df1.index.equals(df2.index), "df1 和 df2 的索引必须对齐"
+        
+        # 填充缺失值
+        df1 = df1.fillna(0)
+        df2 = df2.fillna(0)
+        
+        # 获取分组后的数据
+        df1_groups = list(df1.groupby('instrument'))
+        df2_groups = list(df2.groupby('instrument'))
+        
+        # 确保分组顺序一致
+        if len(df1_groups) != len(df2_groups):
+            raise ValueError("df1 和 df2 的分组数量不一致，请检查数据。")
+        
+        # 使用 joblib 进行并行计算
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(rolling_residuals)(df1_group, df2_group, p)
+            for (_, df1_group), (_, df2_group) in zip(df1_groups, df2_groups)
+        )
+        
+        # 将结果合并为一个 Series，并确保索引一致
+        result = pd.concat(results)
+        result = result.sort_index()  # 按索引排序
+        return result
+
         
 ### 数学运算
 @support_numpy
@@ -411,11 +469,28 @@ def EXP(df:pd.DataFrame):
 
 @support_numpy
 def SQRT(df: pd.DataFrame):
+    if isinstance(df, int):
+        return np.sqrt(df)
     return df.apply(np.sqrt)
 
 @support_numpy
 def LOG(df:pd.DataFrame):
-    return df.apply(np.log)
+    if isinstance(df, int):
+        return np.log(df)
+    return (df+1).apply(np.log)
+
+@support_numpy
+def INV(df: pd.DataFrame):
+    """
+    计算序列的倒数 (1/x)
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        
+    返回:
+        pd.DataFrame: 倒数结果
+    """
+    return 1 / df
 
 @support_numpy
 def POW(df:pd.DataFrame, n:int):
@@ -437,6 +512,75 @@ def ZSCORE(df):
     zscore = (df - mean) / std
     return zscore
 
+@support_numpy
+def SCALE(df: pd.DataFrame, target_sum: float = 1.0):
+    """
+    将序列标准化使其绝对值之和等于target_sum
+    """
+    # 计算当前绝对值之和
+    abs_sum = ABS(df).groupby('datetime').sum()
+    # 进行缩放
+    return df.multiply(target_sum).div(abs_sum, axis=0)
+
+
+@support_numpy
+def MAD(df: pd.DataFrame, p: int = 5):
+    """
+    计算时间序列的滚动中位数绝对偏差(Median Absolute Deviation)
+    
+    MAD = median(|X_i - median(X)|)
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 滚动窗口大小
+        
+    返回:
+        pd.DataFrame: 滚动MAD结果
+    """
+    def rolling_mad(window):
+        # 计算窗口内的中位数
+        median_val = np.median(window)
+        # 计算每个值与中位数的绝对偏差
+        abs_dev = np.abs(window - median_val)
+        # 返回这些偏差的中位数
+        return np.median(abs_dev)
+    
+    return df.groupby('instrument').transform(
+        lambda x: x.rolling(p, min_periods=1).apply(rolling_mad, raw=True)
+    )
+
+
+@support_numpy
+def TS_QUANTILE(df: pd.DataFrame, p: int = 5, q: float = 0.5):
+    """
+    计算时间序列的滚动分位数
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 滚动窗口大小
+        q (float): 分位数，范围在[0, 1]之间
+        
+    返回:
+        pd.DataFrame: 滚动分位数结果
+    """
+    assert 0 <= q <= 1, "分位数 q 必须在 [0, 1] 之间"
+    return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).quantile(q))
+
+@support_numpy
+def TS_PCTCHANGE(df: pd.DataFrame, p: int = 1):
+    """
+    计算时间序列的百分比变化
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 计算间隔，默认为1（相邻期）
+        
+    返回:
+        pd.DataFrame: 百分比变化结果
+    """
+    return df.groupby('instrument').transform(lambda x: x.pct_change(periods=p))
+
+
 def ADD(df1, df2):
     return np.add(df1, df2)
         
@@ -457,6 +601,19 @@ def OR(df1, df2):
     return np.bitwise_or(df1.astype(np.bool_), df2.astype(np.bool_))
 
 
+
+def MACD(price_df, short_window=12, long_window=26):
+    # 计算短期EMA
+    short_ema = EMA(price_df, short_window)
+    
+    # 计算长期EMA
+    long_ema = EMA(price_df, long_window)
+    
+    # 计算MACD差值
+    macd = short_ema - long_ema
+    return macd
+
+
 def RSI(price_df, window=14):
     # 计算价格变化
     price_change = DELTA(price_df, 1)
@@ -473,25 +630,147 @@ def RSI(price_df, window=14):
     rsi = 100 - (100 / (1 + (avg_up / avg_down)))
     return rsi
 
-def BB_MIDDLE(price_df, window=20):
-    # 计算中轨(移动平均线)
-    middle_band = SMA(price_df, window)
-    return middle_band
 
-def BB_UPPER(price_df, window=20):
-    # 计算中轨
-    middle_band = BB_MIDDLE(price_df, window)
-    # 计算标准差
-    std = STD(price_df, window)
-    # 计算上轨
-    upper_band = middle_band + 2 * std
-    return upper_band
 
-def BB_LOWER(price_df, window=20):
-    # 计算中轨
-    middle_band = BB_MIDDLE(price_df, window)
-    # 计算标准差
-    std = STD(price_df, window)
-    # 计算下轨
-    lower_band = middle_band - 2 * std
-    return lower_band
+
+def _calculate_rolling_mean(group_data):
+    """计算单个组的动态移动平均"""
+    price_group, window_group, group_name = group_data
+    result = pd.Series(index=price_group.index, dtype=float)
+    
+    for i in range(len(price_group)):
+        curr_window = int(window_group.iloc[i].values)
+        if curr_window < 1:
+            curr_window = 1
+        if i < curr_window:
+            result.iloc[i] = price_group.iloc[:i+1].mean()
+        else:
+            result.iloc[i] = price_group.iloc[i-curr_window+1:i+1].mean()
+    
+    return group_name, result
+
+def _calculate_rolling_std(group_data):
+    """计算单个组的动态标准差"""
+    price_group, window_group, group_name = group_data
+    result = pd.Series(index=price_group.index, dtype=float)
+    
+    for i in range(len(price_group)):
+        curr_window = int(window_group.iloc[i].values)
+        if curr_window < 1:
+            curr_window = 1
+        if i < curr_window:
+            result.iloc[i] = price_group.iloc[:i+1].std()
+        else:
+            result.iloc[i] = price_group.iloc[i-curr_window+1:i+1].std()
+    
+    return group_name, result
+
+
+
+@support_numpy
+def BB_MIDDLE(price_df, window, n_jobs=-1):
+    """
+    计算布林带中轨，支持动态窗口大小和并行计算
+    
+    参数:
+        price_df: pd.DataFrame - 价格数据
+        window: int 或 pd.DataFrame - 窗口大小，可以是固定整数或与price_df格式相同的DataFrame
+        n_jobs: int - 并行计算的作业数，默认为-1（使用所有可用CPU）
+    """
+    if isinstance(window, (int, float)):
+        # 如果window是固定值，使用原来的逻辑
+        return price_df.groupby('instrument').transform(lambda x: x.rolling(int(window), min_periods=1).mean())
+    else:
+        window.index = price_df.index
+        # 准备并行计算的数据
+        groups_data = [
+            (price_group, 
+             window.xs(group_name, level='instrument'), 
+             group_name)
+            for group_name, price_group in price_df.groupby('instrument')
+        ]
+        
+        # 并行计算
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(_calculate_rolling_mean)(group_data)
+            for group_data in groups_data
+        )
+        
+        # 合并结果
+        final_result = pd.concat([result for _, result in sorted(results, key=lambda x: x[0])])
+        return final_result
+
+@support_numpy
+def BB_UPPER(price_df, window, n_jobs=-1):
+    """
+    计算布林带上轨，支持动态窗口大小和并行计算
+    
+    参数:
+        price_df: pd.DataFrame - 价格数据
+        window: int 或 pd.DataFrame - 窗口大小
+        multiplier: float - 标准差倍数，默认为2
+        n_jobs: int - 并行计算的作业数，默认为-1
+    """
+    
+    if isinstance(window, (int, float)):
+        # 固定窗口大小的标准差计算
+        middle_band = BB_MIDDLE(price_df, window, n_jobs)
+        std = price_df.groupby('instrument').transform(lambda x: x.rolling(int(window), min_periods=1).std())
+    else:
+        window.index = price_df.index
+        middle_band = BB_MIDDLE(price_df, window, n_jobs)
+        # 准备并行计算的数据
+        groups_data = [
+            (price_group, 
+             window.xs(group_name, level='instrument'), 
+             group_name)
+            for group_name, price_group in price_df.groupby('instrument')
+        ]
+        
+        # 并行计算标准差
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(_calculate_rolling_std)(group_data)
+            for group_data in groups_data
+        )
+        
+        # 合并结果
+        std = pd.concat([result for _, result in sorted(results, key=lambda x: x[0])])
+    
+    return middle_band + std
+
+@support_numpy
+def BB_LOWER(price_df, window, n_jobs=-1):
+    """
+    计算布林带下轨，支持动态窗口大小和并行计算
+    
+    参数:
+        price_df: pd.DataFrame - 价格数据
+        window: int 或 pd.DataFrame - 窗口大小
+        n_jobs: int - 并行计算的作业数，默认为-1
+    """
+    
+    if isinstance(window, (int, float)):
+        # 固定窗口大小的标准差计算
+        middle_band = BB_MIDDLE(price_df, window, n_jobs)
+        std = price_df.groupby('instrument').transform(lambda x: x.rolling(int(window), min_periods=1).std())
+    else:
+        window.index = price_df.index
+        middle_band = BB_MIDDLE(price_df, window, n_jobs)
+        # 准备并行计算的数据
+        groups_data = [
+            (price_group, 
+             window.xs(group_name, level='instrument'), 
+             group_name)
+            for group_name, price_group in price_df.groupby('instrument')
+        ]
+        
+        # 并行计算标准差
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(_calculate_rolling_std)(group_data)
+            for group_data in groups_data
+        )
+        
+        # 合并结果
+        std = pd.concat([result for _, result in sorted(results, key=lambda x: x[0])])
+    
+    return middle_band - std

@@ -122,6 +122,74 @@ class QlibFactorHypothesisExperiment2Feedback(HypothesisExperiment2Feedback):
         )
 
 
+
+alphaagent_feedback_prompts = Prompts(file_path=Path(__file__).parent.parent / "prompts_alphaagent.yaml")
+class AlphaAgentQlibFactorHypothesisExperiment2Feedback(HypothesisExperiment2Feedback):
+    def generate_feedback(self, exp: Experiment, hypothesis: Hypothesis, trace: Trace) -> HypothesisFeedback:
+        """
+        Generate feedback for the given experiment and hypothesis.
+
+        Args:
+            exp (QlibFactorExperiment): The experiment to generate feedback for.
+            hypothesis (QlibFactorHypothesis): The hypothesis to generate feedback for.
+            trace (Trace): The trace of the experiment.
+
+        Returns:
+            Any: The feedback generated for the given experiment and hypothesis.
+        """
+        logger.info("Generating feedback...")
+        hypothesis_text = hypothesis.hypothesis
+        current_result = exp.result
+        tasks_factors = [task.get_task_information_and_implementation_result() for task in exp.sub_tasks]
+        sota_result = exp.based_experiments[-1].result
+
+        # Process the results to filter important metrics
+        combined_result = process_results(current_result, sota_result)
+
+        # Generate the system prompt
+        sys_prompt = (
+            Environment(undefined=StrictUndefined)
+            .from_string(alphaagent_feedback_prompts["factor_feedback_generation"]["system"])
+            .render(scenario=self.scen.get_scenario_all_desc())
+        )
+
+        # Generate the user prompt
+        usr_prompt = (
+            Environment(undefined=StrictUndefined)
+            .from_string(alphaagent_feedback_prompts["factor_feedback_generation"]["user"])
+            .render(
+                hypothesis_text=hypothesis_text,
+                task_details=tasks_factors,
+                combined_result=combined_result,
+            )
+        )
+
+        # Call the APIBackend to generate the response for hypothesis feedback
+        response = APIBackend().build_messages_and_create_chat_completion(
+            user_prompt=usr_prompt,
+            system_prompt=sys_prompt,
+            json_mode=True,
+        )
+
+        # Parse the JSON response to extract the feedback
+        response_json = json.loads(response)
+
+        # Extract fields from JSON response
+        observations = response_json.get("Observations", "No observations provided")
+        hypothesis_evaluation = response_json.get("Feedback for Hypothesis", "No feedback provided")
+        new_hypothesis = response_json.get("New Hypothesis", "No new hypothesis provided")
+        reason = response_json.get("Reasoning", "No reasoning provided")
+        decision = convert2bool(response_json.get("Replace Best Result", "no"))
+
+        return HypothesisFeedback(
+            observations=observations,
+            hypothesis_evaluation=hypothesis_evaluation,
+            new_hypothesis=new_hypothesis,
+            reason=reason,
+            decision=decision,
+        )
+
+
 class QlibModelHypothesisExperiment2Feedback(HypothesisExperiment2Feedback):
     """Generated feedbacks on the hypothesis from **Executed** Implementations of different tasks & their comparisons with previous performances"""
 

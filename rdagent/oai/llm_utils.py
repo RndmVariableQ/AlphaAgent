@@ -334,7 +334,7 @@ class APIBackend:
 
             self.chat_model = LLM_SETTINGS.chat_model if chat_model is None else chat_model
             self.chat_model_map = json.loads(LLM_SETTINGS.chat_model_map)
-            self.encoder = self._get_encoder()
+            # self.encoder = self._get_encoder()
             self.chat_api_base = LLM_SETTINGS.chat_azure_api_base if chat_api_base is None else chat_api_base
             self.chat_api_version = (
                 LLM_SETTINGS.chat_azure_api_version if chat_api_version is None else chat_api_version
@@ -773,6 +773,7 @@ class APIBackend:
         return resp, finish_reason
 
     def calculate_token_from_messages(self, messages: list[dict]) -> int:
+        return 0
         if self.use_llama2 or self.use_gcr_endpoint:
             logger.warning("num_tokens_from_messages() is not implemented for model llama2.")
             return 0  # TODO implement this function for llama2
