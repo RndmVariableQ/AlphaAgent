@@ -65,16 +65,12 @@ evolving_strategy_factor_implementation_v1_system: |-
   - **TS_ZSCORE(A, n)**: Z-score for each sequence in A over the past n days.  
   - **SCALE(A, s)**: Scales the values of A such that the sum of their absolute values equals the target sum s.  
 
-  ---
-
   ### **Statistical Functions**
   - **STD(A, n)**: Standard deviation of sequence A over the past n days.  
   - **VAR(A, p)**: Rolling variance of sequence A over the past p periods.
   - **CORR(A, B, n)**: Correlation coefficient between sequences A and B over the past n days.  
   - **COVARIANCE(A, B, n)**: Covariance between sequences A and B over the past n days.  
   - **PERCENTILE(A, q, p)**: Quantile of sequence A, where q is the quantile value between 0 and 1. If p is provided, it calculates the rolling quantile over the past p periods.  
-
-  ---
 
   ### **Time-Series Functions**
   - **DELTA(A, n)**: Change in value of A over n periods.  
@@ -91,15 +87,11 @@ evolving_strategy_factor_implementation_v1_system: |-
   - **LOWDAY(A, n)**: Number of days since the lowest value of A in the past n days.  
   - **SUMAC(A, n)**: Cumulative sum of A over the past n days.  
 
-  ---
-
   ### **Moving Averages and Smoothing Functions**
   - **SMA(A, n, m)**: Simple moving average of A over n periods with modifier m.  
   - **WMA(A, n)**: Weighted moving average of A over n periods, with weights decreasing from 0.9 to 0.9^(n).  
   - **EMA(A, n)**: Exponential moving average of A over n periods, where the decay factor is 2/(n+1).  
   - **DECAYLINEAR(A, d)**: Linearly weighted moving average of A over d periods, with weights increasing from 1 to d.  
-
-  ---
 
   ### **Mathematical Operations**
   - **PROD(A, n)**: Product of values in A over the past n days. Use `*` for general multiplication.  
@@ -114,8 +106,6 @@ evolving_strategy_factor_implementation_v1_system: |-
   - **MIN(A, B)**: Minimum value between A and B.  
   - **INV(A)**: Reciprocal (1/x) of each element in sequence A.  
 
-  ---
-
   ### **Conditional and Logical Functions**
   - **COUNT(C, n)**: Count of samples satisfying condition C in the past n periods. Here, C is a logical expression, e.g., `$close > $open`.  
   - **SUMIF(A, n, C)**: Sum of A over the past n periods if condition C is met. Here, C is a logical expression.  
@@ -124,14 +114,10 @@ evolving_strategy_factor_implementation_v1_system: |-
   - **(C1)||(C2)**: Logical operation "or". Both C1 and C2 are logical expressions, such as A > B.  
   - **(C1)?(A):(B)**: Logical operation "If condition C1 holds, then A, otherwise B". C1 is a logical expression, such as A > B.  
 
-  ---
-
   ### **Regression and Residual Functions**
   - **SEQUENCE(n)**: A single-column sequence of length n, ranging from 1 to integer n. `SEQUENCE()` should always be nested in `REGBETA()` or `REGRESI()` as argument B.  
   - **REGBETA(A, B, n)**: Regression coefficient of A on B using the past n samples, where A MUST be a multi-column sequence and B a single-column or multi-column sequence.  
   - **REGRESI(A, B, n)**: Residual of regression of A on B using the past n samples, where A MUST be a multi-column sequence and B a single-column or multi-column sequence.  
-
-  ---
 
   ### **Technical Indicators**
   - **RSI(A, n)**: Relative Strength Index of sequence A over n periods. Measures momentum by comparing the magnitude of recent gains to recent losses.  
@@ -139,6 +125,7 @@ evolving_strategy_factor_implementation_v1_system: |-
   - **BB_MIDDLE(A, n)**: Middle Bollinger Band, calculated as the n-period simple moving average of sequence A.  
   - **BB_UPPER(A, n)**: Upper Bollinger Band, calculated as middle band plus two standard deviations of sequence A over n periods.  
   - **BB_LOWER(A, n)**: Lower Bollinger Band, calculated as middle band minus two standard deviations of sequence A over n periods.  
+
 
 
   Note that:
@@ -305,16 +292,12 @@ function_lib_description: |-
   - **TS_ZSCORE(A, n)**: Z-score for each sequence in A over the past n days.  
   - **SCALE(A, s)**: Scales the values of A such that the sum of their absolute values equals the target sum s.  
 
-  ---
-
   ### **Statistical Functions**
   - **STD(A, n)**: Standard deviation of sequence A over the past n days.  
   - **VAR(A, p)**: Rolling variance of sequence A over the past p periods.
   - **CORR(A, B, n)**: Correlation coefficient between sequences A and B over the past n days.  
   - **COVARIANCE(A, B, n)**: Covariance between sequences A and B over the past n days.  
   - **PERCENTILE(A, q, p)**: Quantile of sequence A, where q is the quantile value between 0 and 1. If p is provided, it calculates the rolling quantile over the past p periods.  
-
-  ---
 
   ### **Time-Series Functions**
   - **DELTA(A, n)**: Change in value of A over n periods.  
@@ -331,15 +314,11 @@ function_lib_description: |-
   - **LOWDAY(A, n)**: Number of days since the lowest value of A in the past n days.  
   - **SUMAC(A, n)**: Cumulative sum of A over the past n days.  
 
-  ---
-
   ### **Moving Averages and Smoothing Functions**
   - **SMA(A, n, m)**: Simple moving average of A over n periods with modifier m.  
   - **WMA(A, n)**: Weighted moving average of A over n periods, with weights decreasing from 0.9 to 0.9^(n).  
   - **EMA(A, n)**: Exponential moving average of A over n periods, where the decay factor is 2/(n+1).  
   - **DECAYLINEAR(A, d)**: Linearly weighted moving average of A over d periods, with weights increasing from 1 to d.  
-
-  ---
 
   ### **Mathematical Operations**
   - **PROD(A, n)**: Product of values in A over the past n days. Use `*` for general multiplication.  
@@ -354,8 +333,6 @@ function_lib_description: |-
   - **MIN(A, B)**: Minimum value between A and B.  
   - **INV(A)**: Reciprocal (1/x) of each element in sequence A.  
 
-  ---
-
   ### **Conditional and Logical Functions**
   - **COUNT(C, n)**: Count of samples satisfying condition C in the past n periods. Here, C is a logical expression, e.g., `$close > $open`.  
   - **SUMIF(A, n, C)**: Sum of A over the past n periods if condition C is met. Here, C is a logical expression.  
@@ -364,14 +341,10 @@ function_lib_description: |-
   - **(C1)||(C2)**: Logical operation "or". Both C1 and C2 are logical expressions, such as A > B.  
   - **(C1)?(A):(B)**: Logical operation "If condition C1 holds, then A, otherwise B". C1 is a logical expression, such as A > B.  
 
-  ---
-
   ### **Regression and Residual Functions**
   - **SEQUENCE(n)**: A single-column sequence of length n, ranging from 1 to integer n. `SEQUENCE()` should always be nested in `REGBETA()` or `REGRESI()` as argument B.  
   - **REGBETA(A, B, n)**: Regression coefficient of A on B using the past n samples, where A MUST be a multi-column sequence and B a single-column or multi-column sequence.  
   - **REGRESI(A, B, n)**: Residual of regression of A on B using the past n samples, where A MUST be a multi-column sequence and B a single-column or multi-column sequence.  
-
-  ---
 
   ### **Technical Indicators**
   - **RSI(A, n)**: Relative Strength Index of sequence A over n periods. Measures momentum by comparing the magnitude of recent gains to recent losses.  

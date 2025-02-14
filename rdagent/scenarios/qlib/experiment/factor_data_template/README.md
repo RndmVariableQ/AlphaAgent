@@ -21,3 +21,4 @@ $close: close price of the stock on that day.
 $high: high price of the stock on that day.
 $low: low price of the stock on that day.
 $volume: volume of the stock on that day.
+$return: daily return of the stock on that day.

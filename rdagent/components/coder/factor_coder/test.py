@@ -8,7 +8,7 @@ with open('/home/tangziyi/RD-Agent/rdagent/components/coder/factor_coder/templat
 # Step 2: 渲染模板
 template = Template(template_content)
 rendered_code = template.render(
-    expression="(POW((INV((((LOG(INV(((($high+$low+$close+$open)/4)+2.0)))-2.0)/10.0)(-0.5)))/(-0.5))+(-0.5)),10.0)", # "DELAY($high + $low / 2, 5)",
+    expression="STD($return, 20)", # "DELAY($high + $low / 2, 5)",
     factor_name="FACTOR_1"
     )
 

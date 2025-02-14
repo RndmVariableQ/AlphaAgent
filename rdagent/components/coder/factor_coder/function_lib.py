@@ -113,6 +113,7 @@ def DELAY(df:pd.DataFrame, p:int=1):
     assert p >= 0, ValueError("DELAY的时长不能小于0，否则将会造成数据窥测")
     return df.groupby('instrument').transform(lambda x: x.shift(p))
 
+
 def CORR(df1:pd.Series, df2: np.ndarray | pd.Series, p:int=5):
     if isinstance(df2, np.ndarray) and p != len(df2):
         p = len(df2)
@@ -504,7 +505,7 @@ def TS_ZSCORE(df: pd.DataFrame, p:int=5):
 
 @support_numpy
 def ZSCORE(df):
-    # 在每个时间截面上计算平均值和标准差
+    # 在每个因子截面上计算平均值和标准差
     mean = df.groupby('datetime').mean()
     std = df.groupby('datetime').std()
     

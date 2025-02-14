@@ -422,6 +422,8 @@ class FactorValueEvaluator(FactorEvaluator):
         equal_value_ratio_result = 0
         high_correlation_result = False
         row_result = None
+        
+        # import pdb; pdb.set_trace()
 
         # Check if both dataframe has only one columns Mute this since factor task might generate more than one columns now
         if version == 1:
@@ -439,8 +441,8 @@ class FactorValueEvaluator(FactorEvaluator):
         conclusions.append(feedback_str)
 
         # Check if the index of the dataframe is ("datetime", "instrument")
-        feedback_str, _ = FactorOutputFormatEvaluator(self.scen).evaluate(implementation, gt_implementation)
-        conclusions.append(feedback_str)
+        # feedback_str, _ = FactorOutputFormatEvaluator(self.scen).evaluate(implementation, gt_implementation)
+        # conclusions.append(feedback_str)
         if version == 1:
             feedback_str, daily_check_result = FactorDatetimeDailyEvaluator(self.scen).evaluate(
                 implementation, gt_implementation

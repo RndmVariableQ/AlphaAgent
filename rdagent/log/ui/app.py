@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from importlib.resources import files as rfiles
 from pathlib import Path
 from typing import Callable, Type
-
+import os
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -35,11 +35,11 @@ from rdagent.scenarios.qlib.experiment.model_experiment import (
     QlibModelScenario,
 )
 
-st.set_page_config(layout="wide", page_title="RD-Agent", page_icon="🎓", initial_sidebar_state="expanded")
+st.set_page_config(layout="wide", page_title="SeekAlpha", page_icon="🎓", initial_sidebar_state="expanded")
 
 
 # 获取log_path参数
-parser = argparse.ArgumentParser(description="RD-Agent Streamlit App")
+parser = argparse.ArgumentParser(description="SeekAlpha Streamlit App")
 parser.add_argument("--log_dir", type=str, help="Path to the log directory")
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
@@ -73,7 +73,8 @@ def filter_log_folders(main_log_path):
         for folder in main_log_path.iterdir()
         if folder.is_dir() and folder.joinpath("__session__").exists() and folder.joinpath("__session__").is_dir()
     ]
-    folders = sorted(folders, key=lambda x: x.name)
+    # folders = sorted(folders, key=lambda x: x.name)
+    folders.sort(key=lambda f: os.path.getmtime(os.path.join(main_log_path, f)), reverse=True)
     return folders
 
 
@@ -305,44 +306,91 @@ def evolving_feedback_window(wsf: FactorSingleFeedback | ModelSingleFeedback):
             st.markdown(wsf.value_feedback)
 
 
-def display_hypotheses(hypotheses: dict[int, Hypothesis], decisions: dict[int, bool], success_only: bool = False):
+
+def display_hypotheses(hypotheses: dict[int, Hypothesis], decisions: dict[int, bool], round: int = None):
+    if round is not None:
+        hypotheses = {round: hypotheses.get(round)}
+        decisions = {round: decisions.get(round)}
+    
     name_dict = {
         "hypothesis": "RD-Agent proposes the hypothesis⬇️",
         "concise_justification": "because the reason⬇️",
         "concise_observation": "based on the observation⬇️",
         "concise_knowledge": "Knowledge⬇️ gained after practice",
     }
-    if success_only:
-        shd = {k: v.__dict__ for k, v in hypotheses.items() if decisions[k]}
-    else:
-        shd = {k: v.__dict__ for k, v in hypotheses.items()}
+    
+    # if success_only:
+    #     shd = {k: v.__dict__ for k, v in hypotheses.items() if decisions[k]}
+    # else:
+    shd = {k: v.__dict__ for k, v in hypotheses.items()}
+    
     df = pd.DataFrame(shd).T
-
+    
     if "concise_observation" in df.columns and "concise_justification" in df.columns:
         df["concise_observation"], df["concise_justification"] = df["concise_justification"], df["concise_observation"]
         df.rename(
             columns={"concise_observation": "concise_justification", "concise_justification": "concise_observation"},
             inplace=True,
         )
+    
     if "reason" in df.columns:
         df.drop(["reason"], axis=1, inplace=True)
+    
     if "concise_reason" in df.columns:
         df.drop(["concise_reason"], axis=1, inplace=True)
-
+    
     df.columns = df.columns.map(lambda x: name_dict.get(x, x))
-
+    
     def style_rows(row):
         if decisions[row.name]:
             return ["color: green;"] * len(row)
         return [""] * len(row)
-
+    
     def style_columns(col):
         if col.name != name_dict.get("hypothesis", "hypothesis"):
             return ["font-style: italic;"] * len(col)
         return ["font-weight: bold;"] * len(col)
-
-    # st.dataframe(df.style.apply(style_rows, axis=1).apply(style_columns, axis=0))
+    
     st.markdown(df.style.apply(style_rows, axis=1).apply(style_columns, axis=0).to_html(), unsafe_allow_html=True)
+
+# def display_hypotheses(hypotheses: dict[int, Hypothesis], decisions: dict[int, bool], success_only: bool = False):
+#     name_dict = {
+#         "hypothesis": "RD-Agent proposes the hypothesis⬇️",
+#         "concise_justification": "because the reason⬇️",
+#         "concise_observation": "based on the observation⬇️",
+#         "concise_knowledge": "Knowledge⬇️ gained after practice",
+#     }
+#     if success_only:
+#         shd = {k: v.__dict__ for k, v in hypotheses.items() if decisions[k]}
+#     else:
+#         shd = {k: v.__dict__ for k, v in hypotheses.items()}
+#     df = pd.DataFrame(shd).T
+
+#     if "concise_observation" in df.columns and "concise_justification" in df.columns:
+#         df["concise_observation"], df["concise_justification"] = df["concise_justification"], df["concise_observation"]
+#         df.rename(
+#             columns={"concise_observation": "concise_justification", "concise_justification": "concise_observation"},
+#             inplace=True,
+#         )
+#     if "reason" in df.columns:
+#         df.drop(["reason"], axis=1, inplace=True)
+#     if "concise_reason" in df.columns:
+#         df.drop(["concise_reason"], axis=1, inplace=True)
+
+#     df.columns = df.columns.map(lambda x: name_dict.get(x, x))
+
+#     def style_rows(row):
+#         if decisions[row.name]:
+#             return ["color: green;"] * len(row)
+#         return [""] * len(row)
+
+#     def style_columns(col):
+#         if col.name != name_dict.get("hypothesis", "hypothesis"):
+#             return ["font-style: italic;"] * len(col)
+#         return ["font-weight: bold;"] * len(col)
+
+#     # st.dataframe(df.style.apply(style_rows, axis=1).apply(style_columns, axis=0))
+#     st.markdown(df.style.apply(style_rows, axis=1).apply(style_columns, axis=0).to_html(), unsafe_allow_html=True)
 
 
 def metrics_window(df: pd.DataFrame, R: int, C: int, *, height: int = 300, colors: list[str] = None):
@@ -403,7 +451,7 @@ def metrics_window(df: pd.DataFrame, R: int, C: int, *, height: int = 300, color
 
 def summary_window():
     if isinstance(state.scenario, SIMILAR_SCENARIOS):
-        st.header("Summary📊", divider="rainbow", anchor="_summary")
+        st.header("Runing Summary📊", divider="rainbow", anchor="_summary")
         if state.lround == 0:
             return
         with st.container():
@@ -412,28 +460,28 @@ def summary_window():
                 bc, cc = st.columns([2, 2], vertical_alignment="center")
                 with bc:
                     st.subheader("Metrics📈", anchor="_metrics")
-                with cc:
-                    show_true_only = st.toggle("successful hypotheses", value=False)
+                # with cc:
+                #     show_true_only = st.toggle("successful hypotheses", value=False)
 
             # hypotheses_c, chart_c = st.columns([2, 3])
             chart_c = st.container()
             hypotheses_c = st.container()
 
-            with hypotheses_c:
-                st.subheader("Hypotheses🏅", anchor="_hypotheses")
-                display_hypotheses(state.hypotheses, state.h_decisions, show_true_only)
+            # with hypotheses_c:
+            #     st.subheader("Hypotheses🏅", anchor="_hypotheses")
+            #     display_hypotheses(state.hypotheses, state.h_decisions, show_true_only)
 
             with chart_c:
                 if isinstance(state.scenario, QlibFactorScenario) and state.alpha158_metrics is not None:
                     df = pd.DataFrame([state.alpha158_metrics] + state.metric_series)
                 else:
                     df = pd.DataFrame(state.metric_series)
-                if show_true_only and len(state.hypotheses) >= len(state.metric_series):
-                    if state.alpha158_metrics is not None:
-                        selected = ["alpha158"] + [i for i in df.index[2:] if state.h_decisions[int(i[6:])]]
-                    else:
-                        selected = [i for i in df.index if i == "Baseline" or state.h_decisions[int(i[6:])]]
-                    df = df.loc[selected]
+                # if show_true_only and len(state.hypotheses) >= len(state.metric_series):
+                #     if state.alpha158_metrics is not None:
+                #         selected = ["alpha158"] + [i for i in df.index[2:] if state.h_decisions[int(i[6:])]]
+                #     else:
+                #         selected = [i for i in df.index if i == "Baseline" or state.h_decisions[int(i[6:])]]
+                #     df = df.loc[selected]
                 if df.shape[0] == 1:
                     st.table(df.iloc[0])
                 elif df.shape[0] > 1:
@@ -483,18 +531,19 @@ def tabs_hint():
 
 def tasks_window(tasks: list[FactorTask | ModelTask]):
     if isinstance(tasks[0], FactorTask):
-        st.markdown("**Factor Tasks🚩**")
+        st.markdown("")
+        st.markdown("##### **Factor Candidates🔮**")
         tnames = [f.factor_name for f in tasks]
         if sum(len(tn) for tn in tnames) > 100:
             tabs_hint()
         tabs = st.tabs(tnames)
         for i, ft in enumerate(tasks):
             with tabs[i]:
-                st.markdown(f"**Factor Name**: {ft.factor_name}")
-                st.markdown(f"**Factor Expression**: {ft.factor_expression}")
-                st.markdown(f"**Description**: {ft.factor_description}")
-                st.latex("Formulation")
-                st.latex(ft.factor_formulation)
+                st.markdown(f"##### **Factor Name**: `{ft.factor_name}`")
+                st.markdown(f"##### **Factor Expression**: `{ft.factor_expression}`")
+                # st.markdown(f"**Description**: {ft.factor_description}")
+                # st.latex("Formulation")
+                # st.latex(ft.factor_formulation)
 
                 mks = "| Variable | Description |\n| --- | --- |\n"
                 if isinstance(ft.variables, dict):
@@ -523,7 +572,12 @@ def tasks_window(tasks: list[FactorTask | ModelTask]):
                     st.markdown(mks)
 
 
-def research_window():
+def research_window(round: int):
+    # 在 research_window 或 feedback_window 中添加
+    # if hg := state.msgs[round]["r.hypothesis generation"]:
+    #     st.subheader("Hypotheses🏅", anchor="_hypotheses")
+    #     display_hypotheses(state.hypotheses, state.h_decisions, round)
+        
     with st.container(border=True):
         title = "Research🔍" if isinstance(state.scenario, SIMILAR_SCENARIOS) else "Research🔍 (reader)"
         st.subheader(title, divider="blue", anchor="_research")
@@ -533,14 +587,18 @@ def research_window():
                 for i in range(min(2, len(pim))):
                     st.image(pim[i].content, use_container_width=True)
 
+            # import pdb; pdb.set_trace()
             # Hypothesis
             if hg := state.msgs[round]["r.hypothesis generation"]:
-                st.markdown("**Hypothesis💡**")  # 🧠
+                st.markdown("##### **Hypothesis💡**")  # 🧠
                 h: Hypothesis = hg[0].content
                 st.markdown(
                     f"""
 - **Hypothesis**: {h.hypothesis}
-- **Reason**: {h.reason}"""
+- **Justification**: {h.concise_justification}
+- **Knowledge**: {h.concise_knowledge}
+- **Specification**: {h.concise_specification}
+"""
                 )
 
             if eg := state.msgs[round]["r.experiment generation"]:
@@ -722,12 +780,11 @@ def evolving_window():
                     evolving_feedback_window(state.msgs[round]["d.evolving feedback"][evolving_round - 1].content[j])
 
 
-toc = """
 ## [Scenario Description📖](#_scenario)
+toc = """
 ## [Summary📊](#_summary)
 - [**Metrics📈**](#_metrics)
-- [**Hypotheses🏅**](#_hypotheses)
-## [RD-Loops♾️](#_rdloops)
+## [SeekAlpha Loops♾️](#_loops)
 - [**Research🔍**](#_research)
 - [**Development🛠️**](#_development)
 - [**Feedback📝**](#_feedback)
@@ -741,7 +798,7 @@ if isinstance(state.scenario, GeneralModelScenario):
 """
 # Config Sidebar
 with st.sidebar:
-    st.markdown("# RD-Agent🤖  [:grey[@GitHub]](https://github.com/microsoft/RD-Agent)")
+    st.markdown("# **SeekAgent**✨") #   [:grey[@GitHub]](https://github.com/microsoft/RD-Agent)
     st.subheader(":blue[Table of Content]", divider="blue")
     st.markdown(toc)
     st.subheader(":orange[Control Panel]", divider="red")
@@ -757,6 +814,7 @@ with st.sidebar:
                 st.text_input("log path", key="log_path", on_change=refresh, label_visibility="collapsed")
             else:
                 folders = filter_log_folders(main_log_path)
+                # 按修改时间排序，最新的在最前面
                 st.selectbox(f"**Select from `{main_log_path}`**", folders, key="log_path", on_change=refresh)
         else:
             st.text_input(":blue[**log path**]", key="log_path", on_change=refresh)
@@ -820,40 +878,40 @@ if state.log_path and state.fs is None:
     refresh()
 
 # Main Window
-header_c1, header_c3 = st.columns([1, 6], vertical_alignment="center")
-with st.container():
-    with header_c1:
-        st.image("https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b?ver=5c31")
-    with header_c3:
-        st.markdown(
-            """
-        <h1>
-            RD-Agent:<br>LLM-based autonomous evolving agents for industrial data-driven R&D
-        </h1>
-        """,
-            unsafe_allow_html=True,
-        )
+# header_c1, header_c3 = st.columns([1, 6], vertical_alignment="center")
+# with st.container():
+#     with header_c1:
+#         st.image("https://img-prod-cms-rt-microsoft-com.akamaized.net/cms/api/am/imageFileData/RE1Mu3b?ver=5c31")
+#     with header_c3:
+#         st.markdown(
+#             """
+#         <h1>
+#             RD-Agent:<br>LLM-based autonomous evolving agents for industrial data-driven R&D
+#         </h1>
+#         """,
+#             unsafe_allow_html=True,
+#         )
 
 # Project Info
-with st.container():
-    image_c, scen_c = st.columns([3, 3], vertical_alignment="center")
-    with image_c:
-        img_path = rfiles("rdagent.log.ui").joinpath("flow.png")
-        st.image(str(img_path), use_container_width=True)
-    with scen_c:
-        st.header("Scenario Description📖", divider="violet", anchor="_scenario")
-        if state.scenario is not None:
-            theme = st_theme()
-            if theme:
-                theme = theme.get("base", "light")
-            css = f"""
-<style>
-    a[href="#_rdloops"], a[href="#_research"], a[href="#_development"], a[href="#_feedback"], a[href="#_scenario"], a[href="#_summary"], a[href="#_hypotheses"], a[href="#_metrics"] {{
-        color: {"black" if theme == "light" else "white"};
-    }}
-</style>
-"""
-            st.markdown(state.scenario.rich_style_description + css, unsafe_allow_html=True)
+# with st.container():
+#     image_c, scen_c = st.columns([3, 3], vertical_alignment="center")
+#     with image_c:
+#         img_path = rfiles("rdagent.log.ui").joinpath("flow.png")
+#         st.image(str(img_path), use_container_width=True)
+#     with scen_c:
+#         st.header("Scenario Description📖", divider="violet", anchor="_scenario")
+#         if state.scenario is not None:
+#             theme = st_theme()
+#             if theme:
+#                 theme = theme.get("base", "light")
+#             css = f"""
+# <style>
+#     a[href="#_rdloops"], a[href="#_research"], a[href="#_development"], a[href="#_feedback"], a[href="#_scenario"], a[href="#_summary"], a[href="#_hypotheses"], a[href="#_metrics"] {{
+#         color: {"black" if theme == "light" else "white"};
+#     }}
+# </style>
+# """
+#             st.markdown(state.scenario.rich_style_description + css, unsafe_allow_html=True)
 
 
 def show_times(round: int):
@@ -873,12 +931,13 @@ if state.scenario is not None:
 
     # R&D Loops Window
     if isinstance(state.scenario, SIMILAR_SCENARIOS):
-        st.header("R&D Loops♾️", divider="rainbow", anchor="_rdloops")
+        st.header("SeekAlpha Loops♾️", divider="rainbow", anchor="_loops")
+        # st.markdown("#### Loops")
         if len(state.msgs) > 1:
             r_options = list(state.msgs.keys())
             if 0 in r_options:
                 r_options.remove(0)
-            round = st.radio("**Loops**", horizontal=True, options=r_options, index=state.lround - 1)
+            round = st.radio("# **Loop**", horizontal=True, options=r_options, index=state.lround - 1)
         else:
             round = 1
 
@@ -899,7 +958,7 @@ if state.scenario is not None:
         st.stop()
 
     with r_c:
-        research_window()
+        research_window(round)
     with f_c:
         feedback_window()
 
