@@ -1,8 +1,0 @@
-factor_name,factor_expression
-MACD-RSI Combined Factor,"(EMA($close, 12) - EMA($close, 26) - EMA((EMA($close, 12) - EMA($close, 26)), 9)) * (100 - 100 / (1 + MEAN(MAX(DELTA($close, 1), 0), 14) / (MEAN(MAX(-DELTA($close, 1), 0), 14) + 1e-8)))"
-Volatility Spike Factor,"(TS_MAX($high, 5) - TS_MIN($low, 5)) / (MEAN($close, 5) + 1e-8)"
-Adaptive Smoothing and Weighting Factor	DECAYLINEAR,"(EMA($close, 15) - EMA($close, 50), 10)"
-2,"((EMA($close, 50) - EMA($close, 200)) > 0) ? 1 : 0"
-Moving Average Crossover Factor,"(((DELAY($close, 0) - SMA($close, 10, 1e-8)) > 0) ? 1 : 0) - (((DELAY($close, 0) - SMA($close, 50, 1e-8)) > 0) ? 1 : 0)"
-Bollinger Bands Width Factor,"2 * STD($close, 20) / (SMA($close, 20, 1e-8) + 1e-8)"
-Price_Volatility_Oscillator,"(SQRT(STD($close, 10) * STD($close, 10) + 1e-8)) / (ABS($close - $open) + 1e-8)"

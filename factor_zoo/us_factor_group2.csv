@@ -1,2 +1,0 @@
-factor_name,factor_expression
-Market Sentiment Factor,"(($close - $open) > 0) ? 1 : ((($close - $open) < 0) ? -1 : 0)"

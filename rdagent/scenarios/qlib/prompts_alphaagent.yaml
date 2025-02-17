@@ -419,8 +419,8 @@ hypothesis2experiment:
     5. Some additional information to help you generate new {{targets}}.
 
 
-    1. **1-3 Factors per Generation:**
-      - Ensure each generation produces 1-3 factors.
+    1. **1-2 Factors per Generation:**
+      - Ensure each generation produces 1-2 factors.
       - Balance simplicity and innovation to build a robust factor library.
       - Note that each factor is independent. Please do NOT reference other factors within the factor expression.
 

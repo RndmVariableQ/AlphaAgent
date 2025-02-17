@@ -151,7 +151,8 @@ reports/
 
 # git_ignore_folder
 git_ignore_folder/
-
+factor_zoo/*
+saved_mlruns/
 #cache
 *cache*/
 *cache.json
@@ -167,6 +168,7 @@ mlruns/
 # possible output from coder or runner
 *.pth
 *qlib_res.csv
+*.ipynb
 
 # shell script
 *.out

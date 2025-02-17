@@ -798,7 +798,7 @@ if isinstance(state.scenario, GeneralModelScenario):
 """
 # Config Sidebar
 with st.sidebar:
-    st.markdown("# **SeekAgent**✨") #   [:grey[@GitHub]](https://github.com/microsoft/RD-Agent)
+    st.markdown("# **SeekAlpha**✨") #   [:grey[@GitHub]](https://github.com/microsoft/RD-Agent)
     st.subheader(":blue[Table of Content]", divider="blue")
     st.markdown(toc)
     st.subheader(":orange[Control Panel]", divider="red")
@@ -941,7 +941,7 @@ if state.scenario is not None:
         else:
             round = 1
 
-        show_times(round)
+        # show_times(round)
         # rf_c, d_c = st.columns([2, 2])
         r_c = st.container()
         d_c = st.container()
