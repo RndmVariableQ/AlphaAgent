@@ -85,5 +85,5 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 - You can run the following command for our demo program to see the run logs.
 
   ```sh
-  rdagent ui --port 19899 --log_dir log/
+  alphaagent ui --port 19899 --log_dir log/
   ```
