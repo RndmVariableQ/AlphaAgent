@@ -2,7 +2,7 @@ import unittest
 
 import pytest
 
-from rdagent.core.utils import SingletonBaseClass
+from alphaagent.core.utils import SingletonBaseClass
 
 
 class A(SingletonBaseClass):

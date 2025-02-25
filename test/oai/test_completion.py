@@ -2,7 +2,7 @@ import json
 import random
 import unittest
 
-from rdagent.oai.llm_utils import APIBackend
+from alphaagent.oai.llm_utils import APIBackend
 
 
 def _worker(system_prompt, user_prompt):
@@ -60,8 +60,8 @@ class TestChatCompletion(unittest.TestCase):
             - 2 pass
             - cache is not missed & same question get different answer.
         """
-        from rdagent.core.utils import LLM_CACHE_SEED_GEN
-        from rdagent.oai.llm_conf import LLM_SETTINGS
+        from alphaagent.core.utils import LLM_CACHE_SEED_GEN
+        from alphaagent.oai.llm_conf import LLM_SETTINGS
 
         system_prompt = "You are a helpful assistant."
         user_prompt = f"Give me {2} random country names, list {2} cities in each country, and introduce them"
@@ -131,8 +131,8 @@ class TestChatCompletion(unittest.TestCase):
             - 2 pass
             - cache is not missed & same question get different answer.
         """
-        from rdagent.core.utils import LLM_CACHE_SEED_GEN, multiprocessing_wrapper
-        from rdagent.oai.llm_conf import LLM_SETTINGS
+        from alphaagent.core.utils import LLM_CACHE_SEED_GEN, multiprocessing_wrapper
+        from alphaagent.oai.llm_conf import LLM_SETTINGS
 
         system_prompt = "You are a helpful assistant."
         user_prompt = f"Give me {2} random country names, list {2} cities in each country, and introduce them"

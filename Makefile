@@ -198,7 +198,7 @@ changelog:
 release-notes:
 	@$(PIPRUN) git-changelog --input $(CHANGELOG_PATH) --release-notes
 
-# Build documentation only from rdagent.
+# Build documentation only from alphaagent.
 docs-gen:
 	$(PIPRUN) python -m sphinx.cmd.build -W docs $(PUBLIC_DIR)
 

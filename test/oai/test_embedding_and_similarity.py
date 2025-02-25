@@ -1,6 +1,6 @@
 import unittest
 
-from rdagent.oai.llm_utils import (
+from alphaagent.oai.llm_utils import (
     APIBackend,
     calculate_embedding_distance_between_str_list,
 )

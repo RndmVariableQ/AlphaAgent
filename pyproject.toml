@@ -7,7 +7,7 @@ requires = [
 
 [project]
 authors = [
-  {email = "xuyang1@microsoft.com", name = "MSRA-MIIC"},
+  {email = "tangzy27@mail2.sysu.edu.cn", name = "Ziyi Tang"},
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -27,12 +27,12 @@ keywords = [
   "Large Language Models",
   "Research and Development",
 ]
-name = "rdagent"
+name = "alphaagent"
 readme = "README.md"
 requires-python = ">=3.10"
 
 [project.scripts]
-rdagent = "rdagent.app.cli:app"
+alphaagent = "alphaagent.app.cli:app"
 
 [project.urls]
 homepage = "https://github.com/microsoft/RD-Agent/"
@@ -43,7 +43,7 @@ fail_under = 80
 
 [tool.coverage.run]
 source = [
-  "rdagent",
+  "alphaagent",
 ]
 
 [tool.isort]
@@ -72,7 +72,7 @@ minversion = "6.0"
 [tool.ruff]
 fix = true
 line-length = 120
-src = ["rdagent"]
+src = ["alphaagent"]
 
 [tool.ruff.lint]
 ignore = [
@@ -98,7 +98,7 @@ select = ["ALL"]
 "test/*" = ["S101"]
 
 [tool.setuptools]
-packages = ["rdagent"]
+packages = ["alphaagent"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

@@ -1,0 +1,43 @@
+import pandas as pd
+import numpy as np
+import os
+from alphaagent.components.coder.factor_coder.expr_parser import parse_expression, parse_symbol
+from alphaagent.components.coder.factor_coder.function_lib import (
+    ABS, ADD, AND, CORR, COUNT, COVARIANCE, DECAYLINEAR, DELAY, DELTA, DIVIDE, 
+    EMA, EXP, FILTER, HIGHDAY, LOG, LOWDAY, MEAN, TS_MEAN, TS_MEDIAN, MAX, MIN, MULTIPLY, INV,
+    OR, POW, PROD, RANK, REGBETA, REGRESI, SEQUENCE, SIGN, SMA, SQRT, STD, VAR, MAD,
+    SUBTRACT, SUM, SUMAC, SUMIF, TS_MAX, TS_MIN, TS_RANK, TS_ZSCORE, WMA, ZSCORE, SCALE, TS_ARGMAX, TS_ARGMIN, TS_QUANTILE, TS_PCTCHANGE, PERCENTILE,
+    MACD, RSI, BB_MIDDLE, BB_UPPER, BB_LOWER
+)
+
+
+
+def calculate_factor(expr: str, name: str):
+    # Stock DataFrame
+    # df.columns: ['$open', '$close', '$high', '$low', '$volume', '$amount', '$turn', '$pettm', '$pbmrq']
+    df = pd.read_hdf('/home/tangziyi/RD-Agent/rdagent/scenarios/qlib/experiment/factor_data_template/daily_pv_all.h5', key='data')
+    
+    print('expr: ', expr)
+    expr = parse_symbol(expr, df.columns)
+    print('expr: ', expr)
+    expr = parse_expression(expr)
+
+    print('expr: ', expr)
+    # replace 'var_name' by 'df['$var_name']
+    for col in df.columns:
+        expr = expr.replace(col[1:], f"df[\'{col}\']")
+    
+    print('expr: ', expr)
+    df[name] = eval(expr)
+    result = df[name].astype(np.float64)
+    print(result)
+
+    if os.path.exists('result.h5'):
+        os.remove('result.h5')
+    result.to_hdf('result.h5', key='data')
+
+if __name__ == '__main__':
+    # Input factor expression. Do NOT use the variable format like "df['$xxx']" in factor expressions. Instead, you should use "$xxx". 
+    expr = "{{ expression }}"
+    name = "{{ factor_name }}"
+    calculate_factor(expr, name)

@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 import shutil
 
-from rdagent.utils.env import LocalConf, LocalEnv, QlibDockerConf, QTDockerEnv
+from alphaagent.utils.env import LocalConf, LocalEnv, QlibDockerConf, QTDockerEnv
 
 DIRNAME = Path(__file__).absolute().resolve().parent
 

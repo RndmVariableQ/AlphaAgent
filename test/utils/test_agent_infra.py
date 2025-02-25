@@ -1,8 +1,8 @@
 import unittest
 
-from rdagent.oai.llm_utils import APIBackend
-from rdagent.utils.agent.ret import PythonAgentOut
-from rdagent.utils.agent.tpl import T
+from alphaagent.oai.llm_utils import APIBackend
+from alphaagent.utils.agent.ret import PythonAgentOut
+from alphaagent.utils.agent.tpl import T
 
 
 class TestAgentInfra(unittest.TestCase):
