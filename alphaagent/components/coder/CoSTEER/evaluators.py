@@ -8,7 +8,7 @@ from alphaagent.core.evolving_framework import QueriedKnowledge
 from alphaagent.core.experiment import Workspace
 from alphaagent.core.scenario import Task
 from alphaagent.core.utils import multiprocessing_wrapper
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 
 
 class CoSTEERSingleFeedback(Feedback):

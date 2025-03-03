@@ -3,7 +3,7 @@ from alphaagent.components.benchmark.conf import BenchmarkSettings
 from alphaagent.components.benchmark.eval_method import FactorImplementEval
 from alphaagent.core.scenario import Scenario
 from alphaagent.core.utils import import_class
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.scenarios.qlib.factor_experiment_loader.json_loader import (
     FactorTestCaseLoaderFromJsonFile,
 )

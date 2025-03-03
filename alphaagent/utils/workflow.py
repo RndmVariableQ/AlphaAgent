@@ -18,7 +18,7 @@ from typing import Callable
 from tqdm.auto import tqdm
 
 from alphaagent.core.exception import CoderError
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 
 
 class LoopMeta(type):

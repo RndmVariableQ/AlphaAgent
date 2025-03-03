@@ -27,7 +27,7 @@ from rich.rule import Rule
 from rich.table import Table
 
 from alphaagent.core.conf import ExtendedBaseSettings, ExtendedSettingsConfigDict
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 
 ASpecificBaseModel = TypeVar("ASpecificBaseModel", bound=BaseModel)
 

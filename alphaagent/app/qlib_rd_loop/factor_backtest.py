@@ -9,7 +9,7 @@ import fire
 from alphaagent.app.qlib_rd_loop.conf import FACTOR_BACK_TEST_PROP_SETTING
 from alphaagent.components.workflow.alphaagent_loop import BacktestLoop
 
-def main(path=None, step_n=None, factor_csv_path=None):
+def main(path=None, step_n=None, factor_path=None):
     """
     Auto R&D Evolving loop for fintech factors.
 
@@ -17,11 +17,11 @@ def main(path=None, step_n=None, factor_csv_path=None):
 
     .. code-block:: python
 
-        dotenv run -- python rdagent/app/qlib_rd_loop/factor_backtest.py --factor_csv_path "/path/to/factor_file.csv" $LOG_PATH/__session__/1/0_propose  --step_n 1 # `step_n` is a optional paramter
+        dotenv run -- python alphaagent/app/qlib_rd_loop/factor_backtest.py --factor_path "/path/to/factor_file.csv" $LOG_PATH/__session__/1/0_propose  --step_n 1 # `step_n` is a optional paramter
 
     """
     if path is None:
-        model_loop = BacktestLoop(FACTOR_BACK_TEST_PROP_SETTING, factor_csv_path=factor_csv_path)
+        model_loop = BacktestLoop(FACTOR_BACK_TEST_PROP_SETTING, factor_path=factor_path)
     else:
         model_loop = BacktestLoop.load(path)
     model_loop.run(step_n=step_n)

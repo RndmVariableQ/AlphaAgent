@@ -9,7 +9,7 @@ import fire
 from alphaagent.app.qlib_rd_loop.conf import ALPHA_AGENT_FACTOR_PROP_SETTING
 from alphaagent.components.workflow.alphaagent_loop import AlphaAgentLoop
 from alphaagent.core.exception import FactorEmptyError
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.log.time import measure_time
 
 

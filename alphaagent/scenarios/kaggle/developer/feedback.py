@@ -13,7 +13,7 @@ from alphaagent.core.proposal import (
     HypothesisFeedback,
     Trace,
 )
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.oai.llm_utils import APIBackend
 from alphaagent.scenarios.kaggle.experiment.kaggle_experiment import KG_SELECT_MAPPING
 from alphaagent.utils import convert2bool

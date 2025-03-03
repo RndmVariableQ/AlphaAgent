@@ -20,7 +20,7 @@ import tiktoken
 
 from alphaagent.core.utils import LLM_CACHE_SEED_GEN, SingletonBaseClass
 from alphaagent.log import LogColors
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.oai.llm_conf import LLM_SETTINGS
 
 DEFAULT_QLIB_DOT_PATH = Path("./")

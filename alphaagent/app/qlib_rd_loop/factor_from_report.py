@@ -13,7 +13,7 @@ from alphaagent.components.document_reader.document_reader import (
 )
 from alphaagent.core.prompts import Prompts
 from alphaagent.core.proposal import Hypothesis
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.log.time import measure_time
 from alphaagent.oai.llm_utils import APIBackend
 from alphaagent.scenarios.qlib.experiment.factor_experiment import QlibFactorExperiment

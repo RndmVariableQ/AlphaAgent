@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import List, Union, Optional as Opt
 from collections import defaultdict
 import sys
-
+import pandas as pd
 
 # Enable packrat parsing for better performance
 ParserElement.enablePackrat()
@@ -126,18 +126,18 @@ def create_number_node(tokens):
     return NumberNode(float(tokens[0]))
 
 def create_function_node(tokens):
-    name = tokens[0]  # 现在函数名已经是字符串了
-    args = tokens[2:-1]  # Skip parentheses
+    name = tokens[0]  # function name
+    args = tokens[2:-1]  # skip parentheses
     
     def unwrap(arg):
         if isinstance(arg, (list, ParseResults)):
             if len(arg) == 1:
                 return unwrap(arg[0])
-            return [unwrap(x) for x in arg][0]  # 取第一个元素
+            return [unwrap(x) for x in arg][0]  # first element
         return arg
     
     processed_args = [unwrap(arg) for arg in args]
-    # 确保所有参数都是 Node 类型
+    # All args should be Node classes
     assert all(isinstance(arg, Node) for arg in processed_args), f"Invalid args: {processed_args}"
     return FunctionNode(name, processed_args)
 
@@ -326,15 +326,10 @@ def find_largest_common_subtree(root1: Node, root2: Node) -> Opt[SubtreeMatch]:
     return max_match
 
 def compare_expressions(expr1: str, expr2: str) -> Opt[SubtreeMatch]:
-    """比较两个表达式，返回最大公共子树"""
-    # try:
+    """Compare two expressions and return their largest common subtree"""
     tree1 = parse_expression(expr1)
     tree2 = parse_expression(expr2)
-    
     return find_largest_common_subtree(tree1, tree2)
-    # except Exception as e:
-    #     print(f"Error comparing expressions: {e}")
-    #     return 0
     
     
     
@@ -355,62 +350,117 @@ def match_alphazoo(prop_expr, factor_df):
     
 
 
+def count_free_args(expr: str) -> int:
+    """
+    Count the number of NumberNode instances (numeric constants) in the given expression.
+    
+    Args:
+        expr: A string representing a mathematical expression
+        
+    Returns:
+        int: The number of numeric constants in the expression
+    """
+    tree = parse_expression(expr)
+    return count_number_nodes(tree)
+
+def count_number_nodes(node: Node) -> int:
+    """
+    Recursively count the number of NumberNode instances in an AST.
+    
+    Args:
+        node: The root node of the AST or sub-tree
+        
+    Returns:
+        int: The number of NumberNode instances in the tree
+    """
+    if isinstance(node, NumberNode):
+        return 1
+    elif isinstance(node, VarNode):
+        return 0
+    elif isinstance(node, FunctionNode):
+        return sum(count_number_nodes(arg) for arg in node.args)
+    elif isinstance(node, BinaryOpNode):
+        return count_number_nodes(node.left) + count_number_nodes(node.right)
+    elif isinstance(node, ConditionalNode):
+        return (count_number_nodes(node.condition) + 
+                count_number_nodes(node.true_expr) + 
+                count_number_nodes(node.false_expr))
+    return 0
+
+
+
+def count_unique_vars(expr: str) -> int:
+    """
+    Count the number of unique variable names in the given expression.
+    
+    Args:
+        expr: A string representing a mathematical expression
+        
+    Returns:
+        int: The number of unique variable names in the expression
+    """
+    tree = parse_expression(expr)
+    unique_vars = set()
+    collect_unique_vars(tree, unique_vars)
+    return len(unique_vars)
+
+def collect_unique_vars(node: Node, unique_vars: set) -> None:
+    """
+    Recursively collect unique variable names from an AST.
+    
+    Args:
+        node: The root node of the AST or sub-tree
+        unique_vars: A set to collect unique variable names
+    """
+    if isinstance(node, VarNode):
+        # Only add actual data variables, not function names
+        if node.name.startswith('$'):
+            unique_vars.add(node.name)
+    elif isinstance(node, NumberNode):
+        pass  # No variables in number nodes
+    elif isinstance(node, FunctionNode):
+        # Don't add the function name itself as a variable
+        for arg in node.args:
+            collect_unique_vars(arg, unique_vars)
+    elif isinstance(node, BinaryOpNode):
+        collect_unique_vars(node.left, unique_vars)
+        collect_unique_vars(node.right, unique_vars)
+    elif isinstance(node, ConditionalNode):
+        collect_unique_vars(node.condition, unique_vars)
+        collect_unique_vars(node.true_expr, unique_vars)
+        collect_unique_vars(node.false_expr, unique_vars)
+
+# Example usage:
 if __name__ == "__main__":
-    # Test cases
-    # test_expressions = [
-    #     # "RANK(DELTA(open, 1))",
-    #     # "TS_MAX(DELAY($close, 1), 20)",
-    #     # "MAX($close, $open) > MIN(DELAY($open, 1), DELAY($close, 1)) ? 1 : 0",
-    #     # "RANK(DELTA($open, 1) - DELTA($open, 1)) / (1e-8 + 1)",
-    #     "(RANK(STD($close, 10)) + RANK(STD($volume, 10)) + RANK(ABS($close - $open)) + RANK(ABS($high - $low)) + RANK(CORR($close, $volume, 10))) / 5",
-    #     # "(STD($close/DELAY($close,1)-1,10) < MEAN(STD($close/DELAY($close,1)-1,10),20)) ? ($close/DELAY($close,5)-1) : ($close/DELAY($close,20)-1)"
-    # ]
-    
-    # for test_expr in test_expressions:
-    #     print(f"\nParsing: {test_expr}")
-    #     try:
-    #         ast = parse_expression(test_expr)
-    #         print("Tree structure:")
-    #         ast.print_tree()
-    #     except Exception as e:
-    #         print(f"Error: {e}")
-            
-    expr1 = "(($close - TS_MIN($low, 14)) / (TS_MAX($high, 14) - TS_MIN($low, 14) + 1e-8)) * 100"
-    expr2 = "(TS_MAX($high, 14) - TS_MIN($low, 14)) * STD($close, 20) / MEAN($volume, 10)"
-    match = compare_expressions(expr1, expr2)
-    # import pdb; pdb.set_trace()
+    expr1 = "(($close - TS_MIN($low, 14)) / (TS_MAX($high, 14) - TS_MIN($low, 14) + 1e-8))"
+    count = count_free_args(expr1)
+    print(f"Number of NumberNode instances in expression: {count}")  # Should print 3 (14, 1e-8, and 100)
+    count = count_unique_vars(expr1)
+    print(f"Number of unique variables in expression: {count}")  
+
+# if __name__ == "__main__":
+#     # Test cases
+#     expr1 = "(($close - TS_MIN($low, 14)) / (TS_MAX($high, 14) - TS_MIN($low, 14) + 1e-8)) * 100"
+#     expr2 = "(TS_MAX($high, 14) - TS_MIN($low, 14)) * STD($close, 20) / MEAN($volume, 10)"
+#     match = compare_expressions(expr1, expr2)
+#     factor_df = pd.read_csv("factor_zoo/alpha101.csv", index_col=None)
     
     
-    import pandas as pd
-    factor_df = pd.read_csv("factor_zoo/alpha101.csv", index_col=None)
-    
-    
-    max_size = 0
-    matched_subtree = None
-    matched_alpha = None
-    for index, (name, alpha_expr) in factor_df.iterrows():
-        try:
-            match = compare_expressions(expr1, alpha_expr)
-            if match is not None and match.size > max_size:
-                 max_size = match.size
-                 matched_subtree = match.root1
-                 matched_alpha = alpha_expr
-        except Exception as e:
-            print(f"Error comparing alpha \"{alpha_expr}\": \n {e}")
+#     max_size = 0
+#     matched_subtree = None
+#     matched_alpha = None
+#     for index, (name, alpha_expr) in factor_df.iterrows():
+#         try:
+#             match = compare_expressions(expr1, alpha_expr)
+#             if match is not None and match.size > max_size:
+#                  max_size = match.size
+#                  matched_subtree = match.root1
+#                  matched_alpha = alpha_expr
+#         except Exception as e:
+#             print(f"Error comparing alpha \"{alpha_expr}\": \n {e}")
             
 
                  
-    print(max_size)
-    print(matched_subtree)
-    print(matched_alpha)
-        
-            
-    # import pdb; pdb.set_trace()
-    # if match:
-    #     print(f"\nFound largest common subtree (size: {match.size}):")
-    #     print("Tree 1 structure:")
-    #     match.root1.print_tree()
-    #     print("\nTree 2 structure:")
-    #     match.root2.print_tree()
-    # else:
-    #     print("No common subtree found")
+#     print(max_size)
+#     print(matched_subtree)
+#     print(matched_alpha)

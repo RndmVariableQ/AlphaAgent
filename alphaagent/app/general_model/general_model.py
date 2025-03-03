@@ -6,7 +6,7 @@ from alphaagent.components.coder.model_coder.task_loader import (
 from alphaagent.components.document_reader.document_reader import (
     extract_first_page_screenshot_from_pdf,
 )
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.scenarios.general_model.scenario import GeneralModelScenario
 from alphaagent.scenarios.qlib.developer.model_coder import QlibModelCoSTEER
 

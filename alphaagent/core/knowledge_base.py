@@ -2,7 +2,7 @@ from pathlib import Path
 
 import dill as pickle  # type: ignore[import-untyped]
 
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 
 
 class KnowledgeBase:

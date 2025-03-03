@@ -16,7 +16,7 @@ from alphaagent.core.proposal import (
 )
 from alphaagent.core.scenario import Scenario
 from alphaagent.core.utils import import_class
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.log.time import measure_time
 from alphaagent.utils.workflow import LoopBase, LoopMeta
 

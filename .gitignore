@@ -173,3 +173,6 @@ mlruns/
 # shell script
 *.out
 *.sh
+
+*_debug*
+*.ipynb

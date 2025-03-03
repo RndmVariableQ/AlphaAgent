@@ -4,7 +4,7 @@ from typing import Any
 import pandas as pd
 
 from alphaagent.core.experiment import FBWorkspace
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.utils.env import QTDockerEnv
 
 

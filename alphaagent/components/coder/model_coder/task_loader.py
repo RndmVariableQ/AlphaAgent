@@ -10,7 +10,7 @@ from alphaagent.components.document_reader.document_reader import (
 )
 from alphaagent.components.loader.task_loader import ModelTaskLoader
 from alphaagent.core.prompts import Prompts
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.oai.llm_utils import APIBackend
 from alphaagent.scenarios.qlib.experiment.model_experiment import QlibModelExperiment
 

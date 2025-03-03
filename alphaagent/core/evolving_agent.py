@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 from alphaagent.core.evaluation import Feedback
 from alphaagent.core.evolving_framework import EvolvingStrategy, EvoStep
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 
 
 class EvoAgent(ABC):

@@ -8,7 +8,7 @@ from jinja2 import Environment, StrictUndefined
 
 from alphaagent.components.knowledge_management.vector_base import Document, PDVectorBase
 from alphaagent.core.prompts import Prompts
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.oai.llm_utils import APIBackend
 from alphaagent.scenarios.kaggle.knowledge_management.extract_knowledge import (
     extract_knowledge_from_feedback,

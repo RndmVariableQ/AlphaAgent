@@ -1,8 +1,8 @@
 """
-CLI entrance for all rdagent application.
+CLI entrance for all alphaagent application.
 
 This will 
-- make rdagent a nice entry and
+- make alphaagent a nice entry and
 - autoamtically load dotenv
 """
 
@@ -22,9 +22,11 @@ from alphaagent.app.general_model.general_model import (
     extract_models_and_implement as general_model,
 )
 from alphaagent.app.kaggle.loop import main as kaggle_main
-from alphaagent.app.qlib_rd_loop.factor import main as fin_factor
-from alphaagent.app.qlib_rd_loop.factor_from_report import main as fin_factor_report
-from alphaagent.app.qlib_rd_loop.model import main as fin_model
+# from alphaagent.app.qlib_rd_loop.factor import main as fin_factor
+# from alphaagent.app.qlib_rd_loop.factor_from_report import main as fin_factor_report
+from alphaagent.app.qlib_rd_loop.factor_alphaagent import main as mine
+from alphaagent.app.qlib_rd_loop.factor_backtest import main as backtest
+# from alphaagent.app.qlib_rd_loop.model import main as fin_model
 from alphaagent.app.utils.health_check import health_check
 from alphaagent.app.utils.info import collect_info
 
@@ -33,7 +35,7 @@ def ui(port=19899, log_dir="", debug=False):
     """
     start web app to show the log traces.
     """
-    with rpath("rdagent.log.ui", "app.py") as app_path:
+    with rpath("alphaagent.log.ui", "app.py") as app_path:
         cmds = ["streamlit", "run", app_path, f"--server.port={port}"]
         if log_dir or debug:
             cmds.append("--")
@@ -47,14 +49,15 @@ def ui(port=19899, log_dir="", debug=False):
 def app():
     fire.Fire(
         {
-            "fin_factor": fin_factor,
-            "fin_factor_report": fin_factor_report,
-            "fin_model": fin_model,
-            "med_model": med_model,
-            "general_model": general_model,
+            "mine": mine,
+            "backtest": backtest,
+            # "fin_factor_report": fin_factor_report,
+            # "fin_model": fin_model,
+            # "med_model": med_model,
+            # "general_model": general_model,
+            # "kaggle": kaggle_main,
             "ui": ui,
             "health_check": health_check,
             "collect_info": collect_info,
-            "kaggle": kaggle_main,
         }
     )

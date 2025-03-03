@@ -21,7 +21,7 @@ from alphaagent.components.loader.experiment_loader import FactorExperimentLoade
 from alphaagent.core.conf import RD_AGENT_SETTINGS
 from alphaagent.core.prompts import Prompts
 from alphaagent.core.utils import multiprocessing_wrapper
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.oai.llm_conf import LLM_SETTINGS
 from alphaagent.oai.llm_utils import APIBackend
 from alphaagent.scenarios.qlib.factor_experiment_loader.json_loader import (

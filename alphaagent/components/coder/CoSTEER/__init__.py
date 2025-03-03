@@ -14,7 +14,7 @@ from alphaagent.core.developer import Developer
 from alphaagent.core.evaluation import Evaluator
 from alphaagent.core.evolving_agent import EvolvingStrategy
 from alphaagent.core.experiment import Experiment
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 
 
 class CoSTEER(Developer[Experiment]):

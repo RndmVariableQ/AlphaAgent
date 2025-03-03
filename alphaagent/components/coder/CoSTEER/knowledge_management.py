@@ -28,7 +28,7 @@ from alphaagent.core.evolving_framework import (
 from alphaagent.core.experiment import FBWorkspace
 from alphaagent.core.prompts import Prompts
 from alphaagent.core.scenario import Task
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.oai.llm_utils import (
     APIBackend,
     calculate_embedding_distance_between_str_list,

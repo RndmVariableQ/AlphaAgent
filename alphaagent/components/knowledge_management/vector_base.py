@@ -6,7 +6,7 @@ import pandas as pd
 from scipy.spatial.distance import cosine
 
 from alphaagent.core.knowledge_base import KnowledgeBase
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.oai.llm_utils import APIBackend
 
 

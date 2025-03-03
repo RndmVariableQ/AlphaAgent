@@ -12,7 +12,7 @@ pandarallel.initialize(verbose=1)
 
 from alphaagent.components.runner import CachedRunner
 from alphaagent.core.exception import FactorEmptyError
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.scenarios.qlib.experiment.factor_experiment import QlibFactorExperiment
 
 DIRNAME = Path(__file__).absolute().resolve().parent

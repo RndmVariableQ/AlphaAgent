@@ -13,9 +13,8 @@ from alphaagent.scenarios.qlib.experiment.factor_experiment import QlibFactorExp
 from alphaagent.oai.llm_utils import APIBackend
 import os
 import pandas as pd
-from alphaagent.log import rdagent_logger as logger
-from alphaagent.components.coder.factor_coder.expr_parser_tree import match_alphazoo
-from alphaagent.components.coder.factor_coder.expr_parser import parse_expression
+from alphaagent.log import logger
+from alphaagent.scenarios.qlib.regulator.factor_regulator import FactorRegulator
 
 QlibFactorHypothesis = Hypothesis
 alphaagent_prompt_dict = Prompts(file_path=Path(__file__).parent / "prompts_alphaagent.yaml")
@@ -264,8 +263,7 @@ class EmptyHypothesisGen(FactorHypothesisGen):
 class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        self.alphazoo = pd.read_csv("factor_zoo/alpha101.csv", index_col=None)
+        self.factor_regulator = FactorRegulator()
         
     def prepare_context(self, hypothesis: Hypothesis, trace: Trace) -> Tuple[dict | bool]:
         scenario = trace.scen.get_scenario_all_desc()
@@ -298,7 +296,6 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
         }, True
         
     def convert(self, hypothesis: Hypothesis, trace: Trace) -> Experiment:
-        # import pdb; pdb.set_trace()
         context, json_flag = self.prepare_context(hypothesis, trace)
         system_prompt = (
             Environment(undefined=StrictUndefined)
@@ -329,32 +326,34 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
         while True:
             if flag:
                 break
+                
             resp = APIBackend().build_messages_and_create_chat_completion(user_prompt, system_prompt, json_mode=json_flag)
             response_dict = json.loads(resp)
             proposed_names = []
             proposed_exprs = []
+            
             for i, factor_name in enumerate(response_dict):
                 expr = response_dict[factor_name]["expression"]
-                # 解析失败就重新生成
-                try:
-                    parse_expression(expr)
-                except:
-                    logger.info(f"Fail to parse expr: {expr}, retrying...")
-                    break
-                # evaluate complexity    
-                duplicated_subtree_size, duplicated_subtree, matched_alpha = match_alphazoo(expr, self.alphazoo)
-                logger.info(f"Expr: {expr}  Duplicated Size: {duplicated_subtree_size}  Duplicated Subtree: {duplicated_subtree}")
                 
-                # 重复性高则重新生成
-                if duplicated_subtree_size >= 5:
+                # Check if expression is parsable
+                if not self.factor_regulator.is_parsable(expr):
+                    logger.info(f"Failed to parse expr: {expr}, retrying...")
+                    break
+                
+                success, eval_dict = self.factor_regulator.evaluate(expr)
+                if not success:
+                    break
+                
+                # If expression has problems, regenerate with feedback
+                if not self.factor_regulator.is_expression_acceptable(eval_dict):
                     if expression_duplication_prompt is not None:
                         expression_duplication_prompt = '\n\n'.join([expression_duplication_prompt, 
                         (Environment(undefined=StrictUndefined)
                             .from_string(alphaagent_prompt_dict["expression_duplication"])
                             .render(
                                 prev_expression=expr,
-                                duplicated_subtree_size=duplicated_subtree_size,
-                                duplicated_subtree=duplicated_subtree
+                                duplicated_subtree_size=eval_dict['duplicated_subtree_size'],
+                                duplicated_subtree=eval_dict['duplicated_subtree']
                             )
                         )])
                     else:
@@ -363,8 +362,8 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
                             .from_string(alphaagent_prompt_dict["expression_duplication"])
                             .render(
                                 prev_expression=expr,
-                                duplicated_subtree_size=duplicated_subtree_size,
-                                duplicated_subtree=duplicated_subtree
+                                duplicated_subtree_size=eval_dict['duplicated_subtree_size'],
+                                duplicated_subtree=eval_dict['duplicated_subtree']
                             )
                         )
                     
@@ -381,7 +380,6 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
                             expression_duplication=expression_duplication_prompt
                         )
                     )
-                    logger.info(f"Expr: {expr} has a duplicated subtree size: {duplicated_subtree_size}, retrying...")
                     break
                 else:
                     proposed_names.append(factor_name)
@@ -392,12 +390,9 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
                         continue
         
 
-        # import pdb; pdb.set_trace()
-        new_factor = pd.DataFrame({
-                'factor_name': proposed_names,
-                'factor_expression': proposed_exprs
-            })
-        self.alphazoo = pd.concat([self.alphazoo, new_factor])
+        # Add valid factors to the factor regulator
+        self.factor_regulator.add_factor(proposed_names, proposed_exprs)
+                
                 
         return self.convert_response(resp, trace)
     
@@ -420,7 +415,7 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
                     variables=variables,
                 )
             )
-        # import pdb; pdb.set_trace()
+            
         exp = QlibFactorExperiment(tasks)
         exp.based_experiments = [QlibFactorExperiment(sub_tasks=[])] + [t[1] for t in trace.hist if t[2]]
 
@@ -444,9 +439,9 @@ class AlphaAgentHypothesis2FactorExpression(FactorHypothesis2Experiment):
 
 
 class BacktestHypothesis2FactorExpression(FactorHypothesis2Experiment):
-    def __init__(self, factor_csv_path, *args, **kwargs):
+    def __init__(self, factor_path, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.factor_csv_path = factor_csv_path
+        self.factor_path = factor_path
         
     def convert_response(self, *args, **kwargs) -> FactorExperiment:
         return super().convert_response(*args, **kwargs)
@@ -455,9 +450,9 @@ class BacktestHypothesis2FactorExpression(FactorHypothesis2Experiment):
         return super().prepare_context(*args, **kwargs)
         
     def convert(self, hypothesis: Hypothesis, trace: Trace) -> FactorExperiment:
-        if os.path.exists(self.factor_csv_path):
+        if os.path.exists(self.factor_path):
             tasks = []
-            factor_df = pd.read_csv(self.factor_csv_path, index_col=None)
+            factor_df = pd.read_csv(self.factor_path, index_col=None)
             for index, (name, expr) in factor_df.iterrows():
                 tasks.append(
                     FactorTask(
@@ -490,6 +485,6 @@ class BacktestHypothesis2FactorExpression(FactorHypothesis2Experiment):
             return exp
             
         else:
-            raise ValueError(f"csv文件{self.factor_csv_path}不存在")
+            raise ValueError(f"File {self.factor_csv_path} does not exist. ")
         
     

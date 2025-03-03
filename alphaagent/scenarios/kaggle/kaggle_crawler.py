@@ -18,7 +18,7 @@ from selenium.webdriver.common.by import By
 from alphaagent.app.kaggle.conf import KAGGLE_IMPLEMENT_SETTING
 from alphaagent.core.exception import KaggleError
 from alphaagent.core.prompts import Prompts
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.oai.llm_utils import APIBackend
 from alphaagent.utils.env import MLEBDockerEnv
 

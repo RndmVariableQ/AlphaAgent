@@ -2,7 +2,7 @@ import socket
 
 import docker
 
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 
 
 def check_docker() -> None:

@@ -7,7 +7,7 @@ import pandas as pd
 
 from alphaagent.app.kaggle.conf import KAGGLE_IMPLEMENT_SETTING
 from alphaagent.core.experiment import FBWorkspace
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 from alphaagent.utils.env import KGDockerEnv
 
 KG_FEATURE_PREPROCESS_SCRIPT = """import pickle

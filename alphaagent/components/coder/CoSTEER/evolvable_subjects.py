@@ -1,7 +1,7 @@
 from alphaagent.core.evolving_framework import EvolvableSubjects
 from alphaagent.core.experiment import Experiment, FBWorkspace
 from alphaagent.core.scenario import Task
-from alphaagent.log import rdagent_logger as logger
+from alphaagent.log import logger
 
 
 class EvolvingItem(Experiment, EvolvableSubjects):
