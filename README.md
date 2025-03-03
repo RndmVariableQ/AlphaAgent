@@ -5,13 +5,6 @@
 </h3>
 
 
-<!-- # 📰 News
-| 🗞️ News        | 📝 Description                 |
-| --            | ------      
-| Kaggle Scenario release | We release **[Kaggle Agent](https://rdagent.readthedocs.io/en/latest/scens/kaggle_agent.html)**, try the new features!                  |
-| Official WeChat group release  | We created a WeChat group, welcome to join! (🗪[QR Code](docs/WeChat_QR_code.jpg)) |
-| Official Discord release  | We launch our first chatting channel in Discord (🗪[![Chat](https://img.shields.io/badge/chat-discord-blue)](https://discord.gg/ybQ97B6Jjy)) |
-| First release | **RDAgent** is released on GitHub | -->
 
 
 # 📖Introduction
@@ -36,6 +29,33 @@ This repository follows the implementation of [RD-Agent](https://github.com/micr
 ### 🐳 Docker installation.
 Users must ensure Docker is installed before attempting most scenarios. Please refer to the [official 🐳Docker page](https://docs.docker.com/engine/install/) for installation instructions.
 
+
+
+
+### 📈 Data Preparation
+- For A-share market, stock data will be automatically downloaded to `~/.qlib/qlib_data/cn_data`.
+
+- Alternatively, you can mannully download Chinese stock data via baostock and dump into the Qlib format.
+  ```sh
+  # Download or update stock data from baostock
+  python prepare_cn_data.py
+
+  # Convert csv to Qlib format
+  python scripts/dump_bin.py dump_all ... \
+  --include_fields open,high,low,close,preclose,volume,amount,turn,pctChg,peTTM,pbMRQ,psTTM,pcfNcfTTM,isST,factor \
+  --csv_path  ~/.qlib/qlib_data/cn_data/raw_data_now \
+  --qlib_dir ~/.qlib/qlib_data/cn_data \
+  --date_field_name date \
+  --symbol_field_name code
+
+  # Collect calendar data
+  python scripts/data_collector/future_calendar_collector.py --qlib_dir ~/.qlib/qlib_data/cn_data/ --region cn
+
+
+  # Download the CSI500/CSI300/CSI100 stock universe
+  python scripts/data_collector/cn_index/collector.py --index_name CSI500 --qlib_dir ~/.qlib/qlib_data/cn_data/ --method parse_instruments
+  ```
+
 ### 🐍 Create a Conda Environment
 - Create a new conda environment with Python (3.10 and 3.11 are well-tested in our CI):
   ```sh
@@ -46,9 +66,13 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
   conda activate alphaagent
   ```
 
-### 🛠️ Install locally\
-- Install the package in editable mode.
+### 🛠️ Install locally
+- 
   ```sh
+  # Install AlphaAgent
+  pip install .
+
+  # Or install the package in editable mode.
   pip install -e .
   ```
 
@@ -70,12 +94,29 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 
 - Run **AlphaAgent** based on [Qlib Backtesting Framework](http://github.com/microsoft/qlib).
   ```sh
+  alphaagent mine --potential_direction "<YOUR_MARKET_HYPOTHESIS>"
+  ```
+
+- Alternatively, run the following command
+  ```sh
   dotenv run -- python alphaagent/app/qlib_rd_loop/factor_alphaagent.py --potential_direction "<YOUR_MARKET_HYPOTHESIS>"
+  ```
+
+- Multi-factor backtesting
+  ```sh
+  alphaagent backtest --factor_path "<PATH_TO_YOUR_CSV_FILE>"
+  ```
+
+  Your factors need to be stored in a `.csv` file. Here is an example:
+  ```json
+  factor_name,factor_expression
+  MACD_Factor,"MACD($close)"
+  RSI_Factor,"RSI($close)"
   ```
 
 
 - If you need to rerun the baseline results or update backtest configs, remove the cache and log folders:
-  ```
+  ```sh
   rm -r ./pickle_cache/*
   rm -r ./log/*
   rm -r ./git_ignore_folder/*
