@@ -16,7 +16,7 @@
 
 # 📖Introduction
 <div align="center">
-      <img src="docs/_static/workflow2.png" alt="Our focused scenario" style="width:60%; ">
+      <img src="docs/_static/workflow.png" alt="Our focused scenario" style="width:60%; ">
 </div>
 
 
