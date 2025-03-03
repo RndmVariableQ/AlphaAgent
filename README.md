@@ -99,7 +99,7 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 
 - Alternatively, run the following command
   ```sh
-  dotenv run -- python alphaagent/app/qlib_rd_loop/factor_alphaagent.py --potential_direction "<YOUR_MARKET_HYPOTHESIS>"
+  dotenv run -- python alphaagent/app/qlib_rd_loop/factor_alphaagent.py --direction "<YOUR_MARKET_HYPOTHESIS>"
   ```
 
 - Multi-factor backtesting
@@ -108,7 +108,7 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
   ```
 
   Your factors need to be stored in a `.csv` file. Here is an example:
-  ```json
+  ```csv
   factor_name,factor_expression
   MACD_Factor,"MACD($close)"
   RSI_Factor,"RSI($close)"

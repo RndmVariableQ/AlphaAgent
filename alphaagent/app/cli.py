@@ -24,7 +24,7 @@ from alphaagent.app.general_model.general_model import (
 from alphaagent.app.kaggle.loop import main as kaggle_main
 # from alphaagent.app.qlib_rd_loop.factor import main as fin_factor
 # from alphaagent.app.qlib_rd_loop.factor_from_report import main as fin_factor_report
-from alphaagent.app.qlib_rd_loop.factor_alphaagent import main as mine
+from alphaagent.app.qlib_rd_loop.factor_mining import main as mine
 from alphaagent.app.qlib_rd_loop.factor_backtest import main as backtest
 # from alphaagent.app.qlib_rd_loop.model import main as fin_model
 from alphaagent.app.utils.health_check import health_check
