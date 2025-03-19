@@ -40,11 +40,17 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
   # Download or update stock data from baostock
   python prepare_cn_data.py
 
+
+  cd ..
+  # Clone Qlib source code
+  git clone https://github.com/microsoft/qlib.git
+  cd qlib
+
   # Convert csv to Qlib format
   python scripts/dump_bin.py dump_all ... \
   --include_fields open,high,low,close,preclose,volume,amount,turn,pctChg,peTTM,pbMRQ,psTTM,pcfNcfTTM,isST,factor \
   --csv_path  ~/.qlib/qlib_data/cn_data/raw_data_now \
-  --qlib_dir ~/.qlib/qlib_data/cn_data \
+  --qlib_dir ~/.qlib/qlib_data/latest_data \
   --date_field_name date \
   --symbol_field_name code
 
@@ -92,6 +98,18 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 
 ### 🚀 Run AlphaAgent
 
+- Before starting your run, ensure that Docker is installed on your machine. You can verify the installation by running the following command:
+
+  ```bash
+  docker --version
+  ```
+- Additionally, ensure that your user has the necessary permissions to execute Docker commands without requiring sudo. To achieve this, add your user to the docker group by running the following command:
+  ```bash
+  sudo usermod -aG docker $USER
+  ```
+
+  After running the command, log out and log back in for the changes to take effect. 
+
 - Run **AlphaAgent** based on [Qlib Backtesting Framework](http://github.com/microsoft/qlib).
   ```sh
   alphaagent mine --potential_direction "<YOUR_MARKET_HYPOTHESIS>"
@@ -127,4 +145,10 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 
   ```sh
   alphaagent ui --port 19899 --log_dir log/
+  ```
+
+- Activate the alpha mining entrance from the ui. 
+
+  ```sh
+  uvicorn backend.main:app --reload --port 9000
   ```
