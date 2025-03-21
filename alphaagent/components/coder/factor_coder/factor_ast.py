@@ -430,6 +430,44 @@ def collect_unique_vars(node: Node, unique_vars: set) -> None:
         collect_unique_vars(node.true_expr, unique_vars)
         collect_unique_vars(node.false_expr, unique_vars)
 
+
+def count_all_nodes(expr: str) -> int:
+    """
+    Count the number of Node instances (numeric constants) in the given expression.
+    
+    Args:
+        expr: A string representing a mathematical expression
+        
+    Returns:
+        int: The number of numeric constants in the expression
+    """
+    tree = parse_expression(expr)
+    return count_nodes(tree)
+
+
+def count_nodes(node: Node) -> int:
+    """
+    Recursively count the number of Node instances in an AST.
+    
+    Args:
+        node: The root node of the AST or sub-tree
+        
+    Returns:
+        int: The number of Node instances in the tree
+    """
+    if isinstance(node, (NumberNode, VarNode)):
+        return 1
+    elif isinstance(node, FunctionNode):
+        return 1 + sum(count_nodes(arg) for arg in node.args)
+    elif isinstance(node, BinaryOpNode):
+        return 1 + count_nodes(node.left) + count_nodes(node.right)
+    elif isinstance(node, ConditionalNode):
+        return 1 + (count_nodes(node.condition) + 
+                    count_nodes(node.true_expr) + 
+                    count_nodes(node.false_expr))
+    return 0
+
+
 # Example usage:
 if __name__ == "__main__":
     expr1 = "(($close - TS_MIN($low, 14)) / (TS_MAX($high, 14) - TS_MIN($low, 14) + 1e-8))"
@@ -437,6 +475,8 @@ if __name__ == "__main__":
     print(f"Number of NumberNode instances in expression: {count}")  # Should print 3 (14, 1e-8, and 100)
     count = count_unique_vars(expr1)
     print(f"Number of unique variables in expression: {count}")  
+    count = count_all_nodes(expr1)
+    print(f"Number of Node instances in expression: {count}") 
 
 # if __name__ == "__main__":
 #     # Test cases

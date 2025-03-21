@@ -497,8 +497,8 @@ hypothesis2experiment:
     {{ expression_duplication }}
 
     Recommendations:
-    - Bypass the duplicated sub-expressions above when generating the expression
-    - Ensure novelty and uniqueness of each factor by integrating different data variables and operations
+    - Avoid the duplicated sub-expressions above
+    - Generate novel factor by uniquely combining data variables and operations
     - Experiment with a mix of mathematical operations (e.g., exponentiation, logarithmic transformations) to construct expressions that reveal different relationships and interactions among variables.
     - Replace raw variables with transformed variants to enhance expressiveness, such as using `$open`, `$close/TS_MEAN($close, 10)`, or `($open + $close) / 2` instead of `$close` to normalize or adjust for trends.
     {% endif %}

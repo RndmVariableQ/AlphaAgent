@@ -19,7 +19,7 @@ from tqdm.auto import tqdm
 
 from alphaagent.core.exception import CoderError
 from alphaagent.log import logger
-
+import threading
 
 class LoopMeta(type):
     @staticmethod
@@ -86,7 +86,7 @@ class LoopBase:
         self.loop_trace = defaultdict(list[LoopTrace])  # the key is the number of loop
         self.session_folder = logger.log_trace_path / "__session__"
 
-    def run(self, step_n: int | None = None):
+    def run(self, step_n: int | None = None, stop_event: threading.Event = None):
         """
 
         Parameters
@@ -135,9 +135,13 @@ class LoopBase:
                     self.loop_idx += 1
                     self.loop_prev_out = {}
                     pbar.reset()  # reset the progress bar for the next loop
-                # import pdb; pdb.set_trace()
                 self.dump(self.session_folder / f"{li}" / f"{si}_{name}")  # save a snapshot after the session
-
+                
+                if stop_event is not None and stop_event.is_set():
+                    # break
+                    raise Exception("Mining stopped by user")
+                    
+                
     def dump(self, path: str | Path):
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)

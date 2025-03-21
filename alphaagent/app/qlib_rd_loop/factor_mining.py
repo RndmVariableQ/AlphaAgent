@@ -13,7 +13,7 @@ from alphaagent.log import logger
 from alphaagent.log.time import measure_time
 
 
-def main(path=None, step_n=None, direction=None):
+def main(path=None, step_n=None, direction=None, stop_event=None):
     """
     Autonomous alpha factor mining. 
 
@@ -25,10 +25,10 @@ def main(path=None, step_n=None, direction=None):
 
     """
     if path is None:
-        model_loop = AlphaAgentLoop(ALPHA_AGENT_FACTOR_PROP_SETTING, direction)
+        model_loop = AlphaAgentLoop(ALPHA_AGENT_FACTOR_PROP_SETTING, potential_direction=direction, stop_event=stop_event)
     else:
         model_loop = AlphaAgentLoop.load(path)
-    model_loop.run(step_n=step_n)
+    model_loop.run(step_n=step_n, stop_event=stop_event)
 
 
 if __name__ == "__main__":

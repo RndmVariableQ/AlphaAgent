@@ -1,9 +1,10 @@
 import pandas as pd
+import numpy as np
 from typing import Tuple, List, Dict, Any, Optional
 from alphaagent.core.evaluation import Evaluator
 from alphaagent.log import logger
 from alphaagent.core.scenario import Scenario
-from alphaagent.components.coder.factor_coder.factor_ast import match_alphazoo, count_free_args, count_unique_vars
+from alphaagent.components.coder.factor_coder.factor_ast import match_alphazoo, count_free_args, count_unique_vars, count_all_nodes
 from alphaagent.components.coder.factor_coder.expr_parser import parse_expression
 
 class FactorRegulator(Evaluator):
@@ -13,7 +14,7 @@ class FactorRegulator(Evaluator):
     and ensure new factors maintain appropriate originality.
     """
     
-    def __init__(self, factor_zoo_path: str = "factor_zoo/alpha101.csv", duplication_threshold: int = 5):
+    def __init__(self, factor_zoo_path: str = "factor_zoo/alpha101.csv", duplication_threshold: int = 8):
         """
         Initialize the FactorRegulator with a reference to the factor zoo.
         
@@ -67,6 +68,7 @@ class FactorRegulator(Evaluator):
             
             num_free_args = count_free_args(expression)
             num_unique_vars = count_unique_vars(expression)
+            num_all_nodes = count_all_nodes(expression)
             
             logger.info(f"""
                         Evaluated expr: {expression}
@@ -82,7 +84,8 @@ class FactorRegulator(Evaluator):
                 "duplicated_subtree": duplicated_subtree,
                 "matched_alpha": matched_alpha,
                 "num_free_args": num_free_args,
-                "num_unique_vars": num_unique_vars
+                "num_unique_vars": num_unique_vars,
+                "num_all_nodes": num_all_nodes
                 }
             
             return True, eval_dict
@@ -94,10 +97,47 @@ class FactorRegulator(Evaluator):
     
     def is_expression_acceptable(self, eval_dict) -> bool:
         """
-        Determines if an expression is acceptable based on the duplication threshold.
+        Determines if an expression is acceptable based on the duplication threshold,
+        and the ratio of num_free_args and num_unique_vars to the total number of nodes in the expression.
+        
+        Args:
+            eval_dict (dict): Dictionary containing evaluation results of the expression.
+            
+        Returns:
+            bool: True if the expression is acceptable, False otherwise.
         """
-        import pdb; pdb.set_trace()
-        return eval_dict['duplicated_subtree_size'] <= self.duplication_threshold
+        # Condition 1: Check if the duplicated subtree size is within the threshold
+        cond1 = eval_dict['duplicated_subtree_size'] <= self.duplication_threshold
+        
+        # Get the number of free arguments, unique variables, and total nodes
+        num_free_args = eval_dict['num_free_args']
+        num_unique_vars = eval_dict['num_unique_vars']
+        num_all_nodes = eval_dict['num_all_nodes']
+        
+        # Avoid division by zero and invalid ratios
+        if num_all_nodes == 0:
+            logger.warning(f"Expression has no nodes: {eval_dict['expr']}")
+            return False
+        
+        # Calculate ratios
+        free_args_ratio = float(num_free_args) / float(num_all_nodes)
+        unique_vars_ratio = float(num_unique_vars) / float(num_all_nodes)
+        
+        # Ensure ratios are within valid range (0 <= ratio < 1)
+        if free_args_ratio >= 1 or unique_vars_ratio >= 1:
+            logger.warning(f"Invalid ratio detected: free_args_ratio={free_args_ratio}, unique_vars_ratio={unique_vars_ratio}")
+            return False
+        
+        # Condition 2: Ensure the ratio of num_free_args to total nodes is not too high using -log(1 - ratio)
+        # -log(1 - x) increases as x increases, so we set a threshold (e.g., -log(1 - 0.5) ≈ 0.693)
+        # This ensures the ratio is not too high (e.g., x < 0.5)
+        cond2 = -np.log(1 - free_args_ratio) < 0.693  # Threshold for x < 0.5
+        
+        # Condition 3: Ensure the ratio of num_unique_vars to total nodes is not too high using -log(1 - ratio)
+        cond3 = -np.log(1 - unique_vars_ratio) < 0.693  # Threshold for x < 0.5
+        
+        # The expression is acceptable if all conditions are met
+        return cond1 and cond2 and cond3
     
             
     def add_factor(self, factor_name: str, factor_expression: str) -> bool:

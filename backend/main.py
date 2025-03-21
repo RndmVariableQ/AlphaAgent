@@ -7,6 +7,8 @@ from typing import Dict, Optional
 import uuid
 from datetime import datetime
 from alphaagent.app.qlib_rd_loop.factor_mining import main as mine
+import time
+import asyncio
 
 # 配置 logger
 logging.basicConfig(level=logging.INFO)
@@ -58,7 +60,12 @@ def mine_wrapper(direction, stop_event, task_id):
     logger = logging.getLogger(__name__)
     logger.info(f"mine_wrapper 开始执行，task_id={task_id}")
     try:
-        result = mine(direction=direction, stop_event=stop_event)
+        result = None
+        while not stop_event.is_set():
+            # 模拟一个长时间运行的任务
+            result = mine(direction=direction, stop_event=stop_event)
+            if stop_event.is_set():
+                break
         logger.info(f"mine_wrapper 执行完成，结果：{result}")
         with task_lock:
             if task_id in tasks and not tasks[task_id].get("stop", False):
@@ -109,6 +116,9 @@ def run_mine(task_id: str, direction: str):
             task["process_pid"] = p.pid
             tasks[task_id] = task
 
+        timeout = 10  # 设置超时时间为10秒
+        start_time = time.time()
+
         while p.is_alive():
             with task_lock:
                 task = tasks[task_id]
@@ -119,8 +129,18 @@ def run_mine(task_id: str, direction: str):
                         "updated_at": datetime.now().isoformat()
                     })
                     tasks[task_id] = task
-                    break
+                    break  # 如果 stop 被触发，跳出循环
             p.join(timeout=0.5)
+
+        # 只有在 stop_event 被触发后，才启用超时机制
+        if stop_event.is_set():
+            while p.is_alive():
+                if time.time() - start_time > timeout:
+                    logger.warning(f"子进程未在超时时间内退出，强制终止: task_id={task_id}")
+                    p.terminate()
+                    p.join()
+                    break
+                p.join(timeout=0.5)
 
         with task_lock:
             task = tasks[task_id]
@@ -149,6 +169,7 @@ def run_mine(task_id: str, direction: str):
                 task = tasks[task_id]
                 task["stop"] = False
                 tasks[task_id] = task
+        p.join()  # 确保子进程已经退出
 
 @app.post("/api/tasks", response_model=TaskStatus)
 async def create_task(request: TaskRequest, background_tasks: BackgroundTasks):
@@ -170,7 +191,9 @@ async def create_task(request: TaskRequest, background_tasks: BackgroundTasks):
     
     with task_lock:
         tasks[task_id] = manager.dict(task_data)
+        logger.info(f"Task created: task_id={task_id}")
     
+    # 将 run_mine 放到后台任务中执行
     background_tasks.add_task(run_mine, task_id, request.direction)
     return dict(tasks[task_id])
 
@@ -187,7 +210,8 @@ def list_tasks():
         return [dict(task) for task in tasks.values()]
 
 @app.post("/api/tasks/{task_id}/stop")
-def stop_task(task_id: str):
+async def stop_task(task_id: str):
+    logger.info(f"Stop signal received.")
     with task_lock:
         if task_id not in tasks:
             raise HTTPException(status_code=404, detail="Task not found")

@@ -1,5 +1,5 @@
 qlib_init:
-    provider_uri: "~/.qlib/qlib_data/baostock_data"
+    provider_uri: "~/.qlib/qlib_data/latest_data"
     region: cn
 
 market: &market csi500
@@ -7,7 +7,7 @@ benchmark: &benchmark SH000905
 
 data_handler_config: &data_handler_config
     start_time: 2015-01-01
-    end_time: 2024-12-31
+    end_time: 2025-02-28
     instruments: *market
     data_loader:
         class: NestedDataLoader
@@ -56,7 +56,7 @@ port_analysis_config: &port_analysis_config
             n_drop: 5
     backtest:
         start_time: 2021-01-01
-        end_time: 2024-12-30
+        end_time: 2025-02-28
         # start_time: 2020-01-01
         # end_time: 2024-12-30
         account: 100000000
@@ -92,7 +92,7 @@ task:
             segments:
                 train: [2015-01-01, 2019-12-31]
                 valid: [2020-01-01, 2020-12-31]
-                test: [2021-01-01, 2024-12-30]
+                test: [2021-01-01, 2025-02-28]
                 # train: [2015-01-01, 2019-12-31]
                 # valid: [2020-01-01, 2020-12-31]
                 # test: [2020-01-01, 2024-12-30]

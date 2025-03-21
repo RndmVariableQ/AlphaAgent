@@ -21,11 +21,40 @@ from alphaagent.log import logger
 from alphaagent.log.time import measure_time
 from alphaagent.utils.workflow import LoopBase, LoopMeta
 from alphaagent.core.exception import FactorEmptyError
+import threading
+
+
+import datetime
+import pickle
+from collections import defaultdict
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Callable
+
+from tqdm.auto import tqdm
+
+from alphaagent.core.exception import CoderError
+from alphaagent.log import logger
+from functools import wraps
+
+# 定义装饰器：在函数调用前检查stop_event
+
+            
+def stop_event_check(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        if STOP_EVENT is not None and STOP_EVENT.is_set():
+            # 当收到停止信号时，可以直接抛出异常或返回特定值，这里示例抛出异常
+            raise Exception("Operation stopped due to stop_event flag.")
+        return func(self, *args, **kwargs)
+    return wrapper
+
 
 class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
     skip_loop_error = (FactorEmptyError,)
+    
     @measure_time
-    def __init__(self, PROP_SETTING: BaseFacSetting, potential_direction):
+    def __init__(self, PROP_SETTING: BaseFacSetting, potential_direction, stop_event: threading.Event):
         with logger.tag("init"):
             scen: Scenario = import_class(PROP_SETTING.scen)()
             logger.log_object(scen, tag="scenario")
@@ -48,9 +77,14 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
             self.summarizer: HypothesisExperiment2Feedback = import_class(PROP_SETTING.summarizer)(scen)
             logger.log_object(self.summarizer, tag="summarizer")
             self.trace = Trace(scen=scen)
+            
+            global STOP_EVENT
+            STOP_EVENT = stop_event
             super().__init__()
 
+            
     @measure_time
+    @stop_event_check
     def factor_propose(self, prev_out: dict[str, Any]):
         """
         提出作为构建因子的基础的假设
@@ -61,6 +95,7 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
         return idea
 
     @measure_time
+    @stop_event_check
     def factor_construct(self, prev_out: dict[str, Any]):
         """
         基于假设构造多个不同的因子
@@ -71,6 +106,7 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
         return factor
 
     @measure_time
+    @stop_event_check
     def factor_calculate(self, prev_out: dict[str, Any]):
         """
         根据因子表达式计算过去的因子表（因子值）
@@ -82,6 +118,7 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
     
 
     @measure_time
+    @stop_event_check
     def factor_backtest(self, prev_out: dict[str, Any]):
         """
         回测因子
@@ -95,6 +132,7 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
         return exp
 
     @measure_time
+    @stop_event_check
     def feedback(self, prev_out: dict[str, Any]):
         feedback = self.summarizer.generate_feedback(prev_out["factor_backtest"], prev_out["factor_propose"], self.trace)
         with logger.tag("ef"):  # evaluate and feedback
