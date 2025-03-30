@@ -100,7 +100,8 @@ evolving_strategy_factor_implementation_v1_system: |-
   - **MAX(A, B)**: Maximum value between A and B.
   - **MIN(A, B)**: Minimum value between A and B.
   - **INV(A)**: Reciprocal (1/x) of each element in sequence A.
-
+  - **FLOOR(A)**: Floor of each element in sequence A.
+  
   ### **Conditional and Logical Functions**
   - **COUNT(C, n)**: Count of samples satisfying condition C in the past n periods. Here, C is a logical expression, e.g., `$close > $open`.
   - **SUMIF(A, n, C)**: Sum of A over the past n periods if condition C is met. Here, C is a logical expression.
