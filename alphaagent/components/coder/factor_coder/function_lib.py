@@ -31,26 +31,62 @@ def RANK(df:pd.DataFrame):
 
 @support_numpy
 def MEAN(df:pd.DataFrame):
-    return df.groupby('instrument').mean()
+    return df.groupby('datetime').mean()
+
+@support_numpy
+def STD(df:pd.DataFrame):
+    """计算横截面标准差"""
+    return df.groupby('datetime').std()
+
+@support_numpy
+def SKEW(df:pd.DataFrame):
+    """计算横截面偏度"""
+    return df.groupby('datetime').skew()
+
+@support_numpy
+def KURT(df:pd.DataFrame):
+    """计算横截面峰度"""
+    return df.groupby('datetime').kurt()
+
+@support_numpy
+def MAX(df:pd.DataFrame):
+    """计算横截面最大值"""
+    return df.groupby('datetime').max()
+
+@support_numpy
+def MIN(df:pd.DataFrame):
+    """计算横截面最小值"""
+    return df.groupby('datetime').min()
+
+@support_numpy
+def MEDIAN(df:pd.DataFrame):
+    """计算横截面中位数"""
+    return df.groupby('datetime').median()
+
 
 @support_numpy
 def TS_RANK(df:pd.DataFrame, p:int=5):
+    """计算横截面排序"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).rank(pct=True))
 
 @support_numpy
 def TS_MAX(df:pd.DataFrame, p:int=5):
+    """计算横截面最大值"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).max())
 
 @support_numpy
 def TS_MIN(df:pd.DataFrame, p:int=5):
+    """计算横截面最小值"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).min())
 
 @support_numpy
 def TS_MEAN(df:pd.DataFrame, p:int=5):
+    """计算横截面平均值"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).mean())
 
 @support_numpy
 def TS_MEDIAN(df:pd.DataFrame, p:int=5):
+    """计算横截面中位数"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).median())
 
 @support_numpy
@@ -79,46 +115,59 @@ def PERCENTILE(df: pd.DataFrame, q: float, p: int = None):
 
 @support_numpy
 def TS_SUM(df:pd.DataFrame, p:int=5):
+    """计算横截面累加和"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 
 @support_numpy
 def TS_ARGMAX(df: pd.DataFrame, p: int = 5):
-    """
-    计算过去p天内最大值出现的位置距今天数
-    """
+    """计算过去p天内最大值出现的位置距今天数"""
     def rolling_argmax(window):
         return len(window) - window.argmax() - 1
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(rolling_argmax, raw=True))
 
-@support_numpy 
+@support_numpy
 def TS_ARGMIN(df: pd.DataFrame, p: int = 5):
-    """
-    计算过去p天内最小值出现的位置距今天数
-    """
+    """计算过去p天内最小值出现的位置距今天数"""
     def rolling_argmin(window):
         return len(window) - window.argmin() - 1
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(rolling_argmin, raw=True))
 
 
 
-def MAX(x:pd.DataFrame, y:pd.DataFrame):
-    return np.maximum(x, y)
+def MAX(x:pd.DataFrame, y:pd.DataFrame, z:pd.DataFrame=None):
+    """计算多个DataFrame之间的最大值"""
+    if z is None:
+        return np.maximum(x, y)
+    else:
+        return np.maximum(np.maximum(x, y), z)
 
-def MIN(x:pd.DataFrame, y:pd.DataFrame):
-    return np.minimum(x, y)
+
+
+
+def MIN(x:pd.DataFrame, y:pd.DataFrame, z:pd.DataFrame=None):
+    """计算多个DataFrame之间的最小值""" 
+    if z is None:
+        return np.minimum(x, y)
+    else:
+        return np.minimum(np.minimum(x, y), z)
+    
+
 
 @support_numpy
 def ABS(df:pd.DataFrame):
-    return df.groupby('instrument').transform(lambda x: x.abs())
+    """计算DataFrame中每个元素的绝对值"""   
+    return df.groupby('instrument').transform(lambda x: x.abs())    
 
 @support_numpy
 def DELAY(df:pd.DataFrame, p:int=1):
+    """将数据延迟p个周期"""
     assert p >= 0, ValueError("DELAY的时长不能小于0，否则将会造成数据窥测")
     return df.groupby('instrument').transform(lambda x: x.shift(p))
 
 
-def CORR(df1:pd.Series, df2: np.ndarray | pd.Series, p:int=5):
+def TS_CORR(df1:pd.Series, df2: np.ndarray | pd.Series, p:int=5):
+    """计算两个序列的滚动相关性"""
     if isinstance(df2, np.ndarray) and p != len(df2):
         p = len(df2)
         def corr(window):
@@ -152,7 +201,9 @@ def CORR(df1:pd.Series, df2: np.ndarray | pd.Series, p:int=5):
         result = result.reset_index(level=0, drop=True).sort_index()
         return result
 
-def COVARIANCE(df1:pd.DataFrame, df2:pd.DataFrame, p:int=5):  
+
+def TS_COVARIANCE(df1:pd.DataFrame, df2:pd.DataFrame, p:int=5):  
+    """计算两个序列的滚动协方差"""
     if isinstance(df2, np.ndarray) and p != len(df2):
         p = len(df2)
         def cov(window):
@@ -174,33 +225,35 @@ def COVARIANCE(df1:pd.DataFrame, df2:pd.DataFrame, p:int=5):
         return result
 
 @support_numpy
-def STD(df:pd.DataFrame, p:int=20):
+def TS_STD(df:pd.DataFrame, p:int=20):
+    """计算时间序列的滚动标准差(Standard Deviation)"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).std())
 
+
+
+
+
 @support_numpy
-def VAR(df: pd.DataFrame, p: int = 5, ddof: int = 1):
-    """
-    计算时间序列的滚动方差(Variance)
-    
-    参数:
-        df (pd.DataFrame): 输入数据
-        p (int): 滚动窗口大小
-        ddof (int): delta degrees of freedom，用于计算无偏方差，默认为1
-        
-    返回:
-        pd.DataFrame: 滚动方差结果
-    """
+def TS_VAR(df: pd.DataFrame, p: int = 5, ddof: int = 1):
+    """计算时间序列的滚动方差(Variance)"""
     return df.groupby('instrument').transform(
         lambda x: x.rolling(p, min_periods=1).var(ddof=ddof)
     )
 
 @support_numpy
 def SIGN(df: pd.DataFrame):
+    """计算DataFrame中每个元素的符号"""
     return np.sign(df)
 
 @support_numpy
 def SMA(df:pd.DataFrame, m:float=None, n:float=None):
     """
+    计算简单移动平均线(Simple Moving Average)
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        m (float, optional): 移动平均的周期数
+        n (float, optional): 移动平均的权重
     Y_{i+1} = m/n*X_i + (1 - m/n)*Y_i
     """
         
@@ -211,10 +264,30 @@ def SMA(df:pd.DataFrame, m:float=None, n:float=None):
 
 @support_numpy
 def EMA(df:pd.DataFrame, p):
+    """
+    计算指数移动平均线(Exponential Moving Average)
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 移动平均的周期数
+
+    返回:
+        pd.DataFrame: 指数移动平均线结果
+    """
     return df.groupby('instrument').transform(lambda x: x.ewm(span=int(p), min_periods=1).mean())
     
 @support_numpy
 def WMA(df:pd.DataFrame, p:int=20):
+    """
+    计算加权移动平均线(Weighted Moving Average)
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 移动平均的周期数
+        
+    返回:
+        pd.DataFrame: 加权移动平均线结果
+    """
     # 计算权重，最近的数据（i=0）有最大的权重
     weights = [0.9**i for i in range(p)][::-1]
     def calculate_wma(window):
@@ -225,22 +298,61 @@ def WMA(df:pd.DataFrame, p:int=20):
 
 @support_numpy
 def COUNT(cond:pd.DataFrame, p:int=20):
+    """
+    计算条件计数
+    
+    参数:
+        cond (pd.DataFrame): 条件数据
+        p (int): 滚动窗口大小
+    
+    返回:
+        pd.DataFrame: 条件计数结果
+    """
     return cond.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 @support_numpy
 def SUMIF(df:pd.DataFrame, p:int, cond:pd.DataFrame):
+    """
+    计算满足条件的序列的滚动和
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 滚动窗口大小
+        cond (pd.DataFrame): 条件数据
+    
+    返回:
+        pd.DataFrame: 满足条件的序列的滚动和
+    """
     return (df * cond).groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 @support_numpy
 def FILTER(df:pd.DataFrame, cond:pd.DataFrame):
     """
-    Filtering A based on condition
+    根据条件过滤序列
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        cond (pd.DataFrame): 条件数据
+    
+    返回:
+        pd.DataFrame: 根据条件过滤后的序列
     """
     return df.mul(cond)
     
 
 @support_numpy
 def PROD(df:pd.DataFrame, p:int=5):
+    """
+    计算序列的滚动乘积
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 滚动窗口大小
+    
+    返回:
+        pd.DataFrame: 滚动乘积结果
+    """
+
     # 使用rolling方法创建一个滑动窗口，然后应用累乘
     if isinstance(p, int):
         return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(lambda x: x.prod(), raw=True))
@@ -249,6 +361,16 @@ def PROD(df:pd.DataFrame, p:int=5):
 
 @support_numpy
 def DECAYLINEAR(df:pd.DataFrame, p:int=5):
+    """
+    计算序列的线性衰减加权平均
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 滚动窗口大小
+    
+    返回:
+        pd.DataFrame: 线性衰减加权平均结果
+    """
     assert isinstance(p, int), ValueError(f"DECAYLINEAR仅接收正整数参数n，接收到{type(p).__name__}")
     decay_weights = np.arange(1, p+1, 1)
     decay_weights = decay_weights / decay_weights.sum()
@@ -260,6 +382,16 @@ def DECAYLINEAR(df:pd.DataFrame, p:int=5):
 
 @support_numpy
 def HIGHDAY(df:pd.DataFrame, p:int=5):
+    """
+    计算序列中最大值出现的位置距今天数
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 滚动窗口大小
+    
+    返回:
+        pd.DataFrame: 最大值出现的位置距今天数
+    """
     assert isinstance(p, int), ValueError(f"HIGHDAY仅接收正整数参数n，接收到{type(p).__name__}")
     def highday(window):
         return len(window) - window.argmax(axis=0)
@@ -267,6 +399,16 @@ def HIGHDAY(df:pd.DataFrame, p:int=5):
 
 @support_numpy
 def LOWDAY(df:pd.DataFrame, p:int=5):
+    """
+    计算序列中最小值出现的位置距今天数
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 滚动窗口大小
+    
+    返回:
+        pd.DataFrame: 最小值出现的位置距今天数
+    """
     assert isinstance(p, int), ValueError(f"LOWDAY仅接收正整数参数n，接收到{type(p).__name__}")
     def lowday(window):
         return len(window) - window.argmin(axis=0)
@@ -274,11 +416,27 @@ def LOWDAY(df:pd.DataFrame, p:int=5):
     
 
 def SEQUENCE(n):
+    """
+    生成一个从1到n的等差数列
+    
+    参数:
+        n (int): 数列的长度
+    """
     assert isinstance(n, int), ValueError(f"SEQUENCE(n)仅接收正整数参数n，接收到{type(n).__name__}")
     return np.linspace(1, n, n, dtype=np.float32)
 
 @support_numpy
 def SUMAC(df:pd.DataFrame, p:int=10):
+    """
+    计算序列的滚动累加和
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        p (int): 滚动窗口大小
+    
+    返回:
+        pd.DataFrame: 滚动累加和结果
+    """
     assert isinstance(p, int), ValueError(f"SUMAC仅接收正整数参数n，接收到{type(p).__name__}")
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
@@ -470,36 +628,44 @@ def REGRESI(df1: pd.DataFrame, df2: pd.DataFrame, p: int = 5, n_jobs: int = -1):
 ### 数学运算
 @support_numpy
 def EXP(df:pd.DataFrame):
+    """
+    计算序列的指数值
+    
+    参数:
+        df (pd.DataFrame): 输入数据
+        
+    返回:
+        pd.DataFrame: 指数值结果
+    """
     return df.apply(np.exp)
 
 @support_numpy
 def SQRT(df: pd.DataFrame):
+    """计算序列的平方根"""
     if isinstance(df, int):
         return np.sqrt(df)
     return df.apply(np.sqrt)
 
 @support_numpy
 def LOG(df:pd.DataFrame):
+    """计算序列的自然对数"""
     if isinstance(df, int):
         return np.log(df)
     return (df+1).apply(np.log)
 
 @support_numpy
 def INV(df: pd.DataFrame):
-    """
-    计算序列的倒数 (1/x)
-    
-    参数:
-        df (pd.DataFrame): 输入数据
-        
-    返回:
-        pd.DataFrame: 倒数结果
-    """
+    """计算序列的倒数 (1/x)"""
     return 1 / df
 
 @support_numpy
 def POW(df:pd.DataFrame, n:int):
+    """计算序列的幂"""
     return np.power(df, n)
+
+def FLOOR(df:pd.DataFrame):
+    """计算序列的向下取整"""
+    return df.apply(np.floor)
 
 @support_numpy
 def TS_ZSCORE(df: pd.DataFrame, p:int=5):
@@ -608,6 +774,17 @@ def OR(df1, df2):
 
 
 def MACD(price_df, short_window=12, long_window=26):
+    """
+    计算MACD指标
+    
+    参数:
+        price_df: pd.DataFrame - 价格数据
+        short_window: int - 短期EMA的窗口大小，默认为12
+        long_window: int - 长期EMA的窗口大小，默认为26
+        
+    返回:
+        pd.DataFrame: MACD结果
+    """
     # 计算短期EMA
     short_ema = EMA(price_df, short_window)
     
@@ -620,6 +797,16 @@ def MACD(price_df, short_window=12, long_window=26):
 
 
 def RSI(price_df, window=14):
+    """
+    计算相对强弱指数(RSI)
+    
+    参数:
+        price_df: pd.DataFrame - 价格数据
+        window: int - RSI的窗口大小，默认为14
+
+    返回:
+        pd.DataFrame: RSI结果
+    """
     # 计算价格变化
     price_change = DELTA(price_df, 1)
     
@@ -679,8 +866,8 @@ def BB_MIDDLE(price_df, window, n_jobs=-1):
     
     参数:
         price_df: pd.DataFrame - 价格数据
-        window: int 或 pd.DataFrame - 窗口大小，可以是固定整数或与price_df格式相同的DataFrame
-        n_jobs: int - 并行计算的作业数，默认为-1（使用所有可用CPU）
+        window: int 或 pd.DataFrame - 窗口大小
+        n_jobs: int - 并行计算的作业数，默认为-1
     """
     if isinstance(window, (int, float)):
         # 如果window是固定值，使用原来的逻辑
@@ -713,7 +900,6 @@ def BB_UPPER(price_df, window, n_jobs=-1):
     参数:
         price_df: pd.DataFrame - 价格数据
         window: int 或 pd.DataFrame - 窗口大小
-        multiplier: float - 标准差倍数，默认为2
         n_jobs: int - 并行计算的作业数，默认为-1
     """
     

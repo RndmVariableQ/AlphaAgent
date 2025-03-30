@@ -565,17 +565,17 @@ def tasks_window(tasks: list[FactorTask | ModelTask]):
         tabs = st.tabs(tnames)
         for i, ft in enumerate(tasks):
             with tabs[i]:
-                st.markdown(f"##### **Factor Name**: `{ft.factor_name}`")
-                st.markdown(f"##### **Factor Expression**: `{ft.factor_expression}`")
-                # st.markdown(f"**Description**: {ft.factor_description}")
+                st.markdown(f"- ##### **Factor Name** 📌: \n```\n{ft.factor_name}\n```")
+                st.markdown(f"- ##### **Description** 📝: \n```\n{ft.factor_description}\n```")
+                st.markdown(f"- ##### **Expression** ✨: \n```\n{ft.factor_expression}\n```")
                 # st.latex("Formulation")
                 # st.latex(ft.factor_formulation)
 
-                mks = "| Variable | Description |\n| --- | --- |\n"
-                if isinstance(ft.variables, dict):
-                    for v, d in ft.variables.items():
-                        mks += f"| ${v.replace('$', '')}$ | {d} |\n"
-                    st.markdown(mks)
+                # mks = "| Variable | Description |\n| --- | --- |\n"
+                # if isinstance(ft.variables, dict):
+                #     for v, d in ft.variables.items():
+                #         mks += f"| ${v.replace('$', '')}$ | {d} |\n"
+                #     st.markdown(mks)
 
     elif isinstance(tasks[0], ModelTask):
         st.markdown("**Model Tasks🚩**")
@@ -752,7 +752,7 @@ def evolving_window():
 
     # Evolving Status
     if state.erounds[round] > 0:
-        st.markdown("**☑️ Evolving Status**")
+        st.markdown("##### **☑️ Evolving Status**")
         es = state.e_decisions[round]
         e_status_mks = "".join(f"| {ei} " for ei in range(1, state.erounds[round] + 1)) + "|\n"
         e_status_mks += "|--" * state.erounds[round] + "|\n"
@@ -797,7 +797,7 @@ def evolving_window():
         for j, w in enumerate(ws):
             with wtabs[j]:
                 # 只展示表达式而不是整个代码块
-                st.markdown(f"**Expression**: `{w.target_task.factor_expression if isinstance(w.target_task, FactorTask) else w.target_task.name}`")
+                st.markdown(f"- ##### **Expression** ✨: \n```\n{w.target_task.factor_expression if isinstance(w.target_task, FactorTask) else w.target_task.name}\n```")
 
                 # Evolving Feedback
                 if len(state.msgs[round]["d.evolving feedback"]) >= evolving_round:
