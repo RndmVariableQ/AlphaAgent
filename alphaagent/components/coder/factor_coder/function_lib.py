@@ -30,6 +30,10 @@ def RANK(df:pd.DataFrame):
     return df.groupby('datetime').rank(pct=True)
 
 @support_numpy
+def MEAN(df:pd.DataFrame):
+    return df.groupby('instrument').mean()
+
+@support_numpy
 def TS_RANK(df:pd.DataFrame, p:int=5):
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).rank(pct=True))
 
@@ -44,8 +48,6 @@ def TS_MIN(df:pd.DataFrame, p:int=5):
 @support_numpy
 def TS_MEAN(df:pd.DataFrame, p:int=5):
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).mean())
-
-MEAN = TS_MEAN
 
 @support_numpy
 def TS_MEDIAN(df:pd.DataFrame, p:int=5):
@@ -73,8 +75,10 @@ def PERCENTILE(df: pd.DataFrame, q: float, p: int = None):
         # 如果没有滚动窗口大小，直接计算分位数
         return df.groupby('instrument').transform(lambda x: x.quantile(q))
 
+
+
 @support_numpy
-def SUM(df:pd.DataFrame, p:int=5):
+def TS_SUM(df:pd.DataFrame, p:int=5):
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 
@@ -525,7 +529,7 @@ def SCALE(df: pd.DataFrame, target_sum: float = 1.0):
 
 
 @support_numpy
-def MAD(df: pd.DataFrame, p: int = 5):
+def TS_MAD(df: pd.DataFrame, p: int = 5):
     """
     计算时间序列的滚动中位数绝对偏差(Median Absolute Deviation)
     
@@ -579,7 +583,7 @@ def TS_PCTCHANGE(df: pd.DataFrame, p: int = 1):
     返回:
         pd.DataFrame: 百分比变化结果
     """
-    return df.groupby('instrument').transform(lambda x: x.pct_change(periods=p))
+    return df.groupby('instrument').transform(lambda x: x.pct_change(periods=p).fillna(0))
 
 
 def ADD(df1, df2):

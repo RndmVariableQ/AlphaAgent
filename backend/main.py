@@ -18,10 +18,10 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"], # 允许所有来源
+    allow_credentials=True, # 允许携带凭证
+    allow_methods=["*"], # 允许所有方法
+    allow_headers=["*"], # 允许所有头
 )
 
 # 将共享资源的初始化移到startup事件中
@@ -62,7 +62,7 @@ def mine_wrapper(direction, stop_event, task_id):
     try:
         result = None
         while not stop_event.is_set():
-            # 模拟一个长时间运行的任务
+            # 一个长时间运行的任务
             result = mine(direction=direction, stop_event=stop_event)
             if stop_event.is_set():
                 break
@@ -209,11 +209,15 @@ def list_tasks():
     with task_lock:
         return [dict(task) for task in tasks.values()]
 
+
+
+
 @app.post("/api/tasks/{task_id}/stop")
 async def stop_task(task_id: str):
     logger.info(f"Stop signal received.")
     with task_lock:
         if task_id not in tasks:
+            return {"message": "Task not found"}
             raise HTTPException(status_code=404, detail="Task not found")
         task = tasks[task_id]
         task["stop"] = True

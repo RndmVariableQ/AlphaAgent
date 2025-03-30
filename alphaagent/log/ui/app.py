@@ -44,8 +44,7 @@ if '_watch' not in state:
     state._watch = True
     st.cache_data.clear()  # 使用 st.cache_data 替代 st.experimental_memo
 
-
-# 在session_state初始化部分添加
+# 在与state.current_task相关定义的地方附近添加自动刷新的state变量
 if "current_task" not in state:
     state.current_task = None
 if "api_base" not in state:
@@ -780,8 +779,7 @@ def evolving_window():
         ws: list[FactorFBWorkspace | ModelFBWorkspace] = state.msgs[round]["d.evolving code"][
             evolving_round - 1
         ].content
-        # All Tasks
-
+        
         tab_names = [
             w.target_task.factor_name if isinstance(w.target_task, FactorTask) else w.target_task.name for w in ws
         ]
@@ -791,16 +789,15 @@ def evolving_window():
                     tab_names[j] += "✔️"
                 else:
                     tab_names[j] += "❌"
+                    
         if sum(len(tn) for tn in tab_names) > 100:
             tabs_hint()
+            
         wtabs = st.tabs(tab_names)
         for j, w in enumerate(ws):
             with wtabs[j]:
-                # Evolving Code
-                st.markdown(f"**Workspace Path**: {w.workspace_path}")
-                for k, v in w.code_dict.items():
-                    with st.expander(f":green[`{k}`]", expanded=True):
-                        st.code(v, language="python")
+                # 只展示表达式而不是整个代码块
+                st.markdown(f"**Expression**: `{w.target_task.factor_expression if isinstance(w.target_task, FactorTask) else w.target_task.name}`")
 
                 # Evolving Feedback
                 if len(state.msgs[round]["d.evolving feedback"]) >= evolving_round:
@@ -925,7 +922,14 @@ with st.sidebar:
             state.current_task = None
             print("Stop succeeds")
         st.rerun()
-        
+
+    # 删除自动刷新控制代码，仅保留手动刷新按钮
+    if state.current_task:
+        # 手动刷新按钮 - 使用英文
+        if st.button("🔄 Refresh Now", use_container_width=True):
+            refresh(same_trace=True)
+            get_msgs_until(lambda m: False)
+            st.rerun()
 
 
 # Debug Info Window

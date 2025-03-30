@@ -38,6 +38,7 @@ class LLMSettings(ExtendedBaseSettings):
     chat_azure_api_base: str = ""
     chat_azure_api_version: str = ""
     chat_model: str = "gpt-4-turbo"
+    reasoning_model: str = ""
     chat_max_tokens: int = 3000
     chat_temperature: float = 0.5
     chat_stream: bool = True
@@ -48,6 +49,7 @@ class LLMSettings(ExtendedBaseSettings):
         100000  # 100000 is the maximum limit of gpt4, which might increase in the future version of gpt
     )
     default_system_prompt: str = "You are an AI assistant who helps to answer user's questions."
+    factor_mining_timeout: int = 36000 # 10小时，单位：秒
 
     # Embedding configs
     embedding_openai_api_key: str = ""

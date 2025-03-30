@@ -248,6 +248,7 @@ class APIBackend:
         *,
         chat_api_key: str | None = None,
         chat_model: str | None = None,
+        reasoning_model: str | None = None,
         chat_api_base: str | None = None,
         chat_api_version: str | None = None,
         embedding_api_key: str | None = None,
@@ -333,6 +334,7 @@ class APIBackend:
             
 
             self.chat_model = LLM_SETTINGS.chat_model if chat_model is None else chat_model
+            self.reasoning_model = LLM_SETTINGS.reasoning_model if reasoning_model is None else reasoning_model
             self.chat_model_map = json.loads(LLM_SETTINGS.chat_model_map)
             # self.encoder = self._get_encoder()
             self.chat_api_base = LLM_SETTINGS.chat_azure_api_base if chat_api_base is None else chat_api_base
@@ -621,6 +623,7 @@ class APIBackend:
     def _create_chat_completion_inner_function(  # noqa: C901, PLR0912, PLR0915
         self,
         messages: list[dict],
+        reasoning_flag = True,
         temperature: float | None = None,
         max_tokens: int | None = None,
         chat_cache_prefix: str = "",
@@ -671,7 +674,13 @@ class APIBackend:
             tag = caller_locals["self"].__class__.__name__
         else:
             tag = inspect.stack()[4].function
-        model = self.chat_model_map.get(tag, self.chat_model)
+            
+        if reasoning_flag:
+            model = self.reasoning_model
+            json_mode = None
+        else:
+            model = self.chat_model_map.get(tag, self.chat_model)
+        # import pdb; pdb.set_trace()
 
         finish_reason = None
         if self.use_llama2:
@@ -762,7 +771,7 @@ class APIBackend:
                         ),
                         tag="llm_messages",
                     )
-            if json_mode:
+            if json_mode or reasoning_flag:
                 # 提取JSON部分
                 json_start = resp.find('{')
                 json_end = resp.rfind('}') + 1

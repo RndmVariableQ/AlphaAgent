@@ -50,7 +50,7 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
   python scripts/dump_bin.py dump_all ... \
   --include_fields open,high,low,close,preclose,volume,amount,turn,pctChg,peTTM,pbMRQ,psTTM,pcfNcfTTM,isST,factor \
   --csv_path  ~/.qlib/qlib_data/cn_data/raw_data_now \
-  --qlib_dir ~/.qlib/qlib_data/latest_data \
+  --qlib_dir ~/.qlib/qlib_data/cn_data \
   --date_field_name date \
   --symbol_field_name code
 

@@ -128,6 +128,7 @@ class FactorCodeEvaluator(FactorEvaluator):
             user_prompt=user_prompt,
             system_prompt=system_prompt,
             json_mode=False,
+            reasoning_flag=False,
         )
 
         return critic_response, None
@@ -214,7 +215,10 @@ class FactorOutputFormatEvaluator(FactorEvaluator):
             try:
                 api = APIBackend() if attempts == 0 else APIBackend(use_chat_cache=False)
                 resp = api.build_messages_and_create_chat_completion(
-                    user_prompt=gen_df_info_str, system_prompt=system_prompt, json_mode=True
+                    user_prompt=gen_df_info_str, 
+                    system_prompt=system_prompt, 
+                    json_mode=True, 
+                    reasoning_flag=False,
                 )
                 resp_dict = json.loads(resp)
                 resp_dict["output_format_decision"] = str(resp_dict["output_format_decision"]).lower() in ["true", "1"]
@@ -558,6 +562,7 @@ class FactorFinalDecisionEvaluator(FactorEvaluator):
                     api.build_messages_and_create_chat_completion(
                         user_prompt=user_prompt,
                         system_prompt=system_prompt,
+                        reasoning_flag=False,
                         json_mode=True,
                         seed=attempts,  # in case of useless retrying when cache enabled.
                     ),

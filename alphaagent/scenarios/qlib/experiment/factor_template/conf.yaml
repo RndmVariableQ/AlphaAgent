@@ -6,21 +6,21 @@
 # benchmark: &benchmark SPX
 
 qlib_init:
-    provider_uri: "~/.qlib/qlib_data/baostock_data"
+    provider_uri: "~/.qlib/qlib_data/latest_data"
     region: cn
 
 market: &market csi500
 benchmark: &benchmark SH000905
 
 data_handler_config: &data_handler_config
-    start_time: 2015-01-01
-    end_time: 2024-12-30
+    start_time: 2019-01-01
+    end_time: 2025-02-28
     instruments: *market
     data_loader:
         class: qlib.contrib.data.loader.QlibDataLoader
         kwargs:
             config:
-                feature: ["($close-$open)/$open",  "$volume/Mean($volume, 20)", "($high-$low)/Ref($close, 1)", "$close/Ref($close, 1)-1"] # "$high", "$low", "$close", "$volume"
+                feature: ["($close-$open)/$open", "$volume/Mean($volume, 20)", "($high-$low)/Ref($close, 1)", "$close/Ref($close, 1)-1"] # "$high", "$low", "$close", "$volume"
                 label: 
                     - ["Ref($close, -2)/Ref($close, -1) - 1"]
                     - ["LABEL0"]
@@ -53,16 +53,16 @@ port_analysis_config: &port_analysis_config
         module_path: qlib.contrib.strategy
         kwargs:
             signal: <PRED>
-            topk: 50
-            n_drop: 5
+            topk: 100
+            n_drop: 10
     backtest:
-        start_time: 2021-01-01
-        end_time: 2024-12-30
-        account: 100000000
+        start_time: 2024-01-01
+        end_time: 2025-02-28
+        account: 10000000
         benchmark: *benchmark
         exchange_kwargs:
             limit_threshold: 0.095
-            deal_price: open
+            deal_price: close
             open_cost: 0.0005
             close_cost: 0.0015
             min_cost: 5
@@ -118,9 +118,9 @@ task:
                 module_path: qlib.contrib.data.handler
                 kwargs: *data_handler_config
             segments:
-                train: [2015-01-01, 2019-12-31]
-                valid: [2020-01-01, 2020-12-31]
-                test: [2021-01-01, 2024-12-30]
+                train: [2019-01-01, 2023-06-01]
+                valid: [2023-06-01, 2023-12-31]
+                test: [2024-01-01, 2025-02-28]
     record: 
         - class: SignalRecord
           module_path: qlib.workflow.record_temp

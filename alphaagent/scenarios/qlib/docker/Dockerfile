@@ -1,9 +1,9 @@
-FROM hub.geekery.cn/pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
+FROM hub.fast360.xyz/pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
 
 # For GPU support, please choose the proper tag from https://hub.docker.com/r/pytorch/pytorch/tags
 
-RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
-    apt-get clean && apt-get update && apt-get install -y \  
+RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list  
+RUN apt-get clean && apt-get update && apt-get install -y \  
     curl \  
     vim \  
     git \  

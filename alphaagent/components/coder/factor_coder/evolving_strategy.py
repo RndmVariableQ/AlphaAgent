@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-
+import re
 from jinja2 import Environment, StrictUndefined
 
 from alphaagent.components.coder.CoSTEER.evolving_strategy import (
@@ -106,7 +106,7 @@ class FactorMultiProcessEvolvingStrategy(MultiProcessEvolvingStrategy):
             target_factor_task_information
         ][1]
 
-        # import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
         system_prompt = (
             Environment(undefined=StrictUndefined)
             .from_string(
@@ -142,10 +142,16 @@ class FactorMultiProcessEvolvingStrategy(MultiProcessEvolvingStrategy):
                     implement_prompts["evolving_strategy_factor_implementation_v2_user"],
                 )
                 .render(
-                    factor_information_str=target_factor_task_information,
-                    queried_similar_successful_knowledge=queried_similar_successful_knowledge_to_render,
+                    # factor_information_str=target_factor_task_information,
+                    # queried_similar_successful_knowledge=queried_similar_successful_knowledge_to_render,
+                    # queried_similar_error_knowledge=queried_similar_error_knowledge_to_render,
+                    # error_summary_critics=error_summary_critics,
+                    # latest_attempt_to_latest_successful_execution=latest_attempt_to_latest_successful_execution,
+                    factor_information_str=target_task.get_task_description(),
                     queried_similar_error_knowledge=queried_similar_error_knowledge_to_render,
                     error_summary_critics=error_summary_critics,
+                    similar_successful_factor_description=queried_similar_successful_knowledge_to_render[0].target_task.get_task_description(),
+                    similar_successful_expression=self.extract_expr(queried_similar_successful_knowledge_to_render[0].implementation.code),
                     latest_attempt_to_latest_successful_execution=latest_attempt_to_latest_successful_execution,
                 )
                 .strip("\n")
@@ -196,6 +202,16 @@ class FactorParsingStrategy(MultiProcessEvolvingStrategy):
         self.num_loop = 0
         self.haveSelected = False
 
+    def extract_expr(self, code_str: str) -> str:
+        """从代码字符串中提取expr表达式"""
+        # 使用正则表达式匹配expr = "xxx"或expr = 'xxx'的模式
+        pattern = r'expr\s*=\s*["\']([^"\']*)["\']'
+        match = re.search(pattern, code_str)
+        if match:
+            return match.group(1)
+        else:
+            return ""
+
 
     def implement_one_task(
         self,
@@ -206,6 +222,7 @@ class FactorParsingStrategy(MultiProcessEvolvingStrategy):
         #   选择模板 -> 套用模板 -> 返回code
         # 若之前有报错：
         #   提供报错信息、失败/成功案例给GPT -> 重写表达式
+
         
         target_factor_task_information = target_task.get_task_information()
 
@@ -251,7 +268,8 @@ class FactorParsingStrategy(MultiProcessEvolvingStrategy):
                 )
                 .render(
                     scenario=self.scen.get_scenario_all_desc(target_task, filtered_tag="feature"),
-                    queried_former_failed_knowledge=queried_former_failed_knowledge_to_render,
+                    # former_expression=self.extract_expr(queried_former_failed_knowledge_to_render[-1].implementation.code),
+                    # former_feedback=queried_former_failed_knowledge_to_render[-1].feedback,
                 )
             )
             queried_similar_successful_knowledge_to_render = queried_similar_successful_knowledge
@@ -279,14 +297,18 @@ class FactorParsingStrategy(MultiProcessEvolvingStrategy):
                         alphaagent_implement_prompts["evolving_strategy_factor_implementation_v2_user"],
                     )
                     .render(
-                        factor_information_str=target_factor_task_information,
-                        queried_similar_successful_knowledge=queried_similar_successful_knowledge_to_render,
+                        factor_information_str=target_task.get_task_description(),
                         queried_similar_error_knowledge=queried_similar_error_knowledge_to_render,
+                        former_expression=self.extract_expr(queried_former_failed_knowledge_to_render[-1].implementation.code),
+                        former_feedback=queried_former_failed_knowledge_to_render[-1].feedback,
                         error_summary_critics=error_summary_critics,
+                        similar_successful_factor_description=queried_similar_successful_knowledge_to_render[-1].target_task.get_task_description(),
+                        similar_successful_expression=self.extract_expr(queried_similar_successful_knowledge_to_render[-1].implementation.code),
                         latest_attempt_to_latest_successful_execution=latest_attempt_to_latest_successful_execution,
                     )
                     .strip("\n")
                 )
+
                 if (
                     APIBackend().build_messages_and_calculate_token(user_prompt=user_prompt, system_prompt=system_prompt)
                     < LLM_SETTINGS.chat_token_limit
