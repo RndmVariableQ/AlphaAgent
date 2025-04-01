@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
-def support_numpy(func):
+
+def datatype_adapter(func):
     def wrapper(*args):
         # 对于单个输入，若是np array，则转成df
         if len(args) == 1 and isinstance(args[0], np.ndarray):
@@ -33,75 +34,75 @@ def support_numpy(func):
 
     return wrapper
 
-@support_numpy
+@datatype_adapter
 def DELTA(df:pd.DataFrame, p:int=1):
     return df.groupby('instrument').transform(lambda x: x.diff(periods=p))
 
-@support_numpy
+@datatype_adapter
 def RANK(df:pd.DataFrame):
     return df.groupby('datetime').rank(pct=True)
 
-@support_numpy
+@datatype_adapter
 def MEAN(df:pd.DataFrame):
     return df.groupby('datetime').mean()
 
-@support_numpy
+@datatype_adapter
 def STD(df:pd.DataFrame):
     """计算横截面标准差"""
     return df.groupby('datetime').std()
 
-@support_numpy
+@datatype_adapter
 def SKEW(df:pd.DataFrame):
     """计算横截面偏度"""
     return df.groupby('datetime').skew()
 
-@support_numpy
+@datatype_adapter
 def KURT(df:pd.DataFrame):
     """计算横截面峰度"""
     return df.groupby('datetime').kurt()
 
-@support_numpy
+@datatype_adapter
 def MAX(df:pd.DataFrame):
     """计算横截面最大值"""
     return df.groupby('datetime').max()
 
-@support_numpy
+@datatype_adapter
 def MIN(df:pd.DataFrame):
     """计算横截面最小值"""
     return df.groupby('datetime').min()
 
-@support_numpy
+@datatype_adapter
 def MEDIAN(df:pd.DataFrame):
     """计算横截面中位数"""
     return df.groupby('datetime').median()
 
 
-@support_numpy
+@datatype_adapter
 def TS_RANK(df:pd.DataFrame, p:int=5):
     """计算横截面排序"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).rank(pct=True))
 
-@support_numpy
+@datatype_adapter
 def TS_MAX(df:pd.DataFrame, p:int=5):
     """计算横截面最大值"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).max())
 
-@support_numpy
+@datatype_adapter
 def TS_MIN(df:pd.DataFrame, p:int=5):
     """计算横截面最小值"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).min())
 
-@support_numpy
+@datatype_adapter
 def TS_MEAN(df:pd.DataFrame, p:int=5):
     """计算横截面平均值"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).mean())
 
-@support_numpy
+@datatype_adapter
 def TS_MEDIAN(df:pd.DataFrame, p:int=5):
     """计算横截面中位数"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).median())
 
-@support_numpy
+@datatype_adapter
 def PERCENTILE(df: pd.DataFrame, q: float, p: int = None):
     """
     计算给定数据的分位数。
@@ -125,20 +126,20 @@ def PERCENTILE(df: pd.DataFrame, q: float, p: int = None):
 
 
 
-@support_numpy
+@datatype_adapter
 def TS_SUM(df:pd.DataFrame, p:int=5):
     """计算横截面累加和"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 
-@support_numpy
+@datatype_adapter
 def TS_ARGMAX(df: pd.DataFrame, p: int = 5):
     """计算过去p天内最大值出现的位置距今天数"""
     def rolling_argmax(window):
         return len(window) - window.argmax() - 1
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(rolling_argmax, raw=True))
 
-@support_numpy
+@datatype_adapter
 def TS_ARGMIN(df: pd.DataFrame, p: int = 5):
     """计算过去p天内最小值出现的位置距今天数"""
     def rolling_argmin(window):
@@ -166,12 +167,12 @@ def MIN(x:pd.DataFrame, y:pd.DataFrame, z:pd.DataFrame=None):
     
 
 
-@support_numpy
+@datatype_adapter
 def ABS(df:pd.DataFrame):
     """计算DataFrame中每个元素的绝对值"""   
     return df.groupby('instrument').transform(lambda x: x.abs())    
 
-@support_numpy
+@datatype_adapter
 def DELAY(df:pd.DataFrame, p:int=1):
     """将数据延迟p个周期"""
     assert p >= 0, ValueError("DELAY的时长不能小于0，否则将会造成数据窥测")
@@ -236,7 +237,7 @@ def TS_COVARIANCE(df1:pd.DataFrame, df2:pd.DataFrame, p:int=5):
         result = result.reset_index(level=0, drop=True).sort_index()
         return result
 
-@support_numpy
+@datatype_adapter
 def TS_STD(df:pd.DataFrame, p:int=20):
     """计算时间序列的滚动标准差(Standard Deviation)"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).std())
@@ -245,19 +246,19 @@ def TS_STD(df:pd.DataFrame, p:int=20):
 
 
 
-@support_numpy
+@datatype_adapter
 def TS_VAR(df: pd.DataFrame, p: int = 5, ddof: int = 1):
     """计算时间序列的滚动方差(Variance)"""
     return df.groupby('instrument').transform(
         lambda x: x.rolling(p, min_periods=1).var(ddof=ddof)
     )
 
-@support_numpy
+@datatype_adapter
 def SIGN(df: pd.DataFrame):
     """计算DataFrame中每个元素的符号"""
     return np.sign(df)
 
-@support_numpy
+@datatype_adapter
 def SMA(df:pd.DataFrame, m:float=None, n:float=None):
     """
     计算简单移动平均线(Simple Moving Average)
@@ -274,7 +275,7 @@ def SMA(df:pd.DataFrame, m:float=None, n:float=None):
     else:
         return df.groupby('instrument').transform(lambda x: x.ewm(alpha=n/m).mean())
 
-@support_numpy
+@datatype_adapter
 def EMA(df:pd.DataFrame, p):
     """
     计算指数移动平均线(Exponential Moving Average)
@@ -288,7 +289,7 @@ def EMA(df:pd.DataFrame, p):
     """
     return df.groupby('instrument').transform(lambda x: x.ewm(span=int(p), min_periods=1).mean())
     
-@support_numpy
+@datatype_adapter
 def WMA(df:pd.DataFrame, p:int=20):
     """
     计算加权移动平均线(Weighted Moving Average)
@@ -308,7 +309,7 @@ def WMA(df:pd.DataFrame, p:int=20):
     # 应用权重计算滑动WMA
     return df.groupby('instrument').transform(lambda x: x.rolling(window=p, min_periods=1).apply(calculate_wma, raw=True))
 
-@support_numpy
+@datatype_adapter
 def COUNT(cond:pd.DataFrame, p:int=20):
     """
     计算条件计数
@@ -322,7 +323,7 @@ def COUNT(cond:pd.DataFrame, p:int=20):
     """
     return cond.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
-@support_numpy
+@datatype_adapter
 def SUMIF(df:pd.DataFrame, p:int, cond:pd.DataFrame):
     """
     计算满足条件的序列的滚动和
@@ -337,7 +338,7 @@ def SUMIF(df:pd.DataFrame, p:int, cond:pd.DataFrame):
     """
     return (df * cond).groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
-@support_numpy
+@datatype_adapter
 def FILTER(df:pd.DataFrame, cond:pd.DataFrame):
     """
     根据条件过滤序列
@@ -352,7 +353,7 @@ def FILTER(df:pd.DataFrame, cond:pd.DataFrame):
     return df.mul(cond)
     
 
-@support_numpy
+@datatype_adapter
 def PROD(df:pd.DataFrame, p:int=5):
     """
     计算序列的滚动乘积
@@ -371,7 +372,7 @@ def PROD(df:pd.DataFrame, p:int=5):
     else:
         return df.mul(p)    
 
-@support_numpy
+@datatype_adapter
 def DECAYLINEAR(df:pd.DataFrame, p:int=5):
     """
     计算序列的线性衰减加权平均
@@ -392,7 +393,7 @@ def DECAYLINEAR(df:pd.DataFrame, p:int=5):
     
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(calculate_deycaylinear, raw=True))
 
-@support_numpy
+@datatype_adapter
 def HIGHDAY(df:pd.DataFrame, p:int=5):
     """
     计算序列中最大值出现的位置距今天数
@@ -409,7 +410,7 @@ def HIGHDAY(df:pd.DataFrame, p:int=5):
         return len(window) - window.argmax(axis=0)
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).apply(highday, raw=True))
 
-@support_numpy
+@datatype_adapter
 def LOWDAY(df:pd.DataFrame, p:int=5):
     """
     计算序列中最小值出现的位置距今天数
@@ -437,7 +438,7 @@ def SEQUENCE(n):
     assert isinstance(n, int), ValueError(f"SEQUENCE(n)仅接收正整数参数n，接收到{type(n).__name__}")
     return np.linspace(1, n, n, dtype=np.float32)
 
-@support_numpy
+@datatype_adapter
 def SUMAC(df:pd.DataFrame, p:int=10):
     """
     计算序列的滚动累加和
@@ -638,7 +639,7 @@ def REGRESI(df1: pd.DataFrame, df2: pd.DataFrame, p: int = 5, n_jobs: int = -1):
 
         
 ### 数学运算
-@support_numpy
+@datatype_adapter
 def EXP(df:pd.DataFrame):
     """
     计算序列的指数值
@@ -651,26 +652,26 @@ def EXP(df:pd.DataFrame):
     """
     return df.apply(np.exp)
 
-@support_numpy
+@datatype_adapter
 def SQRT(df: pd.DataFrame):
     """计算序列的平方根"""
     if isinstance(df, int):
         return np.sqrt(df)
     return df.apply(np.sqrt)
 
-@support_numpy
+@datatype_adapter
 def LOG(df:pd.DataFrame):
     """计算序列的自然对数"""
     if isinstance(df, int):
         return np.log(df)
     return (df+1).apply(np.log)
 
-@support_numpy
+@datatype_adapter
 def INV(df: pd.DataFrame):
     """计算序列的倒数 (1/x)"""
     return 1 / df
 
-@support_numpy
+@datatype_adapter
 def POW(df:pd.DataFrame, n:int):
     """计算序列的幂"""
     return np.power(df, n)
@@ -679,13 +680,13 @@ def FLOOR(df:pd.DataFrame):
     """计算序列的向下取整"""
     return df.apply(np.floor)
 
-@support_numpy
+@datatype_adapter
 def TS_ZSCORE(df: pd.DataFrame, p:int=5):
     assert isinstance(p, int), ValueError(f"TS_ZSCORE仅接收正整数参数n，接收到{type(p).__name__}")
     # assert isinstance(df, pd.DataFrame), ValueError(f"TS_ZSCORE仅接收pd.DataFrame作为A的类型，接收到{type(df).__name__}")
     return (df - df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).mean())) / df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).std())
 
-@support_numpy
+@datatype_adapter
 def ZSCORE(df):
     # 在每个因子截面上计算平均值和标准差
     mean = df.groupby('datetime').mean()
@@ -695,7 +696,7 @@ def ZSCORE(df):
     zscore = (df - mean) / std
     return zscore
 
-@support_numpy
+@datatype_adapter
 def SCALE(df: pd.DataFrame, target_sum: float = 1.0):
     """
     将序列标准化使其绝对值之和等于target_sum
@@ -706,7 +707,7 @@ def SCALE(df: pd.DataFrame, target_sum: float = 1.0):
     return df.multiply(target_sum).div(abs_sum, axis=0)
 
 
-@support_numpy
+@datatype_adapter
 def TS_MAD(df: pd.DataFrame, p: int = 5):
     """
     计算时间序列的滚动中位数绝对偏差(Median Absolute Deviation)
@@ -733,7 +734,7 @@ def TS_MAD(df: pd.DataFrame, p: int = 5):
     )
 
 
-@support_numpy
+@datatype_adapter
 def TS_QUANTILE(df: pd.DataFrame, p: int = 5, q: float = 0.5):
     """
     计算时间序列的滚动分位数
@@ -749,7 +750,7 @@ def TS_QUANTILE(df: pd.DataFrame, p: int = 5, q: float = 0.5):
     assert 0 <= q <= 1, "分位数 q 必须在 [0, 1] 之间"
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).quantile(q))
 
-@support_numpy
+@datatype_adapter
 def TS_PCTCHANGE(df: pd.DataFrame, p: int = 1):
     """
     计算时间序列的百分比变化
@@ -871,7 +872,7 @@ def _calculate_rolling_std(group_data):
 
 
 
-@support_numpy
+@datatype_adapter
 def BB_MIDDLE(price_df, window, n_jobs=-1):
     """
     计算布林带中轨，支持动态窗口大小和并行计算
@@ -904,7 +905,7 @@ def BB_MIDDLE(price_df, window, n_jobs=-1):
         final_result = pd.concat([result for _, result in sorted(results, key=lambda x: x[0])])
         return final_result
 
-@support_numpy
+@datatype_adapter
 def BB_UPPER(price_df, window, n_jobs=-1):
     """
     计算布林带上轨，支持动态窗口大小和并行计算
@@ -941,7 +942,7 @@ def BB_UPPER(price_df, window, n_jobs=-1):
     
     return middle_band + std
 
-@support_numpy
+@datatype_adapter
 def BB_LOWER(price_df, window, n_jobs=-1):
     """
     计算布林带下轨，支持动态窗口大小和并行计算
