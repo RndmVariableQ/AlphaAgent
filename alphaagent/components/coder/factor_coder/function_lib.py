@@ -4,6 +4,18 @@ from joblib import Parallel, delayed
 
 def support_numpy(func):
     def wrapper(*args):
+        # 对于单个输入，若是np array，则转成df
+        if len(args) == 1 and isinstance(args[0], np.ndarray):
+            # 转换NumPy数组到DataFrame
+            new_args = (pd.DataFrame(args[0]),)
+            # 执行函数并转回NumPy数组
+            result = func(*new_args)
+            return result
+        # 对于单个输入，若是float，则转成df再转回float
+        if len(args) == 1 and isinstance(args[0], (float, int)):
+            new_args = (pd.DataFrame([args[0]]),)
+            result = func(*new_args)
+            return float(result.iloc[0])
         # 对于典型输入，func(df, p) or func(df)
         if (len(args) == 2 and isinstance(args[0], np.ndarray) and not isinstance(args[1], np.ndarray)):
             # 转换NumPy数组到DataFrame

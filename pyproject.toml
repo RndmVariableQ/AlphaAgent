@@ -16,7 +16,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
 ]
-description = "Research & Development Agent"
+description = "Alpha Factor Mining Agent"
 dynamic = [
   "dependencies",
   "optional-dependencies",
@@ -38,65 +38,6 @@ alphaagent = "alphaagent.app.cli:app"
 homepage = "https://github.com/microsoft/RD-Agent/"
 issue = "https://github.com/microsoft/RD-Agent/issues"
 
-[tool.coverage.report]
-fail_under = 80
-
-[tool.coverage.run]
-source = [
-  "alphaagent",
-]
-
-[tool.isort]
-color_output = true
-profile = "black"
-
-[tool.mypy]
-check_untyped_defs = true
-disallow_any_unimported = true
-disallow_untyped_defs = true
-enable_error_code = [
-  "ignore-without-code",
-]
-explicit_package_bases = true
-warn_return_any = true
-warn_unused_ignores = true
-
-[tool.pytest.ini_options]
-addopts = "-l -s --durations=0"
-log_cli = true
-log_cli_level = "info"
-log_date_format = "%Y-%m-%d %H:%M:%S"
-log_format = "%(asctime)s %(levelname)s %(message)s"
-minversion = "6.0"
-
-[tool.ruff]
-fix = true
-line-length = 120
-src = ["alphaagent"]
-
-[tool.ruff.lint]
-ignore = [
-  # https://docs.astral.sh/ruff/rules/#pydocstyle-d
-  "ANN101",
-  "ANN401",
-  "D",
-  "ERA001",
-  "FIX",
-  "INP001",
-  "PGH",
-  "PLR0913",
-  "S101",
-  "S301",
-  "T20",
-  "TCH003",
-  "TD",
-]
-select = ["ALL"]
-
-[tool.ruff.lint.per-file-ignores]
-"docs/conf.py" = ["INP001"]
-"test/*" = ["S101"]
-
 [tool.setuptools]
 packages = ["alphaagent"]
 
@@ -112,8 +53,3 @@ test = {file = ["requirements/test.txt"]}
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
 version_scheme = "guess-next-dev"
-
-[tool.tomlsort]
-all = true
-in_place = true
-trailing_comma_inline_array = true

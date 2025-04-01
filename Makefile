@@ -180,19 +180,14 @@ docs-autobuild:
 		--watch rdagent
 
 # Generate changelog from git commits.
-# The -c and -s arguments should match
-# If -c uses Basic (default, inherits from base class), -s optional argument: # If -c uses conventional (inherits from base class), -s optional parameter: add,fix,change,remove,merge,doc
-# If -c uses conventional (inherits from base class), -s is optional: build,chore,ci,deps,doc,docs,feat,fix,perf,ref,refactor,revert,style,test,tests
-# If -c uses angular (inherits from conventional), -s optional argument: build,chore,ci,deps,doc,docs,feat,fix,perf,ref,refactor,revert,style,test,tests
-# NOTE(xuan.hu): Need to be run before document generation to take effect.
-# $(PIPRUN) git-changelog -ETrio $(CHANGELOG_PATH) -c conventional -s build,chore,ci,docs,feat,fix,perf,refactor,revert,style,test
+# Usage: make changelog VERSION=0.1.0
 changelog:
 	@if wget -q --spider $(CHANGELOG_URL); then \
 		echo "Existing Changelog found at '$(CHANGELOG_URL)', download for incremental generation."; \
 		wget -q -O $(CHANGELOG_PATH) $(CHANGELOG_URL); \
 	fi
-	$(PIPRUN) LATEST_TAG=$$(git tag --sort=-creatordate | head -n 1); \
-	git-changelog --bump $$LATEST_TAG -Tio docs/changelog.md -c conventional -s build,chore,ci,deps,doc,docs,feat,fix,perf,ref,refactor,revert,style,test,tests
+	$(PIPRUN) VERSION=$${VERSION:-$$(git tag --sort=-creatordate | head -n 1)}; \
+	git-changelog --bump $$VERSION -Tio docs/changelog.md
 
 # Generate release notes from changelog.
 release-notes:

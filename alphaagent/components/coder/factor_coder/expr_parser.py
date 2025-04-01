@@ -176,11 +176,8 @@ def parse_conditional_expression(s, loc, tokens):
     B = ''.join(flatten_nested_tokens(B))
     C = ''.join(flatten_nested_tokens(C))
 
-    # 在逻辑表达式周围添加括号
-    # A = f"({A})" if "||" in A or "&&" in A else A
-    # print(A)
-    # print(B)
-    return f"np.where({A}, {B}, {C})" # , index=({A}).index, columns=({A}).columns)
+    # 将结果转换为带有datetime和instrument双重索引的Series
+    return f"pd.Series(np.where({A}, {B}, {C}), index=({A}).index)"
 
 # 定义逻辑运算符的解析函数
 def parse_logical_expression(s, loc, tokens):
