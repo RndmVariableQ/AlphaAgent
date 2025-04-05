@@ -62,6 +62,10 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
   python scripts/data_collector/cn_index/collector.py --index_name CSI500 --qlib_dir ~/.qlib/qlib_data/cn_data/ --method parse_instruments
   ```
 
+- You can modify backtest configuration files which are located at:
+  - Baseline: `alphaagent/scenarios/qlib/experiment/factor_template/conf.yaml`
+  - For Newly proposed factors: `alphaagent/scenarios/qlib/experiment/factor_template/conf_cn_combined.yaml`
+
 ### 🐍 Create a Conda Environment
 - Create a new conda environment with Python (3.10 and 3.11 are well-tested in our CI):
   ```sh

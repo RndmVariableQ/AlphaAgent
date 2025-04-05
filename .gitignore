@@ -177,3 +177,4 @@ mlruns/
 *_debug*
 *.ipynb
 注意事项.md
+alphaagent/scenarios/qlib/experiment/factor_template/*.yaml
