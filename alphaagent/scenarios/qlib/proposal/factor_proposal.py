@@ -452,14 +452,14 @@ class BacktestHypothesis2FactorExpression(FactorHypothesis2Experiment):
     def convert(self, hypothesis: Hypothesis, trace: Trace) -> FactorExperiment:
         if os.path.exists(self.factor_path):
             tasks = []
-            factor_df = pd.read_csv(self.factor_path, index_col=None)
-            for index, (name, expr) in factor_df.iterrows():
+            factor_df = pd.read_csv(self.factor_path, usecols=["factor_name", "factor_expression"], index_col=None)
+            for index, row in factor_df.iterrows():
                 tasks.append(
                     FactorTask(
-                        factor_name=name,
+                        factor_name=row["factor_name"],
                         factor_description="",
                         factor_formulation="",
-                        factor_expression=expr,
+                        factor_expression=row["factor_expression"],
                         variables="",
                     )
                 )

@@ -125,8 +125,9 @@ evolving_strategy_factor_implementation_v1_system: |-
 
 
   Note that:
-  - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression. 
-  - Make sure your factor expression contain at least one variables within the dataframe columns (e.g. $open), combined with registered operations above. Do NOT use any undeclared variable (e.g. 'n', 'w_1') and undefined symbols (e.g., '=') in the expression. 
+  - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression.
+  - Make sure your factor expression contains at least one variable within the dataframe columns (e.g., $open), combined with registered operations above. Do NOT use any undeclared variable (e.g., 'n', 'w_1') and undefined symbols (e.g., '=') in the expression.
+  - Pay attention to the distinction between operations with the TS prefix (e.g., TS_STD()) and those without (e.g., STD()).
 
   Please response the corrected expression in the following json format. Here is the structure for the JSON output:
   {

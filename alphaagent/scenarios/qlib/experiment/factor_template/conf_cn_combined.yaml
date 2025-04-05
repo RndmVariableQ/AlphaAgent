@@ -1,5 +1,5 @@
 qlib_init:
-    provider_uri: "~/.qlib/qlib_data/latest_data"
+    provider_uri: "~/.qlib/qlib_data/cn_data"
     region: cn
 
 market: &market csi500
@@ -54,7 +54,7 @@ port_analysis_config: &port_analysis_config
         kwargs:
             signal: <PRED>
             topk: 100
-            n_drop: 10
+            n_drop: 5
     backtest:
         start_time: 2024-01-01
         end_time: 2025-03-31
