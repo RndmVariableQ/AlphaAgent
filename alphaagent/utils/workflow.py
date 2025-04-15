@@ -110,6 +110,7 @@ class LoopBase:
                 func = getattr(self, name)
                 try:
                     self.loop_prev_out[name] = func(self.loop_prev_out)
+                    
                     # TODO: Fix the error logger.exception(f"Skip loop {li} due to {e}")
                 except self.skip_loop_error as e:
                     logger.warning(f"Skip loop {li} due to {e}")

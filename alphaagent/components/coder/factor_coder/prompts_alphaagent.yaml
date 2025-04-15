@@ -1,9 +1,94 @@
 evaluator_code_feedback_v1_system: |-
-  User is trying to implement some factors in the following scenario:
+  User is trying to implement some factors with expression in the following scenario:
   {{ scenario }}
+
+  **Only the following operations are allowed in expression:**
+  ### **Cross-sectional Functions**
+  - **RANK(A)**: Ranking of each element in the cross-sectional dimension of A.
+  - **ZSCORE(A)**: Z-score of each element in the cross-sectional dimension of A.
+  - **MEAN(A)**: Mean value of each element in the cross-sectional dimension of A.
+  - **STD(A)**: Standard deviation in the cross-sectional dimension of A.
+  - **SKEW(A)**: Skewness in the cross-sectional dimension of A.
+  - **KURT(A)**: Kurtosis in the cross-sectional dimension of A.
+  - **MAX(A)**: Maximum value in the cross-sectional dimension of A.
+  - **MIN(A)**: Minimum value in the cross-sectional dimension of A.
+  - **MEDIAN(A)**: Median value in the cross-sectional dimension of A
+  - **SCALE(A, target_sum)**: Scale the absolute values in the cross-section to sum to target_sum.
+
+  ### **Time-Series Functions**
+  - **DELTA(A, n)**: Change in value of A over n periods.
+  - **DELAY(A, n)**: Value of A delayed by n periods.
+  - **TS_MEAN(A, n)**: Mean value of sequence A over the past n days.
+  - **TS_SUM(A, n)**: Sum of sequence A over the past n days.
+  - **TS_RANK(A, n)**: Time-series rank of the last value of A in the past n days.
+  - **TS_ZSCORE(A, n)**: Z-score for each sequence in A over the past n days.
+  - **TS_MEDIAN(A, n)**: Median value of sequence A over the past n days.
+  - **TS_PCTCHANGE(A, p)**: Percentage change in the value of sequence A over p periods.
+  - **TS_MIN(A, n)**: Minimum value of A in the past n days.
+  - **TS_MAX(A, n)**: Maximum value of A in the past n days.
+  - **TS_ARGMAX(A, n)**: The index (relative to the current time) of the maximum value of A over the past n days.
+  - **TS_ARGMIN(A, n)**: The index (relative to the current time) of the minimum value of A over the past n days.
+  - **TS_QUANTILE(A, p, q)**: Rolling quantile of sequence A over the past p periods, where q is the quantile value between 0 and 1.
+  - **TS_STD(A, n)**: Standard deviation of sequence A over the past n days.
+  - **TS_VAR(A, p)**: Rolling variance of sequence A over the past p periods.
+  - **TS_CORR(A, B, n)**: Correlation coefficient between sequences A and B over the past n days.
+  - **TS_COVARIANCE(A, B, n)**: Covariance between sequences A and B over the past n days.
+  - **TS_MAD(A, n)**: Rolling Median Absolute Deviation of sequence A over the past n days.
+  - **PERCENTILE(A, q, p)**: Quantile of sequence A, where q is the quantile value between 0 and 1. If p is provided, it calculates the rolling quantile over the past p periods.
+  - **HIGHDAY(A, n)**: Number of days since the highest value of A in the past n days.
+  - **LOWDAY(A, n)**: Number of days since the lowest value of A in the past n days.
+  - **SUMAC(A, n)**: Cumulative sum of A over the past n days.
+
+  ### **Moving Averages and Smoothing Functions**
+  - **SMA(A, n, m)**: Simple moving average of A over n periods with modifier m.
+  - **WMA(A, n)**: Weighted moving average of A over n periods, with weights decreasing from 0.9 to 0.9^(n).
+  - **EMA(A, n)**: Exponential moving average of A over n periods, where the decay factor is 2/(n+1).
+  - **DECAYLINEAR(A, d)**: Linearly weighted moving average of A over d periods, with weights increasing from 1 to d.
+
+  ### **Mathematical Operations**
+  - **PROD(A, n)**: Product of values in A over the past n days. Use `*` for general multiplication.
+  - **LOG(A)**: Natural logarithm of each element in A.
+  - **SQRT(A)**: Square root of each element in A.
+  - **POW(A, n)**: Raise each element in A to the power of n.
+  - **SIGN(A)**: Sign of each element in A, one of 1, 0, or -1.
+  - **EXP(A)**: Exponential of each element in A.
+  - **ABS(A)**: Absolute value of A.
+  - **MAX(A, B)**: Maximum value between A and B.
+  - **MIN(A, B)**: Minimum value between A and B.
+  - **INV(A)**: Reciprocal (1/x) of each element in sequence A.
+  - **FLOOR(A)**: Floor of each element in sequence A.
+  
+  ### **Conditional and Logical Functions**
+  - **COUNT(C, n)**: Count of samples satisfying condition C in the past n periods. Here, C is a logical expression, e.g., `$close > $open`.
+  - **SUMIF(A, n, C)**: Sum of A over the past n periods if condition C is met. Here, C is a logical expression.
+  - **FILTER(A, C)**: Filtering multi-column sequence A based on condition C. Here, C is presented in a logical expression form, with the same size as A.
+  - **(C1)&&(C2)**: Logical operation "and". Both C1 and C2 are logical expressions, such as A > B.
+  - **(C1)||(C2)**: Logical operation "or". Both C1 and C2 are logical expressions, such as A > B.
+  - **(C1)?(A):(B)**: Logical operation "If condition C1 holds, then A, otherwise B". C1 is a logical expression, such as A > B.
+
+  ### **Regression and Residual Functions**
+  - **SEQUENCE(n)**: A single-column sequence of length n, ranging from 1 to integer n. `SEQUENCE()` should always be nested in `REGBETA()` or `REGRESI()` as argument B.
+  - **REGBETA(A, B, n)**: Regression coefficient of A on B using the past n samples, where A MUST be a multi-column sequence and B a single-column or multi-column sequence.
+  - **REGRESI(A, B, n)**: Residual of regression of A on B using the past n samples, where A MUST be a multi-column sequence and B a single-column or multi-column sequence.
+
+  ### **Technical Indicators**
+  - **RSI(A, n)**: Relative Strength Index of sequence A over n periods. Measures momentum by comparing the magnitude of recent gains to recent losses.
+  - **MACD(A, short_window, long_window)**: Moving Average Convergence Divergence (MACD) of sequence A, calculated as the difference between the short-term (short_window) and long-term (long_window) exponential moving averages.
+  - **BB_MIDDLE(A, n)**: Middle Bollinger Band, calculated as the n-period simple moving average of sequence A.
+  - **BB_UPPER(A, n)**: Upper Bollinger Band, calculated as middle band plus two standard deviations of sequence A over n periods.
+  - **BB_LOWER(A, n)**: Lower Bollinger Band, calculated as middle band minus two standard deviations of sequence A over n periods.
+
+
+
+  Note that:
+  - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression.
+  - Make sure your factor expression contains at least one variable within the dataframe columns (e.g., $open), combined with registered operations above. Do NOT use any undeclared variable (e.g., 'n', 'w_1') and undefined symbols (e.g., '=') in the expression.
+  - Pay attention to the distinction between operations with the TS prefix (e.g., TS_STD()) and those without (e.g., STD()).
+
+  
   User will provide you the information of the factor.
 
-  Your job is to check whether user's factor expression is align with the factor description. The factor expression was rendered into a python jinja2 template and then was executed. The user will provide the execution error message if execution failed. 
+  Your job is to check whether user's factor expression is align with the factor description and whether the factor can be correctly calculated. The factor expression was rendered into a python jinja2 template and then was executed. The user will provide the execution error message if execution failed. 
   
   Your comments should examine whether the user's factor expression conveys a meaning similar to that of the factor description. Minor discrepancies between the factor formulation and the expression are acceptable. E.g., differences in window size or the implementation of non-core elements are OK. There's no need to nitpick. 
 
@@ -271,7 +356,7 @@ evaluator_final_decision_v1_system: |-
   Please response the critic in the json format. Here is an example structure for the JSON output, please strictly follow the format:
   {
       "final_decision": true,
-      "final_feedback": "The final feedback message",
+      "final_feedback": "The final feedback message, A SINGLE LINE OF TEXT",
   }
 
 evaluator_final_decision_v1_user: |-

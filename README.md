@@ -1,7 +1,7 @@
 <h4 align="center">
   <img src="docs/_static/logo.png" alt="RA-Agent logo" style="width:70%; ">
   
-  <a href="https://arxiv.org/abs/2502.16789"><b>📃Paper Link</b>👁️</a>
+  <!-- <a href="https://arxiv.org/abs/2502.16789"><b>📃Paper Link</b>👁️</a> -->
 </h3>
 
 
@@ -37,16 +37,15 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 
 - Alternatively, you can mannully download Chinese stock data via baostock and dump into the Qlib format.
   ```sh
-  # Download or update stock data from baostock
+  # Download or update stock data from 2015-01-01 until NOW from baostock
   python prepare_cn_data.py
-
 
   cd ..
   # Clone Qlib source code
   git clone https://github.com/microsoft/qlib.git
   cd qlib
 
-  # Convert csv to Qlib format
+  # Convert csv to Qlib format. Check correct paths before runing. 
   python scripts/dump_bin.py dump_all ... \
   --include_fields open,high,low,close,preclose,volume,amount,turn,pctChg,peTTM,pbMRQ,psTTM,pcfNcfTTM,isST,factor \
   --csv_path  ~/.qlib/qlib_data/cn_data/raw_data_now \
@@ -79,10 +78,7 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 ### 🛠️ Install locally
 - 
   ```sh
-  # Install AlphaAgent
-  pip install .
-
-  # Or install the package in editable mode.
+  # Install AlphaAgent in editable mode.
   pip install -e .
   ```
 

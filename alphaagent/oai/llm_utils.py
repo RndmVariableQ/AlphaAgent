@@ -332,6 +332,16 @@ class APIBackend:
                 or os.environ.get("OPENAI_BASE_URL")
             )
             
+            self.embedding_base_url = (
+                LLM_SETTINGS.embedding_base_url
+                or os.environ.get("EMBEDDING_BASE_URL")
+            )
+
+            self.embedding_api_key = (
+                LLM_SETTINGS.embedding_api_key
+                or os.environ.get("EMBEDDING_API_KEY")
+            )
+            
 
             self.chat_model = LLM_SETTINGS.chat_model if chat_model is None else chat_model
             self.reasoning_model = LLM_SETTINGS.reasoning_model if reasoning_model is None else reasoning_model
@@ -389,7 +399,7 @@ class APIBackend:
                     )
             else:
                 self.chat_client = openai.OpenAI(api_key=self.chat_api_key, base_url=self.base_url)
-                self.embedding_client = openai.OpenAI(api_key=self.embedding_api_key, base_url=self.base_url)
+                self.embedding_client = openai.OpenAI(api_key=self.embedding_api_key, base_url=self.embedding_base_url)
 
         self.dump_chat_cache = LLM_SETTINGS.dump_chat_cache if dump_chat_cache is None else dump_chat_cache
         self.use_chat_cache = LLM_SETTINGS.use_chat_cache if use_chat_cache is None else use_chat_cache

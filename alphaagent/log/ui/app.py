@@ -6,6 +6,7 @@ from importlib.resources import files as rfiles
 from pathlib import Path
 from typing import Callable, Type
 import os
+import re
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -623,7 +624,7 @@ def research_window(round: int):
 - **Hypothesis**: {h.hypothesis}
 - **Justification**: {h.concise_justification}
 - **Knowledge**: {h.concise_knowledge}
-- **Specification**: {h.concise_specification}
+{f"- **Specification**: {h.concise_specification}" if hasattr(h, "concise_specification") and h.concise_specification else ""}
 """
                 )
 
@@ -796,8 +797,19 @@ def evolving_window():
         wtabs = st.tabs(tab_names)
         for j, w in enumerate(ws):
             with wtabs[j]:
+                # if 'file_dict' in w.__dict__:
+                #     for k, v in w.file_dict.items():
+                #         with st.expander(f":green[`{k}`]", expanded=True):
+                #             st.code(v, language="python")
+                # continue
+
+
+                # Evolving Code
+                st.markdown(f"**Workspace Path**: {w.workspace_path}")
+                expr = re.search(r"expr\s*=\s*\"(.*?)\"", w.code_dict['factor.py'], re.DOTALL).group(1)
                 # 只展示表达式而不是整个代码块
-                st.markdown(f"- ##### **Expression** ✨: \n```\n{w.target_task.factor_expression if isinstance(w.target_task, FactorTask) else w.target_task.name}\n```")
+                expression = w.target_task.factor_expression
+                st.markdown(f"- ##### **Expression** ✨: \n```\n{expr}\n```")
 
                 # Evolving Feedback
                 if len(state.msgs[round]["d.evolving feedback"]) >= evolving_round:

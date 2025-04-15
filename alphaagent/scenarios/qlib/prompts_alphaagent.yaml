@@ -19,11 +19,11 @@ hypothesis_and_feedback: |-
 hypothesis_output_format: |-
   The output should follow JSON format. Do not add any other text in your response. The schema is as follows:
   {
-  "hypothesis": "TEXT ONLY. The new hypothesis generated based on the information provided.",
-  "concise_knowledge": "TEXT ONLY. Transferable knowledge based on theoretical principles. Use conditional grammar. eg. 'If...., ..; When..., .; and etc' Make sure that you state things clearly without ambiguity. Eg. avoid saying 'previous hypothesis', because one wouldn't know what that is.",
-  "concise_observation": "TEXT ONLY. It focuses on the observation of the given scenario, data characteristics, or previous experiences (failures & succeses).",
-  "concise_justification": "TEXT ONLY. Justify the hypothesis based on theoretical principles or initial assumptions.",
-  "concise_specification": "TEXT ONLY. Define the scope, conditions, constraints of the hypothesis. Specify the expected relationships, variables, and thresholds, ensuring testability and relevance to the observed data."
+  "hypothesis": "A SINGLE LINE OF TEXT. The new hypothesis generated based on the information provided.",
+  "concise_knowledge": "A SINGLE LINE OF TEXT. Transferable knowledge based on theoretical principles. Use conditional grammar. eg. 'If...., ..; When..., .; and etc' Make sure that you state things clearly without ambiguity. Eg. avoid saying 'previous hypothesis', because one wouldn't know what that is.",
+  "concise_observation": "A SINGLE LINE OF TEXT. It focuses on the observation of the given scenario, data characteristics, or previous experiences (failures & succeses).",
+  "concise_justification": "A SINGLE LINE OF TEXT. Justify the hypothesis based on theoretical principles or initial assumptions.",
+  "concise_specification": "A SINGLE LINE OF TEXT. Define the scope, conditions, constraints of the hypothesis. Specify the expected relationships, variables, and thresholds, ensuring testability and relevance to the observed data."
     }
 
 
@@ -73,7 +73,7 @@ factor_hypothesis_specification: |-
 
 
 function_lib_description: |-
-  Only the following operations are allowed in expression: 
+  Only the following operations are allowed in expressions: 
   ### **Cross-sectional Functions**
   - **RANK(A)**: Ranking of each element in the cross-sectional dimension of A.
   - **ZSCORE(A)**: Z-score of each element in the cross-sectional dimension of A.
@@ -152,7 +152,7 @@ function_lib_description: |-
   Note that:
   - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression. 
   - Make sure your factor expression contain at least one variables within the dataframe columns (e.g. $open), combined with registered operations above. Do NOT use any undeclared variable (e.g. 'n', 'w_1') and undefined symbols (e.g., '=') in the expression. 
-  - Pay attention to the distinction between operations with the TS prefix (e.g., TS_STD()) and those without (e.g., STD()).
+  - Pay attention to the distinction between operations with the TS prefix (e.g., TS_STD()) and those without (e.g., STD()). 
 
 
 factor_experiment_output_format: |-
@@ -188,10 +188,10 @@ factor_experiment_output_format: |-
               "$close": "Close price of the stock on that day.",
               "$open": "Open price of the stock on that day.",
               "ABS(A)": "Absolute value of A.",
-              "STD(A, n)": "Standard deviation of sequence A over the past n days."
+              "TS_STD(A, n)": "Standard deviation of sequence A over the past n days."
           }
           "formulation": "NIR_\\text{10D} = \\frac{\\text{ABS}(\\text{close} - \\text{open})}{\\text{STD}(\\text{close}, 10)}",
-          "expression": "ABS($close - $open) / (STD($close, 10) + 1e-8)",
+          "expression": "ABS($close - $open) / (TS_STD($close, 10) + 1e-8)",
       },
       "Volume_Range_Correlation_Factor_20D": {
           "description": "This factor measures the correlation between the candlestick range (high - low) and the trading volume over a 20-day period, aiming to capture the relationship between price range and market participation.",
@@ -199,10 +199,10 @@ factor_experiment_output_format: |-
               "$high": "High price of the stock on that day.",
               "$low": "Low price of the stock on that day.",
               "$volume": "Volume of the stock on that day.",
-              "CORR(A, B, n)": "Correlation coefficient between sequences A and B over the past n days."
+              "TS_CORR(A, B, n)": "Correlation coefficient between sequences A and B over the past n days."
           }
-          "formulation": "VRC_\\text{20D} = \\text{CORR}(\\text{high} - \\text{low}, \\text{volume}, 20)",
-          "expression": "CORR($high - $low, $volume, 20)",
+          "formulation": "VRC_\\text{20D} = \\text{TS_CORR}(\\text{high} - \\text{low}, \\text{volume}, 20)",
+          "expression": "TS_CORR($high - $low, $volume, 20)",
       }
   }
 
@@ -457,13 +457,13 @@ hypothesis2experiment:
 
       - **Robustness Considerations:**
           - Validate factor stability across multiple time windows
-          - Consider MEDIAN() over MEAN() to reduce outlier impact
+          - Consider TS_MEDIAN() over TS_MEAN() to reduce outlier impact
           - Apply moving averages to smooth high-frequency variations
   
       - **Flexibility Considerations:**  
           - Allow for a range of values or flexibility when defining factors, rather than imposing strict equality constraints.
           - For example, in expression `(TS_MIN($low, 10) == DELAY(TS_MIN($low, 10), 1))`, `==` is too restrictive. 
-          - Instead, use a range-based approach like: `(TS_MIN($low, 10) < DELAY(TS_MIN($low, 10), 1) + 1/10 * STD($low, 20)) && (TS_MIN($low, 10) > DELAY(TS_MIN($low, 10), 1) - 1/10 * STD($low, 20))`.
+          - Instead, use a range-based approach like: `(TS_MIN($low, 10) < DELAY(TS_MIN($low, 10), 1) + 1/10 * TS_STD($low, 20)) && (TS_MIN($low, 10) > DELAY(TS_MIN($low, 10), 1) - 1/10 * TS_STD($low, 20))`.
 
       - **Handling Duplicated Sub-expressions:**
             - When given specific duplicated sub-expressions to avoid, ensure new factor expressions use alternative calculations

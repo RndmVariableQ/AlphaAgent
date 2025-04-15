@@ -100,7 +100,7 @@ def download_stock_data(start_date, end_date, output_dir):
 if __name__ == '__main__':
     # 动态设置结束日期为当前日期
     START_DATE = '2014-12-31'
-    END_DATE = datetime.now().strftime('%Y-%m-%d') # '2025-01-01' # 
+    END_DATE = datetime.now().strftime('%Y-%m-%d') # '2025-01-01' 
     DATA_DIR = '~/.qlib/qlib_data/cn_data/raw_data_now'
     
     print("开始下载股票数据...")

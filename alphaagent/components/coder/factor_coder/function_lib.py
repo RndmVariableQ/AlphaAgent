@@ -40,10 +40,12 @@ def DELTA(df:pd.DataFrame, p:int=1):
 
 @datatype_adapter
 def RANK(df:pd.DataFrame):
+    """计算横截面排序"""
     return df.groupby('datetime').rank(pct=True)
 
 @datatype_adapter
 def MEAN(df:pd.DataFrame):
+    """计算横截面平均值"""
     return df.groupby('datetime').mean()
 
 @datatype_adapter
@@ -79,27 +81,27 @@ def MEDIAN(df:pd.DataFrame):
 
 @datatype_adapter
 def TS_RANK(df:pd.DataFrame, p:int=5):
-    """计算横截面排序"""
+    """计算时间序列的百分比排名"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).rank(pct=True))
 
 @datatype_adapter
 def TS_MAX(df:pd.DataFrame, p:int=5):
-    """计算横截面最大值"""
+    """计算时间序列的最大值"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).max())
 
 @datatype_adapter
 def TS_MIN(df:pd.DataFrame, p:int=5):
-    """计算横截面最小值"""
+    """计算时间序列的最小值"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).min())
 
 @datatype_adapter
 def TS_MEAN(df:pd.DataFrame, p:int=5):
-    """计算横截面平均值"""
+    """计算时间序列的平均值"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).mean())
 
 @datatype_adapter
 def TS_MEDIAN(df:pd.DataFrame, p:int=5):
-    """计算横截面中位数"""
+    """计算时间序列的中位数"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).median())
 
 @datatype_adapter
@@ -128,7 +130,7 @@ def PERCENTILE(df: pd.DataFrame, q: float, p: int = None):
 
 @datatype_adapter
 def TS_SUM(df:pd.DataFrame, p:int=5):
-    """计算横截面累加和"""
+    """计算时间序列的累加和"""
     return df.groupby('instrument').transform(lambda x: x.rolling(p, min_periods=1).sum())
 
 
@@ -341,7 +343,7 @@ def SUMIF(df:pd.DataFrame, p:int, cond:pd.DataFrame):
 @datatype_adapter
 def FILTER(df:pd.DataFrame, cond:pd.DataFrame):
     """
-    根据条件过滤序列
+    根据条件过滤序列，保留满足条件的元素，不满足条件的元素置为0
     
     参数:
         df (pd.DataFrame): 输入数据

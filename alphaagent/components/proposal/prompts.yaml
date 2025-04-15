@@ -36,7 +36,7 @@ hypothesis2experiment:
     2. The hypothesis generated in the previous steps and their corresponding feedbacks.
     3. Former proposed {{targets}} on similar hypothesis.
     4. Some additional information to help you generate new {{targets}}.
-    Please generate the output following the format below:
+    Please generate the output, including 1-2 factors implemented on the hypothesis, without any other content, following the format below:
     {{ experiment_output_format }}
     
   user_prompt: |-
