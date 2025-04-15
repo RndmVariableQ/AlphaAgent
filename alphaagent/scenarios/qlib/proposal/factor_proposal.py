@@ -51,7 +51,7 @@ class AlphaAgentHypothesis(Hypothesis):
                 concise Specification: {self.concise_specification}
                 """
 
-prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts.yaml")
+rdagent_prompt_dict = Prompts(file_path=Path(__file__).parent.parent / "prompts_rdagent.yaml")
 
 class QlibFactorHypothesisGen(FactorHypothesisGen):
     def __init__(self, scen: Scenario) -> Tuple[dict, bool]:
@@ -61,7 +61,7 @@ class QlibFactorHypothesisGen(FactorHypothesisGen):
         hypothesis_and_feedback = (
             (
                 Environment(undefined=StrictUndefined)
-                .from_string(prompt_dict["hypothesis_and_feedback"])
+                .from_string(rdagent_prompt_dict["hypothesis_and_feedback"])
                 .render(trace=trace)
             )
             if len(trace.hist) > 0
@@ -70,8 +70,8 @@ class QlibFactorHypothesisGen(FactorHypothesisGen):
         context_dict = {
             "hypothesis_and_feedback": hypothesis_and_feedback,
             "RAG": None,
-            "hypothesis_output_format": prompt_dict["hypothesis_output_format"],
-            "hypothesis_specification": prompt_dict["factor_hypothesis_specification"],
+            "hypothesis_output_format": rdagent_prompt_dict["hypothesis_output_format"],
+            "hypothesis_specification": rdagent_prompt_dict["factor_hypothesis_specification"],
         }
         return context_dict, True
 
@@ -91,12 +91,12 @@ class QlibFactorHypothesisGen(FactorHypothesisGen):
 class QlibFactorHypothesis2Experiment(FactorHypothesis2Experiment):
     def prepare_context(self, hypothesis: Hypothesis, trace: Trace) -> Tuple[dict | bool]:
         scenario = trace.scen.get_scenario_all_desc()
-        experiment_output_format = prompt_dict["factor_experiment_output_format"]
+        experiment_output_format = rdagent_prompt_dict["factor_experiment_output_format"]
 
         hypothesis_and_feedback = (
             (
                 Environment(undefined=StrictUndefined)
-                .from_string(prompt_dict["hypothesis_and_feedback"])
+                .from_string(rdagent_prompt_dict["hypothesis_and_feedback"])
                 .render(trace=trace)
             )
             if len(trace.hist) > 0

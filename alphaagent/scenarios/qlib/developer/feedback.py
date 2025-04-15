@@ -16,7 +16,7 @@ from alphaagent.log import logger
 from alphaagent.oai.llm_utils import APIBackend
 from alphaagent.utils import convert2bool
 
-feedback_prompts = Prompts(file_path=Path(__file__).parent.parent / "prompts.yaml")
+rdagent_feedback_prompts = Prompts(file_path=Path(__file__).parent.parent / "prompts_rdagent.yaml")
 DIRNAME = Path(__file__).absolute().resolve().parent
 
 
@@ -81,14 +81,14 @@ class QlibFactorHypothesisExperiment2Feedback(HypothesisExperiment2Feedback):
         # Generate the system prompt
         sys_prompt = (
             Environment(undefined=StrictUndefined)
-            .from_string(feedback_prompts["factor_feedback_generation"]["system"])
+            .from_string(rdagent_feedback_prompts["factor_feedback_generation"]["system"])
             .render(scenario=self.scen.get_scenario_all_desc())
         )
 
         # Generate the user prompt
         usr_prompt = (
             Environment(undefined=StrictUndefined)
-            .from_string(feedback_prompts["factor_feedback_generation"]["user"])
+            .from_string(rdagent_feedback_prompts["factor_feedback_generation"]["user"])
             .render(
                 hypothesis_text=hypothesis_text,
                 task_details=tasks_factors,

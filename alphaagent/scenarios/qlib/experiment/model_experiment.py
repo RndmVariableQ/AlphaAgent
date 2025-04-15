@@ -11,7 +11,7 @@ from alphaagent.core.prompts import Prompts
 from alphaagent.core.scenario import Scenario
 from alphaagent.scenarios.qlib.experiment.workspace import QlibFBWorkspace
 
-prompt_dict = Prompts(file_path=Path(__file__).parent / "prompts.yaml")
+rdagent_prompt_dict = Prompts(file_path=Path(__file__).parent / "prompts_rdagent.yaml")
 
 
 class QlibModelExperiment(ModelExperiment[ModelTask, QlibFBWorkspace, ModelFBWorkspace]):
@@ -23,12 +23,12 @@ class QlibModelExperiment(ModelExperiment[ModelTask, QlibFBWorkspace, ModelFBWor
 class QlibModelScenario(Scenario):
     def __init__(self) -> None:
         super().__init__()
-        self._background = deepcopy(prompt_dict["qlib_model_background"])
-        self._output_format = deepcopy(prompt_dict["qlib_model_output_format"])
-        self._interface = deepcopy(prompt_dict["qlib_model_interface"])
-        self._simulator = deepcopy(prompt_dict["qlib_model_simulator"])
-        self._rich_style_description = deepcopy(prompt_dict["qlib_model_rich_style_description"])
-        self._experiment_setting = deepcopy(prompt_dict["qlib_model_experiment_setting"])
+        self._background = deepcopy(rdagent_prompt_dict["qlib_model_background"])
+        self._output_format = deepcopy(rdagent_prompt_dict["qlib_model_output_format"])
+        self._interface = deepcopy(rdagent_prompt_dict["qlib_model_interface"])
+        self._simulator = deepcopy(rdagent_prompt_dict["qlib_model_simulator"])
+        self._rich_style_description = deepcopy(rdagent_prompt_dict["qlib_model_rich_style_description"])
+        self._experiment_setting = deepcopy(rdagent_prompt_dict["qlib_model_experiment_setting"])
 
     @property
     def background(self) -> str:

@@ -12,7 +12,7 @@ from alphaagent.core.scenario import Scenario
 from alphaagent.scenarios.qlib.experiment.utils import get_data_folder_intro
 from alphaagent.scenarios.qlib.experiment.workspace import QlibFBWorkspace
 
-prompt_dict = Prompts(file_path=Path(__file__).parent / "prompts.yaml")
+rdagent_prompt_dict = Prompts(file_path=Path(__file__).parent / "prompts_rdagent.yaml")
 
 
 class QlibFactorExperiment(FactorExperiment[FactorTask, QlibFBWorkspace, FactorFBWorkspace]):
@@ -24,14 +24,14 @@ class QlibFactorExperiment(FactorExperiment[FactorTask, QlibFBWorkspace, FactorF
 class QlibFactorScenario(Scenario):
     def __init__(self) -> None:
         super().__init__()
-        self._background = deepcopy(prompt_dict["qlib_factor_background"])
+        self._background = deepcopy(rdagent_prompt_dict["qlib_factor_background"])
         self._source_data = deepcopy(get_data_folder_intro())
-        self._output_format = deepcopy(prompt_dict["qlib_factor_output_format"])
-        self._interface = deepcopy(prompt_dict["qlib_factor_interface"])
-        self._strategy = deepcopy(prompt_dict["qlib_factor_strategy"])
-        self._simulator = deepcopy(prompt_dict["qlib_factor_simulator"])
-        self._rich_style_description = deepcopy(prompt_dict["qlib_factor_rich_style_description"])
-        self._experiment_setting = deepcopy(prompt_dict["qlib_factor_experiment_setting"])
+        self._output_format = deepcopy(rdagent_prompt_dict["qlib_factor_output_format"])
+        self._interface = deepcopy(rdagent_prompt_dict["qlib_factor_interface"])
+        self._strategy = deepcopy(rdagent_prompt_dict["qlib_factor_strategy"])
+        self._simulator = deepcopy(rdagent_prompt_dict["qlib_factor_simulator"])
+        self._rich_style_description = deepcopy(rdagent_prompt_dict["qlib_factor_rich_style_description"])
+        self._experiment_setting = deepcopy(rdagent_prompt_dict["qlib_factor_experiment_setting"])
 
     @property
     def background(self) -> str:

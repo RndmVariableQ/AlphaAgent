@@ -152,3 +152,13 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
   ```sh
   uvicorn backend.main:app --reload --port 9000
   ```
+
+### 🤖 Prompt Files
+
+#### 💡 IdeaAgent's Prompts: 
+- `alphaagent/scenarios/qlib/prompts_alphaagent.yaml`
+
+#### ⚙️ FactorAgent's Prompts: 
+- `alphaagent/components/coder/factor_coder/prompts_alphaagent.yaml`
+
+
