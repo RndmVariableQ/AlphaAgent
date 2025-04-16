@@ -13,7 +13,7 @@ qlib_factor_background: |-
 
 qlib_factor_interface: |-
   Your factor expression should follow the interface to better interact with the user's system.
-  Your expression must at least one variables (e.g., '$open'). Other parts contain arithmetic operator ('+', '-', '*', '/'), logical operator ('&&', '||'), functions ('DELAY()', 'EXP()'), and conditional statement ('?:'). 
+  Your expression must at least one variables (e.g., `$open`). Other parts contain arithmetic operator (`+, -, *, /`), logical operator (`&&, ||`), functions (`DELAY(), EXP()`), and conditional statement (`A?B:C`). 
   User will write your expression into a python template and execute the file directly with "python {your_file_name}.py". The factor values will be saved into a HDF5(H5) file named "result.h5" in the same directory as your python file. The result file is a HDF5(H5) file containing a pandas dataframe. The index of the dataframe is the "datetime" and "instrument", and the single column name is the factor name, and the value is the factor value. The result file should be saved in the same directory as your python file.
 
 qlib_factor_strategy: |-

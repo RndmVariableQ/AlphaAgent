@@ -153,6 +153,13 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
   uvicorn backend.main:app --reload --port 9000
   ```
 
+### 📊 Performance
+<div align="center">
+      <img src="docs/_static/excess_return.png" alt="Excess Return Comparison" style="width:90%; ">
+</div>
+
+The above figure illustrates our method's excess return performance against the CSI 500 benchmark over the past four years. The results demonstrate the remarkable effectiveness of our approach in generating stable alpha factors, consistently outperforming not only traditional methods but also cutting-edge reasoning models like OpenAI-o1 and DeepSeek-R1 that are currently in the spotlight. 
+
 ### 🤖 Prompt Files
 
 #### 💡 IdeaAgent's Prompts: 
@@ -160,5 +167,6 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 
 #### ⚙️ FactorAgent's Prompts: 
 - `alphaagent/components/coder/factor_coder/prompts_alphaagent.yaml`
+
 
 

@@ -122,13 +122,13 @@ function_lib_description: |-
 
 
   Note that:
-  - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression. 
+  - Only the variables provided in data (e.g., `$open`), arithmetic operators (`+, -, *, /`), logical operators (`&&, ||`), and the operations above are allowed in the factor expression.
   - Make sure your factor expression contain at least one variables within the dataframe columns (e.g. $open), combined with registered operations above. Do NOT use any undeclared variable (e.g. 'n', 'w_1') and undefined symbols (e.g., '=') in the expression. 
-  - Pay attention to the distinction between operations with the TS prefix (e.g., TS_STD()) and those without (e.g., STD()). 
+  - Pay attention to the distinction between operations with the TS prefix (e.g., `TS_STD()`) and those without (e.g., `STD()`). 
 
 
 factor_experiment_output_format: |-
-  Do NOT use any undeclared variables. The factor expression should be strictly based on the function library (e.g. RANK(.)) and the variables provided in data (e.g., $open). 
+  Do NOT use any undeclared variables. The factor expression should be strictly based on the function library (e.g. `RANK(.)`) and the variables provided in data (e.g., `$open`). 
   The output should follow JSON format without other content. The schema is as follows:
   {
       "factor name 1": {

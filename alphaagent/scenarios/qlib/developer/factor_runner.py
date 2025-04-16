@@ -120,7 +120,7 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
                 pickle.dump(combined_factors, f)
 
         result = exp.experiment_workspace.execute(
-            qlib_config_name=f"conf.yaml" if len(exp.based_experiments) == 0 else "conf_cn_thesis.yaml"
+            qlib_config_name=f"conf.yaml" if len(exp.based_experiments) == 0 else "conf_cn_combined_kdd_ver.yaml"
         )
         
         logger.info(f"Backtesting results: \n{result.iloc[2:]}")

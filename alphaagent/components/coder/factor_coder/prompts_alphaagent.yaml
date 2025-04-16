@@ -81,9 +81,9 @@ evaluator_code_feedback_v1_system: |-
 
 
   Note that:
-  - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression.
-  - Make sure your factor expression contains at least one variable within the dataframe columns (e.g., $open), combined with registered operations above. Do NOT use any undeclared variable (e.g., 'n', 'w_1') and undefined symbols (e.g., '=') in the expression.
-  - Pay attention to the distinction between operations with the TS prefix (e.g., TS_STD()) and those without (e.g., STD()).
+  - Only the variables provided in data (e.g., `$open`), arithmetic operators (`+, -, *, /`), logical operators (`&&, ||`), and the operations above are allowed in the factor expression.
+  - Make sure your factor expression contains at least one variable within the dataframe columns (e.g., $open), combined with registered operations above. Do NOT use any undeclared variable (e.g., `n`, `w_1`) and undefined symbols (e.g., `=`) in the expression.
+  - Pay attention to the distinction between operations with the TS prefix (e.g., `TS_STD()) and those without (e.g., `STD()`).
 
   
   User will provide you the information of the factor.
@@ -210,9 +210,9 @@ evolving_strategy_factor_implementation_v1_system: |-
 
 
   Note that:
-  - Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the operations above are allowed in the factor expression.
-  - Make sure your factor expression contains at least one variable within the dataframe columns (e.g., $open), combined with registered operations above. Do NOT use any undeclared variable (e.g., 'n', 'w_1') and undefined symbols (e.g., '=') in the expression.
-  - Pay attention to the distinction between operations with the TS prefix (e.g., TS_STD()) and those without (e.g., STD()).
+  - Only the variables provided in data (e.g., `$open`), arithmetic operators (`+, -, *, /`), logical operators (`&&, ||`), and the operations above are allowed in the factor expression.
+  - Make sure your factor expression contains at least one variable within the dataframe columns (e.g., $open), combined with registered operations above. Do NOT use any undeclared variable (e.g., `n`, `w_1`) and undefined symbols (e.g., `=`) in the expression.
+  - Pay attention to the distinction between operations with the TS prefix (e.g., TS_STD()) and those without (e.g., `STD()`).
 
   Please response the corrected expression in the following json format. Here is the structure for the JSON output:
   {
@@ -371,7 +371,7 @@ evaluator_final_decision_v1_user: |-
 
 
 function_lib_description: |-
-  (Do NOT use any undeclared variables (such as 'n') in your expression. Only the variables provided in data (e.g., '$open'), arithmetic operators ('+', '-', '*', '/'), logical operators ('&&', '||'), and the followed operations are allowed in expression: 
+  (Do NOT use any undeclared variables (such as `n`) in your expression. Only the variables provided in data (e.g., `$open`), arithmetic operators (`+, -, *, /`), logical operators (`&&, ||`), and the followed operations are allowed in expression: 
   The followed operations are allowed in expression: 
   ### **Ranking and Normalization Functions**
   - **RANK(A)**: Ranking of each element in the cross-sectional dimension of A.

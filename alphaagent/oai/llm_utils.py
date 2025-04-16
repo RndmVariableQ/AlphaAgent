@@ -347,6 +347,7 @@ class APIBackend:
             self.reasoning_model = LLM_SETTINGS.reasoning_model if reasoning_model is None else reasoning_model
             self.chat_model_map = json.loads(LLM_SETTINGS.chat_model_map)
             # self.encoder = self._get_encoder()
+            
             self.chat_api_base = LLM_SETTINGS.chat_azure_api_base if chat_api_base is None else chat_api_base
             self.chat_api_version = (
                 LLM_SETTINGS.chat_azure_api_version if chat_api_version is None else chat_api_version
@@ -690,7 +691,6 @@ class APIBackend:
             json_mode = None
         else:
             model = self.chat_model_map.get(tag, self.chat_model)
-        # import pdb; pdb.set_trace()
 
         finish_reason = None
         if self.use_llama2:
@@ -734,6 +734,8 @@ class APIBackend:
                 frequency_penalty=frequency_penalty,
                 presence_penalty=presence_penalty,
             )
+            
+            import pdb; pdb.set_trace()
             if json_mode:
                 if add_json_in_prompt:
                     for message in messages[::-1]:
@@ -743,6 +745,7 @@ class APIBackend:
                 kwargs["response_format"] = {"type": "json_object"}
             response = self.chat_client.chat.completions.create(**kwargs)
 
+            
             if self.chat_stream:
                 resp = ""
                 # TODO: with logger.config(stream=self.chat_stream): and add a `stream_start` flag to add timestamp for first message.
