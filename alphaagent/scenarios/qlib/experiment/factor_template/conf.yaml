@@ -6,7 +6,7 @@
 # benchmark: &benchmark SPX
 
 qlib_init:
-    provider_uri: "~/.qlib/qlib_data/latest_data"
+    provider_uri: "~/.qlib/qlib_data/cn_data"
     region: cn
 
 market: &market csi500

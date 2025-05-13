@@ -1,4 +1,4 @@
-FROM hub.fast360.xyz/pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
+FROM docker.1panel.live/pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
 
 # For GPU support, please choose the proper tag from https://hub.docker.com/r/pytorch/pytorch/tags
 
@@ -23,3 +23,4 @@ RUN python -m pip install -e .
 RUN pip install catboost
 RUN pip install xgboost
 RUN pip install scipy==1.11.4
+RUN pip install joblib==1.4.2

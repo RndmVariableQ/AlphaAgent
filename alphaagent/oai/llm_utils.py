@@ -735,7 +735,7 @@ class APIBackend:
                 presence_penalty=presence_penalty,
             )
             
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
             if json_mode:
                 if add_json_in_prompt:
                     for message in messages[::-1]:

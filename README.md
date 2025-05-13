@@ -81,6 +81,11 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
   # Install AlphaAgent in editable mode.
   pip install -e .
   ```
+- If you've installed qlib from source during data preparation process, just skip this installation
+  ```sh
+  # Install pyqlib if qlib has not been installed yet
+  pip install pyqlib==0.9.6
+  ```
 
 ### 💊 Health check
 - We provide a health check that currently checks two things.
@@ -94,6 +99,7 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 ### ⚙️ Configuration
 - For the official OpenAI API, simply set up your `OPENAI_API_KEY` in the `.env` file.
 - If you're using an unofficial API provider, ensure both `OPENAI_BASE_URL` and `OPENAI_API_KEY` are configured in the `.env` file.
+- add `USE_LOCAL=True` in `.env` file if you want to run this project using local environment instead of docker
 
 
 ### 🚀 Run AlphaAgent

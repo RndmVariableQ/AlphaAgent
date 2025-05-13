@@ -10,28 +10,33 @@ from jinja2 import Environment, StrictUndefined
 
 from alphaagent.components.coder.factor_coder.config import FACTOR_COSTEER_SETTINGS
 from alphaagent.utils.env import QTDockerEnv
+from alphaagent.log import logger
 
 
-def generate_data_folder_from_qlib():
+def generate_data_folder_from_qlib(use_local: bool = True):
     template_path = Path(__file__).parent / "factor_data_template"
-    qtde = QTDockerEnv()
+    qtde = QTDockerEnv(is_local=use_local)
     qtde.prepare()
-    # Run the Qlib backtest
+    
+    # 运行数据生成脚本
+    logger.info(f"在{'本地' if use_local else 'Docker容器'}中生成因子数据")
     execute_log = qtde.run(
         local_path=str(template_path),
         entry=f"python generate.py",
     )
 
-    assert (
-        Path(__file__).parent / "factor_data_template" / "daily_pv_all.h5"
-    ).exists(), "daily_pv_all.h5 is not generated."
-    assert (
-        Path(__file__).parent / "factor_data_template" / "daily_pv_debug.h5"
-    ).exists(), "daily_pv_debug.h5 is not generated."
+    # 检查文件是否生成
+    daily_pv_all = Path(__file__).parent / "factor_data_template" / "daily_pv_all.h5"
+    daily_pv_debug = Path(__file__).parent / "factor_data_template" / "daily_pv_debug.h5"
+    
+    assert daily_pv_all.exists(), "daily_pv_all.h5 is not generated."
+    assert daily_pv_debug.exists(), "daily_pv_debug.h5 is not generated."
 
+    # 创建数据目录并复制文件
+    logger.info(f"复制生成的数据文件到工作目录")
     Path(FACTOR_COSTEER_SETTINGS.data_folder).mkdir(parents=True, exist_ok=True)
     shutil.copy(
-        Path(__file__).parent / "factor_data_template" / "daily_pv_all.h5",
+        daily_pv_all,
         Path(FACTOR_COSTEER_SETTINGS.data_folder) / "daily_pv.h5",
     )
     shutil.copy(
@@ -41,13 +46,15 @@ def generate_data_folder_from_qlib():
 
     Path(FACTOR_COSTEER_SETTINGS.data_folder_debug).mkdir(parents=True, exist_ok=True)
     shutil.copy(
-        Path(__file__).parent / "factor_data_template" / "daily_pv_debug.h5",
+        daily_pv_debug,
         Path(FACTOR_COSTEER_SETTINGS.data_folder_debug) / "daily_pv.h5",
     )
     shutil.copy(
         Path(__file__).parent / "factor_data_template" / "README.md",
         Path(FACTOR_COSTEER_SETTINGS.data_folder_debug) / "README.md",
     )
+    
+    logger.info(f"数据准备完成")
     
 
 
@@ -122,7 +129,12 @@ A snapshot of one instrument, from which you can tell the distribution of the da
         )
 
 
-def get_data_folder_intro(fname_reg: str = ".*", flags=0, variable_mapping=None) -> str:
+def get_data_folder_intro(
+    fname_reg: str = ".*",
+    flags=0,
+    variable_mapping=None,
+    use_local: bool = True,
+) -> str:
     """
     Directly get the info of the data folder.
     It is for preparing prompting message.
@@ -147,7 +159,7 @@ def get_data_folder_intro(fname_reg: str = ".*", flags=0, variable_mapping=None)
     ):
         # FIXME: (xiao) I think this is writing in a hard-coded way.
         # get data folder intro does not imply that we are generating the data folder.
-        generate_data_folder_from_qlib()
+        generate_data_folder_from_qlib(use_local=use_local)
     content_l = []
     
     for p in Path(FACTOR_COSTEER_SETTINGS.data_folder_debug).iterdir():

@@ -56,7 +56,6 @@ def main(path=None, step_n=None, direction=None, stop_event=None):
         step_n: 步骤数
         direction: 初始方向
         stop_event: 停止事件
-        timeout: 超时时间（秒），默认12小时
 
     You can continue running session by
 
@@ -66,10 +65,13 @@ def main(path=None, step_n=None, direction=None, stop_event=None):
 
     """
     try:
+        use_local = os.getenv("USE_LOCAL", "True").lower()
+        use_local = True if use_local in ["true", "1"] else False
+        logger.info(f"使用{'本地环境' if use_local else 'Docker容器'}执行因子回测")
         if path is None:
-            model_loop = AlphaAgentLoop(ALPHA_AGENT_FACTOR_PROP_SETTING, potential_direction=direction, stop_event=stop_event)
+            model_loop = AlphaAgentLoop(ALPHA_AGENT_FACTOR_PROP_SETTING, potential_direction=direction, stop_event=stop_event, use_local=use_local)
         else:
-            model_loop = AlphaAgentLoop.load(path)
+            model_loop = AlphaAgentLoop.load(path, use_local=use_local)
         model_loop.run(step_n=step_n, stop_event=stop_event)
     except Exception as e:
         logger.error(f"执行过程中发生错误: {str(e)}")

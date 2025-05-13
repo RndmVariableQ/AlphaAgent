@@ -2,15 +2,18 @@
 pydantic-settings
 
 python-Levenshtein
-scikit-learn
 filelock
 loguru
 fire
 fuzzywuzzy
 openai
 
-numpy # we use numpy as default data format. So we have to install numpy
-pandas # we use pandas as default data format. So we have to install pandas
+scikit-learn==1.6.1
+xgboost==3.0.0
+catboost==1.2.8
+
+numpy==1.23.5 # we use numpy as default data format. So we have to install numpy
+pandas==1.5.3 # we use pandas as default data format. So we have to install pandas
 pandarallel # parallelize pandas
 matplotlib
 langchain

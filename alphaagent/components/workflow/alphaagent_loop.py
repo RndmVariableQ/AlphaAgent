@@ -54,9 +54,11 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
     skip_loop_error = (FactorEmptyError,)
     
     @measure_time
-    def __init__(self, PROP_SETTING: BaseFacSetting, potential_direction, stop_event: threading.Event):
+    def __init__(self, PROP_SETTING: BaseFacSetting, potential_direction, stop_event: threading.Event, use_local: bool = True):
         with logger.tag("init"):
-            scen: Scenario = import_class(PROP_SETTING.scen)()
+            self.use_local = use_local
+            logger.info(f"初始化AlphaAgentLoop，使用{'本地环境' if use_local else 'Docker容器'}回测")
+            scen: Scenario = import_class(PROP_SETTING.scen)(use_local=use_local)
             logger.log_object(scen, tag="scenario")
 
             ### 换成基于初始hypo的，生成完整的hypo
@@ -82,7 +84,14 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
             STOP_EVENT = stop_event
             super().__init__()
 
-            
+    @classmethod
+    def load(cls, path, use_local: bool = True):
+        """加载现有会话"""
+        instance = super().load(path)
+        instance.use_local = use_local
+        logger.info(f"加载AlphaAgentLoop，使用{'本地环境' if use_local else 'Docker容器'}回测")
+        return instance
+
     @measure_time
     @stop_event_check
     def factor_propose(self, prev_out: dict[str, Any]):
@@ -124,7 +133,8 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
         回测因子
         """
         with logger.tag("ef"):  # evaluate and feedback
-            exp = self.runner.develop(prev_out["factor_calculate"])
+            logger.info(f"开始因子回测 (本地环境: {self.use_local})")
+            exp = self.runner.develop(prev_out["factor_calculate"], use_local=self.use_local)
             if exp is None:
                 logger.error(f"Factor extraction failed.")
                 raise FactorEmptyError("Factor extraction failed.")

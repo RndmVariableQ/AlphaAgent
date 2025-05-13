@@ -83,10 +83,10 @@ The simulator user can use to test your factor:
 
 alphaagent_prompt_dict = Prompts(file_path=Path(__file__).parent / "prompts_alphaagent.yaml")
 class QlibAlphaAgentScenario(Scenario):
-    def __init__(self) -> None:
+    def __init__(self, use_local: bool = True) -> None:
         super().__init__()
         self._background = deepcopy(alphaagent_prompt_dict["qlib_factor_background"])
-        self._source_data = deepcopy(get_data_folder_intro())
+        self._source_data = deepcopy(get_data_folder_intro(use_local=use_local))
         self._output_format = deepcopy(alphaagent_prompt_dict["qlib_factor_output_format"])
         self._interface = deepcopy(alphaagent_prompt_dict["qlib_factor_interface"])
         self._strategy = deepcopy(alphaagent_prompt_dict["qlib_factor_strategy"])

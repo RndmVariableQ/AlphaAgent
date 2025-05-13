@@ -88,7 +88,7 @@ class LocalEnv(Env[LocalConf]):
     """
 
     def prepare(self):
-        if not (Path("~/.qlib/qlib_data/us_data").expanduser().resolve().exists()):
+        if not (Path("~/.qlib/qlib_data/cn_data").expanduser().resolve().exists()):
             self.run(
                 entry="python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --region cn",
             )
@@ -113,6 +113,81 @@ class LocalEnv(Env[LocalConf]):
             raise RuntimeError(f"Error while running the command: {result.stderr}")
 
         return result.stdout
+
+
+class QlibLocalEnv(LocalEnv):
+    """本地运行Qlib环境，替代Docker容器"""
+    
+    def __init__(self):
+        conf = LocalConf(
+            py_bin="python",
+            default_entry="qrun conf.yaml"
+        )
+        super().__init__(conf)
+    
+    def prepare(self):
+        """确保本地环境已准备就绪"""
+        logger.info("使用本地环境运行Qlib回测")
+        # 确保Qlib数据目录存在
+        qlib_data_path = Path("~/.qlib/qlib_data/cn_data").expanduser()
+        if not qlib_data_path.exists():
+            logger.warning(f"Qlib数据目录不存在: {qlib_data_path}，请确保已下载数据")
+        
+    def run(
+        self, 
+        entry: str | None = None, 
+        local_path: Optional[str] = None, 
+        env: dict | None = None,
+        **kwargs
+    ) -> str:
+        """在本地运行命令"""
+        if env is None:
+            env = {}
+            
+        if entry is None:
+            entry = self.conf.default_entry
+            
+        # 记录运行信息
+        table = Table(title="本地运行信息", show_header=False)
+        table.add_column("Key", style="bold cyan")
+        table.add_column("Value", style="bold magenta")
+        table.add_row("Entry", entry)
+        table.add_row("工作目录", local_path)
+        table.add_row("环境变量", "\n".join(f"{k}:{v}" for k, v in env.items()))
+        print(table)
+        
+        # 分割命令
+        command = entry.split()
+        
+        # 设置工作目录
+        cwd = None
+        if local_path:
+            cwd = Path(local_path).resolve()
+            
+        print(Rule("[bold green]开始本地执行[/bold green]", style="dark_orange"))
+        
+        # 运行命令
+        result = subprocess.run(
+            command, 
+            cwd=cwd, 
+            env={**os.environ, **env}, 
+            capture_output=True, 
+            text=True
+        )
+        
+        # 输出结果
+        output = result.stdout
+        print(output)
+        
+        if result.stderr:
+            print(f"[bold red]错误输出:[/bold red] {result.stderr}")
+            
+        print(Rule("[bold green]本地执行结束[/bold green]", style="dark_orange"))
+        
+        if result.returncode != 0:
+            logger.error(f"命令执行失败: {result.stderr}")
+            
+        return output
 
 
 ## Docker Environment -----
@@ -395,23 +470,23 @@ class DockerEnv(Env[DockerConf]):
 
 
 class QTDockerEnv(DockerEnv):
-    """Qlib Torch Docker"""
+    """Qlib运行环境，可选择Docker或本地环境"""
 
-    def __init__(self, conf: DockerConf = QlibDockerConf()):
-        super().__init__(conf)
+    def __init__(self, conf: DockerConf = QlibDockerConf(), is_local=False):
+        self.is_local = is_local
+        if is_local:
+            self.env = QlibLocalEnv()
+        else:
+            self.env = DockerEnv(conf)
 
     def prepare(self):
-        """
-        Download image & data if it doesn't exist
-        """
-        super().prepare()
-        qlib_data_path = next(iter(self.conf.extra_volumes.keys()))
-        if not (Path(qlib_data_path) / "qlib_data" / "us_data").exists():
-            logger.info("We are downloading!")
-            cmd = "python -m qlib.run.get_data qlib_data --target_dir ~/.qlib/qlib_data/cn_data --region cn --interval 1d --delete_old False"
-            self.run(entry=cmd)
-        else:
-            logger.info("Data already exists. Download skipped.")
+        """准备环境"""
+        self.env.prepare()
+
+    def run(self, local_path=None, entry=None, env=None, running_extra_volume=None):
+        """运行命令"""
+        return self.env.run(entry=entry, local_path=local_path, env=env, 
+                          running_extra_volume=running_extra_volume if not self.is_local else None)
 
 
 class DMDockerEnv(DockerEnv):

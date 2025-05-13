@@ -9,7 +9,7 @@ from alphaagent.oai.llm_utils import md5_hash
 
 
 class CachedRunner(Developer[ASpecificExp]):
-    def get_cache_key(self, exp: Experiment) -> str:
+    def get_cache_key(self, exp: Experiment, **kwargs) -> str:
         all_tasks = []
         for based_exp in exp.based_experiments:
             all_tasks.extend(based_exp.sub_tasks)

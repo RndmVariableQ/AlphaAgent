@@ -71,15 +71,15 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
         return new_feature.iloc[:, IC_max[IC_max < 0.99].index]
 
     @cache_with_pickle(CachedRunner.get_cache_key, CachedRunner.assign_cached_result)
-    def develop(self, exp: QlibFactorExperiment) -> QlibFactorExperiment:
+    def develop(self, exp: QlibFactorExperiment, use_local: bool = True) -> QlibFactorExperiment:
         
         """
         Generate the experiment by processing and combining factor data,
-        then passing the combined data to Docker for backtest results.
+        then passing the combined data to Docker or local environment for backtest results.
         """
         
         if exp.based_experiments and exp.based_experiments[-1].result is None:
-            exp.based_experiments[-1] = self.develop(exp.based_experiments[-1])
+            exp.based_experiments[-1] = self.develop(exp.based_experiments[-1], use_local=use_local)
 
         if exp.based_experiments:
             SOTA_factor = None
@@ -113,17 +113,20 @@ class QlibFactorRunner(CachedRunner[QlibFactorExperiment]):
             logger.info(f"Factor values this round: \n\n{combined_factors.tail()}\n\n")
 
             # Save the combined factors to the workspace
-            # file_path = exp.experiment_workspace.workspace_path / "combined_factors_df.pkl"
-            # if os.path.exists(file_path):
-            #     os.remove(file_path)
             with open(exp.experiment_workspace.workspace_path / "combined_factors_df.pkl", "wb") as f:
                 pickle.dump(combined_factors, f)
 
+
+        # 执行回测，支持本地或Docker环境
+        config_name = f"conf.yaml" if len(exp.based_experiments) == 0 else "conf_cn_combined_kdd_ver.yaml"
+        logger.info(f"执行因子回测 (使用{'本地环境' if use_local else 'Docker容器'}): {config_name}")
+        
         result = exp.experiment_workspace.execute(
-            qlib_config_name=f"conf.yaml" if len(exp.based_experiments) == 0 else "conf_cn_combined_kdd_ver.yaml"
+            qlib_config_name=config_name,
+            use_local=use_local
         )
         
-        logger.info(f"Backtesting results: \n{result.iloc[2:]}")
+        logger.info(f"Backtesting results: \n{result.iloc[2:] if result is not None else 'None'}")
         exp.result = result
 
         return exp
