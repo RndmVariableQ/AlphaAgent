@@ -11,7 +11,7 @@ from alphaagent.core.scenario import Scenario
 from alphaagent.scenarios.qlib.experiment.factor_experiment import QlibFactorScenario
 from alphaagent.scenarios.qlib.experiment.workspace import QlibFBWorkspace
 
-prompt_dict = Prompts(file_path=Path(__file__).parent / "prompts.yaml")
+prompt_dict = Prompts(file_path=Path(__file__).parent / "prompts_rdagent.yaml")
 
 
 class QlibFactorFromReportScenario(QlibFactorScenario):

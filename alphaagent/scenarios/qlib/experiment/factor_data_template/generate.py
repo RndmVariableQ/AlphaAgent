@@ -6,7 +6,7 @@ from qlib.data import D
 
 instruments = D.instruments()
 fields = ["$open", "$close", "$high", "$low", "$volume"]  # , "$amount", "$turn", "$pettm", "$pbmrq"
-data = D.features(instruments, fields, freq="day").swaplevel().sort_index().loc["2015-01-01":"2024-12-31"].sort_index()
+data = D.features(instruments, fields, freq="day").swaplevel().sort_index().loc["2015-01-01":].sort_index()
 
 # 计算收益率
 data["$return"] = data.groupby(level=0)["$close"].pct_change().fillna(0)

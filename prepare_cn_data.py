@@ -39,7 +39,9 @@ def download_stock_data(start_date, end_date, output_dir):
         all_stocks = get_all_stocks_in_period(start_date, end_date)
         fields = "date,code,open,high,low,close,preclose,volume,amount,turn,tradestatus,pctChg,peTTM,pbMRQ,psTTM,pcfNcfTTM,isST"
         
-        for code in tqdm(all_stocks, desc="下载进度"):
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
+        def download_single_stock(code):
             code_clean = code.replace('.', '')
             output_file = output_path / f"{code_clean}.csv"
             
@@ -49,38 +51,64 @@ def download_stock_data(start_date, end_date, output_dir):
                 if not existing_df.empty:
                     existing_df['date'] = pd.to_datetime(existing_df['date'])
                     last_date = existing_df['date'].max()
-                    code_start_date = (last_date + timedelta(days=1)).strftime('%Y-%m-%d')
+                    code_download_start_date = (last_date + timedelta(days=1)).strftime('%Y-%m-%d')
                     # 如果无需更新则跳过
-                    if pd.to_datetime(code_start_date) > pd.to_datetime(end_date):
-                        continue
+                    # print(f"股票 {code} 已下载开始日期：{code_download_start_date}，结束日期：{last_date.strftime('%Y-%m-%d')}")
+                    if code_download_start_date == end_date:
+                        print(f"股票 {code} 无需更新")
+                        return
                 else:
-                    code_start_date = start_date
+                    code_download_start_date = start_date
             else:
-                code_start_date = start_date
+                code_download_start_date = start_date
             
             # 下载增量数据
+            print(f"下载 {code} 数据...日期范围：{code_download_start_date} 至 {end_date}")
             rs = bs.query_history_k_data_plus(
                 code,
                 fields,
-                start_date=code_start_date,
+                start_date=code_download_start_date,
                 end_date=end_date,
                 frequency="d",
-                adjustflag="2"
+                adjustflag="1" # 后复权
             )
+            
             if rs.error_code != '0':
                 print(f"获取 {code} 数据失败: {rs.error_msg}")
-                continue
+                return
             
             data_list = []
             while rs.next():
                 data_list.append(rs.get_row_data())
+
+
+
+            # 获取复权因子
+            rs_list = []
+            rs_adj = bs.query_adjust_factor(
+                code,
+                start_date=code_download_start_date,
+                end_date=end_date,
+            )
+
+            while (rs_adj.error_code == '0') & rs_adj.next():
+                rs_list.append(rs_adj.get_row_data())
+
+            adj_df = pd.DataFrame(rs_list, columns=rs_adj.fields).set_index('dividOperateDate')['adjustFactor']
+            adj_df = adj_df.rename('factor')
+
             
             if data_list:
-                new_df = pd.DataFrame(data_list, columns=rs.fields)
+                new_df = pd.DataFrame(data_list, columns=rs.fields).set_index('date')
+                new_df = pd.concat([new_df, adj_df], axis=1).ffill().fillna(1)
+                
                 new_df['code'] = new_df['code'].str.replace('.', '', regex=False)
-                new_df['factor'] = np.ones(len(new_df))
+                # new_df['factor'] = np.ones(len(new_df))
                 numeric_cols = new_df.columns[2:]
                 new_df[numeric_cols] = new_df[numeric_cols].apply(pd.to_numeric, errors='coerce')
+
+                new_df = new_df.reset_index()
+                new_df = new_df.rename(columns={'index': 'date'})
                 
                 # 合并并保存数据
                 if output_file.exists():
@@ -91,18 +119,61 @@ def download_stock_data(start_date, end_date, output_dir):
                 else:
                     combined_df = new_df
                 
+                
                 combined_df.to_csv(output_file, index=False, encoding='utf-8')
             
-            time.sleep(0.5)
+            # time.sleep(0.5)
+        
+        # # 使用线程池进行并发下载
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            futures = [executor.submit(download_single_stock, code) for code in all_stocks]
+            
+            # 使用tqdm显示进度
+            for _ in tqdm(as_completed(futures), total=len(futures), desc="下载进度"):
+                pass
+
+        # for code in all_stocks:
+        #     download_single_stock(code)
+                
     finally:
         bs.logout()
+
+
+
+def download_oneday_stock_data_(date):
+
+    #### 登陆系统 ####
+    lg = bs.login()
+    # 显示登陆返回信息
+    print('login respond error_code:'+lg.error_code)
+    print('login respond  error_msg:'+lg.error_msg)
+
+    #### 获取某日所有证券信息 ####
+    rs = bs.query_all_stock(day=date)
+    print('query_all_stock respond error_code:'+rs.error_code)
+    print('query_all_stock respond  error_msg:'+rs.error_msg)
+
+    #### 打印结果集 ####
+    data_list = []
+    while (rs.error_code == '0') & rs.next():
+        # 获取一条记录，将记录合并在一起
+        data_list.append(rs.get_row_data())
+    result = pd.DataFrame(data_list, columns=rs.fields)
+
+    #### 结果集输出到csv文件 ####   
+    # result.to_csv("D:\\all_stock.csv", encoding="gbk", index=False)
+    print(result)
+
+    #### 登出系统 ####
+    bs.logout()
 
 if __name__ == '__main__':
     # 动态设置结束日期为当前日期
     START_DATE = '2014-12-31'
-    END_DATE = datetime.now().strftime('%Y-%m-%d') # '2025-01-01' 
-    DATA_DIR = '~/.qlib/qlib_data/cn_data/raw_data_now'
+    END_DATE = (datetime.now()).strftime('%Y-%m-%d') # '2025-01-01'  - timedelta(days=7)
+    DATA_DIR = '~/.qlib/qlib_data/cn_data/raw_data_back_adjust'
     
-    print("开始下载股票数据...")
+    print("开始下载股票数据...日期范围：", START_DATE, "至", END_DATE)
     download_stock_data(START_DATE, END_DATE, DATA_DIR)
+    # download_oneday_stock_data_((datetime.now()-timedelta(days=1)).strftime('%Y-%m-%d'))
     print("下载完成!")

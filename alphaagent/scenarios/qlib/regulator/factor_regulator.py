@@ -14,7 +14,7 @@ class FactorRegulator(Evaluator):
     and ensure new factors maintain appropriate originality.
     """
     
-    def __init__(self, factor_zoo_path: str = "factor_zoo/alpha101.csv", duplication_threshold: int = 8):
+    def __init__(self, factor_zoo_path: str = None, duplication_threshold: int = 8):
         """
         Initialize the FactorRegulator with a reference to the factor zoo.
         
@@ -24,7 +24,10 @@ class FactorRegulator(Evaluator):
         """
         super().__init__(None)
         self.factor_zoo_path = factor_zoo_path
-        self.alphazoo = pd.read_csv(factor_zoo_path, index_col=None)
+        if factor_zoo_path:
+            self.alphazoo = pd.read_csv(factor_zoo_path, index_col=None)
+        else:
+            self.alphazoo = pd.DataFrame()
         self.duplication_threshold = duplication_threshold
         self.new_factors = []
         
