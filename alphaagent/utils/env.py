@@ -127,7 +127,7 @@ class QlibLocalEnv(LocalEnv):
     
     def prepare(self):
         """确保本地环境已准备就绪"""
-        logger.info("使用本地环境运行Qlib回测")
+        logger.info("Use local environment to run Qlib backtest")
         # 确保Qlib数据目录存在
         qlib_data_path = Path("~/.qlib/qlib_data/cn_data").expanduser()
         if not qlib_data_path.exists():
@@ -148,12 +148,12 @@ class QlibLocalEnv(LocalEnv):
             entry = self.conf.default_entry
             
         # 记录运行信息
-        table = Table(title="本地运行信息", show_header=False)
+        table = Table(title="Local Run Info", show_header=False)
         table.add_column("Key", style="bold cyan")
         table.add_column("Value", style="bold magenta")
         table.add_row("Entry", entry)
-        table.add_row("工作目录", local_path)
-        table.add_row("环境变量", "\n".join(f"{k}:{v}" for k, v in env.items()))
+        table.add_row("Working Directory", local_path)
+        table.add_row("Environment Variables", "\n".join(f"{k}:{v}" for k, v in env.items()))
         print(table)
         
         # 分割命令

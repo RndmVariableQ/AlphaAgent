@@ -1,0 +1,147 @@
+qlib_init:
+    provider_uri: "~/.qlib/qlib_data/future_data"
+    region: cn
+
+market: &market all
+benchmark: &benchmark IC000000
+
+
+data_handler_config: &data_handler_config
+    start_time: 2017-01-18
+    end_time: 2025-02-28
+    instruments: *market
+    data_loader:
+        class: qlib.contrib.data.loader.QlibDataLoader
+        kwargs:
+            config:
+                feature: ["($close-$open)/$open", "$volume/Mean($volume, 20)", "($high-$low)/Ref($close, 1)", "$close/Ref($close, 1)-1"] # "$high", "$low", "$close", "$volume"
+                label: 
+                    - ["Ref($close, -2)/Ref($close, -1) - 1"]
+                    - ["LABEL0"]
+
+    learn_processors:
+        - class: Fillna
+          kwargs:
+              fields_group: feature
+        - class: DropnaLabel
+        - class: CSZScoreNorm
+          kwargs:
+              fields_group: feature
+        - class: CSZScoreNorm
+          kwargs:
+              fields_group: label
+    infer_processors: 
+        - class: Fillna
+          kwargs:
+              fields_group: feature
+        - class: CSZScoreNorm
+          kwargs:
+              fields_group: feature
+        - class: CSZScoreNorm
+          kwargs:
+              fields_group: label
+
+
+
+
+port_analysis_config: &port_analysis_config
+    # executor:
+    #     class: SimulatorExecutor
+    #     module_path: qlib.backtest.executor
+    #     kwargs:
+    #         time_per_step: day
+    #         generate_portfolio_metrics: True
+    #         verbose: True
+    #         indicator_config:
+    #             show_indicator: True
+
+    executor:
+        class: NestedExecutor
+        module_path: qlib.backtest.executor
+        kwargs:
+            time_per_step: month
+            inner_executor:
+                class: NestedExecutor
+                module_path: qlib.backtest.executor
+                kwargs:
+                    time_per_step: month
+                    inner_executor:
+                        class: SimulatorExecutor
+                        module_path: qlib.backtest.executor
+                        kwargs:
+                            time_per_step: day
+                            generate_portfolio_metrics: True
+                            verbose: True
+                            indicator_config:
+                                show_indicator: True
+                    inner_strategy:
+                        class: SBBStrategyEMA
+                        module_path: qlib.contrib.strategy.rule_strategy
+                        kwargs:
+                            instruments: *market
+                            freq: day
+                    generate_portfolio_metrics: True
+                    indicator_config:
+                        show_indicator: True
+            inner_strategy:
+                class: TopkDropoutStrategy
+                module_path: qlib.contrib.strategy
+                kwargs:
+                    signal: <PRED>
+                    topk: 2
+                    n_drop: 1
+            track_data: True
+            generate_portfolio_metrics: True
+            indicator_config:
+                show_indicator: True
+
+    strategy:
+        class: TopkDropoutStrategy
+        module_path: qlib.contrib.strategy
+        kwargs:
+            signal: <PRED>
+            topk: 2
+            n_drop: 1
+    backtest:
+        start_time: 2024-01-01
+        end_time: 2025-01-01
+        account: 10000000
+        benchmark: *benchmark
+        exchange_kwargs:
+            freq: day
+            limit_threshold: 0.095
+            deal_price: close
+            open_cost: 0.0005
+            close_cost: 0.0015
+            min_cost: 5
+task:
+    model: &model
+        class: LGBModel
+        module_path: qlib.contrib.model.gbdt
+    dataset: &dataset
+        class: DatasetH
+        module_path: qlib.data.dataset
+        kwargs:
+            handler:
+                class: DataHandlerLP
+                module_path: qlib.contrib.data.handler
+                kwargs: *data_handler_config
+            segments:
+                train: [2017-01-18, 2021-12-31]
+                valid: [2022-01-01, 2023-12-31]
+                test: [2024-01-01, 2025-01-01]
+    record: 
+        - class: SignalRecord
+          module_path: qlib.workflow.record_temp
+          kwargs: 
+            model: <MODEL>
+            dataset: <DATASET>
+        - class: SigAnaRecord
+          module_path: qlib.workflow.record_temp
+          kwargs: 
+            ana_long_short: False
+            ann_scaler: 252
+        - class: PortAnaRecord
+          module_path: qlib.workflow.record_temp
+          kwargs: 
+            config: *port_analysis_config

@@ -183,7 +183,7 @@ def cache_with_pickle(hash_func: Callable, post_process_func: Callable | None = 
             if cache_file.exists():
                 with cache_file.open("rb") as f:
                     cached_res = pickle.load(f)
-                return post_process_func(*args, cached_res=cached_res, **kwargs) if post_process_func else cached_res
+                return post_process_func(*args, cached_res=cached_res) if post_process_func else cached_res
 
             if RD_AGENT_SETTINGS.use_file_lock:
                 with FileLock(lock_file):
