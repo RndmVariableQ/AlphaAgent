@@ -67,7 +67,7 @@ def main(path=None, step_n=None, direction=None, stop_event=None):
     try:
         use_local = os.getenv("USE_LOCAL", "True").lower()
         use_local = True if use_local in ["true", "1"] else False
-        logger.info(f"使用{'本地环境' if use_local else 'Docker容器'}执行因子回测")
+        logger.info(f"Use {'Local' if use_local else 'Docker container'} to execute factor backtest")
         if path is None:
             model_loop = AlphaAgentLoop(ALPHA_AGENT_FACTOR_PROP_SETTING, potential_direction=direction, stop_event=stop_event, use_local=use_local)
         else:

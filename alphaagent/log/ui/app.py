@@ -40,6 +40,188 @@ import requests
 from datetime import datetime
 import time
 
+# 设置页面配置
+st.set_page_config(layout="wide", page_title="AlphaAgent", page_icon="🎓", initial_sidebar_state="expanded")
+
+# 添加CSS样式
+st.markdown("""
+<style>
+.metric-card {
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    background-color: transparent;
+}
+.metric-card:hover {
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+.metric-title {
+    color: #1f77b4;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+}
+.plotly-chart {
+    width: 100%;
+    height: 100%;
+}
+.ideas-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin: 10px 0;
+}
+.idea-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+.idea-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+.idea-title {
+    color: #1f77b4;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 8px;
+    border-bottom: 2px solid #1f77b4;
+    padding-bottom: 4px;
+    text-align: center;
+}
+.idea-content {
+    font-size: 0.95em;
+    color: inherit;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px 5px;
+}
+[data-testid="column"] {
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+}
+[data-testid="column"] > div {
+    height: 100%;
+}
+
+/* Factor Agent 样式 */
+.factor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 10px 0;
+}
+.factor-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.factor-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+.factor-name {
+    color: #2ca02c;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-align: center;
+    border-bottom: 2px solid #2ca02c;
+    padding-bottom: 5px;
+}
+.factor-section {
+    margin-bottom: 15px;
+}
+.factor-section-title {
+    color: #1f77b4;
+    font-size: 1em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.factor-section-content {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 0.95em;
+    color: inherit;
+}
+.factor-expression {
+    font-family: 'Courier New', Courier, monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Factor Agent 新样式 */
+.factor-container {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 10px 0;
+    border: 1px solid rgba(49, 51, 63, 0.2);
+    transition: all 0.3s ease;
+}
+
+.factor-container:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.factor-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(49, 51, 63, 0.2);
+}
+
+.factor-name {
+    color: #2ca02c;
+    font-size: 1.2em;
+    font-weight: bold;
+    flex-grow: 1;
+}
+
+.factor-content {
+    background-color: rgba(49, 51, 63, 0.05);
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.factor-label {
+    color: #1f77b4;
+    font-size: 1em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* 自定义代码块样式 */
+.factor-code {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 5px;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border: 1px solid rgba(49, 51, 63, 0.1);
+}
+</style>
+""", unsafe_allow_html=True)
+
 # 在文件开头添加
 if '_watch' not in state:
     state._watch = True
@@ -51,11 +233,8 @@ if "current_task" not in state:
 if "api_base" not in state:
     state.api_base = "http://127.0.0.1:6701"  # 根据实际后端地址配置
 
-st.set_page_config(layout="wide", page_title="SeekAlpha", page_icon="🎓", initial_sidebar_state="expanded")
-
-
 # 获取log_path参数
-parser = argparse.ArgumentParser(description="SeekAlpha Streamlit App")
+parser = argparse.ArgumentParser(description="AlphaAgent Streamlit App")
 parser.add_argument("--log_dir", type=str, help="Path to the log directory")
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
@@ -70,9 +249,9 @@ else:
 
 QLIB_SELECTED_METRICS = [
     "IC",
-    "1day.excess_return_without_cost.annualized_return",
-    "1day.excess_return_without_cost.information_ratio",
-    "1day.excess_return_without_cost.max_drawdown",
+    "annualized_return",
+    "information_ratio",
+    "max_drawdown",
 ]
 
 SIMILAR_SCENARIOS = (QlibAlphaAgentScenario, QlibModelScenario, QlibModelScenario, DMModelScenario, QlibFactorScenario, QlibFactorFromReportScenario, KGScenario)
@@ -302,13 +481,14 @@ def evolving_feedback_window(wsf: FactorSingleFeedback | ModelSingleFeedback):
             ["**Final Feedback🏁**", "Execution Feedback🖥️", "Code Feedback📄", "Value Feedback🔢"]
         )
         with ffc:
-            st.markdown(wsf.final_feedback)
+            st.code(wsf.final_feedback, language="log")
         with efc:
             st.code(wsf.execution_feedback, language="log")
         with cfc:
-            st.markdown(wsf.code_feedback)
+            st.code(wsf.code_feedback, language="log")
         with vfc:
-            st.markdown(wsf.value_feedback)
+            st.code(wsf.value_feedback, language="log")
+            
     elif isinstance(wsf, ModelSingleFeedback):
         ffc, efc, cfc, msfc, vfc = st.tabs(
             [
@@ -427,6 +607,12 @@ def metrics_window(df: pd.DataFrame, R: int, C: int, *, height: int = 300, color
             '1day.excess_return_with_cost.information_ratio', 
             '1day.excess_return_with_cost.max_drawdown'
                  ][:R*C]]
+    
+    # 去掉前缀
+    df.columns = df.columns.str.replace('1day.excess_return_without_cost.', '')
+    df.columns = df.columns.str.replace('1day.excess_return_with_cost.', '')
+    
+    # 创建子图
     fig = make_subplots(rows=R, cols=C, subplot_titles=df.columns)
 
     def hypothesis_hover_text(h: Hypothesis, d: bool = False):
@@ -442,7 +628,10 @@ def metrics_window(df: pd.DataFrame, R: int, C: int, *, height: int = 300, color
     ]
     if state.alpha158_metrics is not None:
         hover_texts = ["Baseline: alpha158"] + hover_texts
-    # import pdb; pdb.set_trace()
+
+    # 使用自定义颜色
+    custom_colors = colors if colors else ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
+    
     for ci, col in enumerate(df.columns):
         row = ci // C + 1
         col_num = ci % C + 1
@@ -453,25 +642,51 @@ def metrics_window(df: pd.DataFrame, R: int, C: int, *, height: int = 300, color
                 name=col,
                 mode="lines+markers",
                 connectgaps=True,
-                marker=dict(size=10, color=colors[col_num-1]) if colors else dict(size=10),
-                # hovertext=hover_texts,
-                # hovertemplate="%{hovertext}<br><br><span style='color: black'>%{x} Value:</span> <span style='color: blue'>%{y}</span><extra></extra>",
+                marker=dict(
+                    size=10, 
+                    color=custom_colors[col_num-1],
+                    line=dict(width=2, color='white')
+                ),
+                line=dict(width=3),
             ),
             row=row,
             col=col_num,
         )
-    fig.update_layout(showlegend=False, height=height)
 
-    if state.alpha158_metrics is not None:
-        for i in range(1, R + 1):  # 行
-            for j in range(1, C + 1):  # 列
-                fig.update_xaxes(
-                    tickvals=[df.index[0]] + list(df.index[1:]),
-                    ticktext=[f'<span style="color:blue; font-weight:bold">{df.index[0]}</span>'] + list(df.index[1:]),
-                    row=i,
-                    col=j,
-                )
-    st.plotly_chart(fig)
+    # 更新布局
+    fig.update_layout(
+        showlegend=False,
+        height=height,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=40, r=40, t=60, b=40),
+    )
+
+    # 更新所有子图的样式
+    for i in range(1, R + 1):
+        for j in range(1, C + 1):
+            fig.update_xaxes(
+                showgrid=True,
+                gridwidth=1,
+                gridcolor='rgba(128,128,128,0.2)',
+                tickvals=[df.index[0]] + list(df.index[1:]),
+                ticktext=[f'<span style="color:#ff7f0e; font-weight:bold">{df.index[0]}</span>'] + list(df.index[1:]),
+                row=i,
+                col=j,
+            )
+            fig.update_yaxes(
+                showgrid=True,
+                gridwidth=1,
+                gridcolor='rgba(128,128,128,0.2)',
+                row=i,
+                col=j,
+            )
+
+    # 使用卡片容器显示图表
+    st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+    # st.markdown('<div class="metric-title">Performance Metrics</div>', unsafe_allow_html=True)
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 def summary_window():
@@ -556,27 +771,28 @@ def tabs_hint():
 
 def tasks_window(tasks: list[FactorTask | ModelTask]):
     if isinstance(tasks[0], FactorTask):
-        # st.markdown("")
         title = "Factor Agent⚙️"
         st.subheader(title, divider="blue", anchor="_factor")
-        # st.markdown("##### **Factor Agent⚙️**")
-        tnames = [f.factor_name for f in tasks]
-        if sum(len(tn) for tn in tnames) > 100:
-            tabs_hint()
-        tabs = st.tabs(tnames)
-        for i, ft in enumerate(tasks):
-            with tabs[i]:
-                st.markdown(f"- ##### **Factor Name** 📌: \n```\n{ft.factor_name}\n```")
-                st.markdown(f"- ##### **Description** 📝: \n```\n{ft.factor_description}\n```")
-                st.markdown(f"- ##### **Expression** ✨: \n```\n{ft.factor_expression}\n```")
-                # st.latex("Formulation")
-                # st.latex(ft.factor_formulation)
-
-                # mks = "| Variable | Description |\n| --- | --- |\n"
-                # if isinstance(ft.variables, dict):
-                #     for v, d in ft.variables.items():
-                #         mks += f"| ${v.replace('$', '')}$ | {d} |\n"
-                #     st.markdown(mks)
+        
+        for ft in tasks:
+            # 使用 Streamlit 容器创建卡片效果
+            with st.container():
+                # 添加一些上下边距
+                # st.markdown("<br>", unsafe_allow_html=True)
+                
+                # 使用 expander 创建可展开的卡片
+                with st.expander(f"### 🔍 **{ft.factor_name}**", expanded=True):
+                    # Description 部分
+                    st.markdown("##### Description")
+                    st.code(ft.factor_description, language="plaintext")
+                    
+                    # Expression 部分
+                    st.markdown("##### Expression")
+                    # 使用 success 样式代替 info，显示为绿色背景
+                    st.code(f"{ft.factor_expression}", language="python")
+                
+                # 添加分隔
+                st.markdown("<br>", unsafe_allow_html=True)
 
     elif isinstance(tasks[0], ModelTask):
         st.markdown("**Model Tasks🚩**")
@@ -586,7 +802,6 @@ def tasks_window(tasks: list[FactorTask | ModelTask]):
         tabs = st.tabs(tnames)
         for i, mt in enumerate(tasks):
             with tabs[i]:
-                # st.markdown(f"**Model Name**: {mt.name}")
                 st.markdown(f"**Model Type**: {mt.model_type}")
                 st.markdown(f"**Description**: {mt.description}")
                 st.latex("Formulation")
@@ -600,13 +815,8 @@ def tasks_window(tasks: list[FactorTask | ModelTask]):
 
 
 def research_window(round: int):
-    # 在 research_window 或 feedback_window 中添加
-    # if hg := state.msgs[round]["r.hypothesis generation"]:
-    #     st.subheader("Hypotheses🏅", anchor="_hypotheses")
-    #     display_hypotheses(state.hypotheses, state.h_decisions, round)
-        
     with st.container(border=True):
-        title = "Idea Agent💡" # if isinstance(state.scenario, SIMILAR_SCENARIOS) else "Research🔍 (reader)"
+        title = "Idea Agent💡"
         st.subheader(title, divider="blue", anchor="_idea")
         if isinstance(state.scenario, SIMILAR_SCENARIOS):
             # pdf image
@@ -614,19 +824,33 @@ def research_window(round: int):
                 for i in range(min(2, len(pim))):
                     st.image(pim[i].content, use_container_width=True)
 
-            # import pdb; pdb.set_trace()
             # Hypothesis
             if hg := state.msgs[round]["r.hypothesis generation"]:
-                # st.markdown("##### **Idea Agent💡**")  # 🧠
                 h: Hypothesis = hg[0].content
-                st.markdown(
-                    f"""
-- **Hypothesis**: {h.hypothesis}
-- **Justification**: {h.concise_justification}
-- **Knowledge**: {h.concise_knowledge}
-{f"- **Specification**: {h.concise_specification}" if hasattr(h, "concise_specification") and h.concise_specification else ""}
-"""
-                )
+                
+                # 创建网格布局的HTML
+                cards_html = f"""
+                <div class="ideas-grid">
+                    <div class="idea-card">
+                        <div class="idea-title">Hypothesis</div>
+                        <div class="idea-content">{h.hypothesis}</div>
+                    </div>
+                    <div class="idea-card">
+                        <div class="idea-title">Justification</div>
+                        <div class="idea-content">{h.concise_justification}</div>
+                    </div>
+                    <div class="idea-card">
+                        <div class="idea-title">Knowledge</div>
+                        <div class="idea-content">{h.concise_knowledge}</div>
+                    </div>
+                    <div class="idea-card">
+                        <div class="idea-title">Specification</div>
+                        <div class="idea-content">By combining Intraday Price Velocity with volume and volatility data within a specific time window and analyzing their collective impact on short-term returns, we aim to enhance the model's predictive power and capture a more nuanced understanding of market dynamics, thereby increasing the accuracy of short-term return predictions.</div>
+                    </div>
+                </div>
+                """
+                
+                st.markdown(cards_html, unsafe_allow_html=True)
 
             if eg := state.msgs[round]["r.experiment generation"]:
                 tasks_window(eg[0].content)
@@ -663,7 +887,8 @@ def feedback_window():
                     st.markdown(state.scenario.experiment_setting, unsafe_allow_html=True)
             
             if fbr := state.msgs[round]["ef.Quantitative Backtesting Chart"]:
-                st.markdown("**Returns📈**")
+                # st.markdown("<br><br>", unsafe_allow_html=True)
+                st.markdown("#### PnL Figure📈")
                 num_fig = len(state.msgs[round]["ef.Quantitative Backtesting Chart"])
                 if num_fig > 1:
                     for i in range(num_fig):
@@ -681,7 +906,9 @@ def feedback_window():
                     fig = report_figure(fbr[0].content)
                     st.plotly_chart(fig)
             if fbn := state.msgs[round]["ef.runner result"]:
-                st.markdown("**Runner Result Backtesting Table**")
+                # 添加空行
+                st.markdown("<br><br>", unsafe_allow_html=True)
+                st.markdown("#### Runner Result Backtesting Table 📌")
                 # 获取结果数据
                 runner_result_data = fbn[0].content
                 result = runner_result_data.result
@@ -689,45 +916,124 @@ def feedback_window():
                 result_df = pd.DataFrame(result) if isinstance(result, pd.Series) else pd.DataFrame(result)
                 result_df = result_df.reset_index()
                 result_df.columns = ["Metric", "Value"]
-                # 按条件分类
-                without_cost_df = result_df[result_df["Metric"].str.contains("without_cost")]
-                with_cost_df = result_df[result_df["Metric"].str.contains("with_cost")]
-                rest_df = result_df[~result_df["Metric"].str.contains("without_cost|with_cost")]
-                # 精炼 Metric 列
-                without_cost_df["Metric"] = without_cost_df["Metric"].apply(lambda x: x.split(".")[-1].replace("_", " "))
-                with_cost_df["Metric"] = with_cost_df["Metric"].apply(lambda x: x.split(".")[-1].replace("_", " "))
-                rest_df["Metric"] = rest_df["Metric"].apply(lambda x: x.split(".")[-1].replace("_", " "))
-                # 渲染表格函数
-                def render_table(df, title):
-                    if not df.empty:
-                        st.markdown(f"### {title}")
-                        table_md = "| Metric | Value |\n| --- | --- |\n"
-                        for _, row in df.iterrows():
-                            table_md += f"| {row['Metric']} | {row['Value']} |\n"
-                        st.markdown(table_md)
-                # 渲染不同分类的表格
-                render_table(without_cost_df, "Excess Return Without Cost")
-                render_table(with_cost_df, "Excess Return With Cost")
-                render_table(rest_df, "Rest")
-
-                # runner_result_data = fbn[0].content
-                # result = runner_result_data.result
-                # result_df = pd.DataFrame(result) if isinstance(result, pd.Series) else pd.DataFrame(result)
-                # result_df = result_df.reset_index()
-                # result_df.columns = ["Metric", "Value"]
-                # # 在前端显示动态表格
-                # st.dataframe(result_df, height=result_df.shape[0] * 35 + 50, use_container_width=True)  # 动态显示表格，可交互排序和搜索
+                
+                # 添加Category列来分类指标
+                def categorize_metric(metric):
+                    if "without_cost" in metric:
+                        return "Without Cost"
+                    elif "with_cost" in metric:
+                        return "With Cost"
+                    else:
+                        return "Other Metrics"
+                
+                result_df['Category'] = result_df['Metric'].apply(categorize_metric)
+                
+                # 清理Metric名称
+                result_df['Metric'] = result_df['Metric'].apply(lambda x: x.split('.')[-1].replace('_', ' ').title())
+                
+                # 规范化指标名称
+                metric_name_map = {
+                    'Ic': 'IC',
+                    'Icir': 'ICIR',
+                    'Rank Ic': 'Rank IC',
+                    'Rank Icir': 'Rank ICIR',
+                    'Ffr': 'ffr',
+                    'Pa': 'pa',
+                    'Pos': 'pos'
+                }
+                result_df['Metric'] = result_df['Metric'].apply(lambda x: metric_name_map.get(x, x))
+                
+                # 设置表格样式
+                st.markdown("""
+                <style>
+                .metric-table {
+                    font-size: 1em;
+                    border-collapse: collapse;
+                    margin: 25px 0;
+                    width: 100%;
+                    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+                    background-color: rgba(255, 255, 255, 0.05);
+                    border-radius: 10px;
+                    overflow: hidden;
+                }
+                .metric-table thead tr {
+                    background-color: #1f77b4;
+                    color: white;
+                    text-align: left;
+                    font-weight: bold;
+                }
+                .metric-table th,
+                .metric-table td {
+                    padding: 12px 15px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                }
+                .metric-table tbody tr {
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                }
+                .metric-table tbody tr:nth-of-type(even) {
+                    background-color: rgba(255, 255, 255, 0.05);
+                }
+                .metric-table tbody tr:last-of-type {
+                    border-bottom: 2px solid #1f77b4;
+                }
+                .category-header {
+                    background-color: rgba(31, 119, 180, 0.1) !important;
+                    font-weight: bold;
+                    color: #1f77b4;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+                
+                # 创建HTML表格
+                table_html = '<table class="metric-table"><thead><tr><th>Category</th><th>Metric</th><th>Value</th></tr></thead><tbody>'
+                
+                # 按Category分组添加行
+                for category in ['Without Cost', 'With Cost', 'Other Metrics']:
+                    category_data = result_df[result_df['Category'] == category]
+                    if not category_data.empty:
+                        # 添加类别标题行
+                        table_html += f'<tr class="category-header"><td colspan="3">{category}</td></tr>'
+                        # 添加该类别的所有指标
+                        for _, row in category_data.iterrows():
+                            table_html += f'<tr><td></td><td>{row["Metric"]}</td><td>{row["Value"]:.4f}</td></tr>'
+                
+                table_html += '</tbody></table>'
+                
+                # 显示表格
+                st.markdown(table_html, unsafe_allow_html=True)
             if fb := state.msgs[round]["ef.feedback"]:
-                st.markdown("**Hypothesis Feedback🔍**")
+                st.markdown("<br><br>", unsafe_allow_html=True)
+                st.markdown("#### Hypothesis Feedback🔍")
                 h: HypothesisFeedback = fb[0].content
-                st.markdown(
-                    f"""
-- **Observations**: {h.observations}
-- **Hypothesis Evaluation**: {h.hypothesis_evaluation}
-- **New Hypothesis**: {h.new_hypothesis}
-- **Decision**: {h.decision}
-- **Reason**: {h.reason}"""
+                
+                # 使用网格布局显示反馈内容
+                feedback_html = """
+                <div class="ideas-grid">
+                    <div class="idea-card">
+                        <div class="idea-title">Observations</div>
+                        <div class="idea-content">{}</div>
+                    </div>
+                    <div class="idea-card">
+                        <div class="idea-title">Hypothesis Evaluation</div>
+                        <div class="idea-content">{}</div>
+                    </div>
+                    <div class="idea-card">
+                        <div class="idea-title">New Hypothesis</div>
+                        <div class="idea-content">{}</div>
+                    </div>
+                    <div class="idea-card">
+                        <div class="idea-title">Decision & Reason</div>
+                        <div class="idea-content">Decision: {}<br><br>Reason: {}</div>
+                    </div>
+                </div>
+                """.format(
+                    h.observations,
+                    h.hypothesis_evaluation,
+                    h.new_hypothesis,
+                    h.decision,
+                    h.reason
                 )
+                st.markdown(feedback_html, unsafe_allow_html=True)
 
             if isinstance(state.scenario, KGScenario):
                 if fbe := state.msgs[round]["ef.runner result"]:
@@ -816,11 +1122,11 @@ def evolving_window():
                     evolving_feedback_window(state.msgs[round]["d.evolving feedback"][evolving_round - 1].content[j])
 
 
-## [Scenario Description📖](#_scenario)
+## [Scenario Description](#_scenario)
 toc = """
 ## [Summary📊](#_summary)
 - [**Metrics📈**](#_metrics)
-## [SeekAlpha Loops♾️](#_loops)
+## [AlphaAgent Loops♾️](#_loops)
 - [**Idea Agent💡**](#_idea)
 - [**Factor Agent⚙️**](#_factor)
 - [**Eval Agent📝**](#_eval)
@@ -834,7 +1140,7 @@ if isinstance(state.scenario, GeneralModelScenario):
 """
 # Config Sidebar
 with st.sidebar:
-    st.markdown("# **SeekAlpha**✨")
+    st.markdown("# **AlphaAgent**✨")
     st.subheader(":blue[Table of Content]", divider="blue")
     st.markdown(toc)
     st.subheader(":blue[Control Panel]", divider="blue")
@@ -1023,7 +1329,7 @@ if state.scenario is not None:
 
     # R&D Loops Window
     if isinstance(state.scenario, SIMILAR_SCENARIOS):
-        st.header("SeekAlpha Loops♾️", divider="rainbow", anchor="_loops")
+        st.header("AlphaAgent Loops♾️", divider="rainbow", anchor="_loops")
         # st.markdown("#### Loops")
         if len(state.msgs) > 1:
             r_options = list(state.msgs.keys())

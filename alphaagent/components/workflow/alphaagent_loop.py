@@ -133,7 +133,7 @@ class AlphaAgentLoop(LoopBase, metaclass=LoopMeta):
         回测因子
         """
         with logger.tag("ef"):  # evaluate and feedback
-            logger.info(f"开始因子回测 (本地环境: {self.use_local})")
+            logger.info(f"Start factor backtest (Local: {self.use_local})")
             exp = self.runner.develop(prev_out["factor_calculate"], use_local=self.use_local)
             if exp is None:
                 logger.error(f"Factor extraction failed.")

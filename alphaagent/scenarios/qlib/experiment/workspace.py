@@ -26,7 +26,7 @@ class QlibFBWorkspace(FBWorkspace):
         qtde.prepare()
         
         # 运行Qlib回测
-        logger.info(f"执行{'本地' if use_local else 'Docker容器'}回测: qrun {qlib_config_name}")
+        logger.info(f"Execute {'Local' if use_local else 'Docker container'} Backtest: qrun {qlib_config_name}")
         execute_log = qtde.run(
             local_path=str(self.workspace_path),
             entry=f"qrun {qlib_config_name}",
@@ -34,7 +34,7 @@ class QlibFBWorkspace(FBWorkspace):
         )
 
         # 处理结果
-        logger.info(f"读取{'本地' if use_local else 'Docker容器'}回测结果")
+        logger.info(f"Read {'Local' if use_local else 'Docker container'} Backtest Result")
         execute_log = qtde.run(
             local_path=str(self.workspace_path),
             entry="python read_exp_res.py",
