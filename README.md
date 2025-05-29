@@ -64,6 +64,8 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 - You can modify backtest configuration files which are located at:
   - Baseline: `alphaagent/scenarios/qlib/experiment/factor_template/conf.yaml`
   - For Newly proposed factors: `alphaagent/scenarios/qlib/experiment/factor_template/conf_cn_combined.yaml`
+  - For changing train/val/test periods, first remove all cache files in `./git_ignore_folder` and `./pickle_cache`. 
+  - For changing the market, remove cache files in `./git_ignore_folder`, `./pickle_cache`. Then, delete `daily_pv_all.h5` and `daily_pv_debug.h5` in directory `alphaagent/scenarios/qlib/experiment/factor_data_template/`. 
 
 ### 🐍 Create a Conda Environment
 - Create a new conda environment with Python (3.10 and 3.11 are well-tested in our CI):
