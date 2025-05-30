@@ -98,7 +98,9 @@ This repository follows the implementation of [RD-Agent](https://github.com/micr
 
 ### ⚙️ Configuration
 - For OpenAI compatible API, ensure both `OPENAI_BASE_URL` and `OPENAI_API_KEY` are configured in the `.env` file.
-- add `USE_LOCAL=True` in `.env` file if you want to run this project using local environment instead of docker
+- `REASONING_MODEL` is used in the idea agent and factor agent, while `CHAT_MODEL` is for debugging factors and generating feedbacks.
+- Slow-thinking models, such as DeepSeek-R1 are preferred for the `REASONING_MODEL`.
+- To run the project in a local environment (instead of Docker), add `USE_LOCAL=True` to the `.env` file.
 
 
 ### 🚀 Run AlphaAgent
@@ -133,26 +135,10 @@ This repository follows the implementation of [RD-Agent](https://github.com/micr
   ```
 
 ### 🖥️ Monitor the Application Results
-- You can run the following command for our demo program to see the run logs.
-
+- You can run the following command for our demo program to see the run logs. Note than the entrance is deprecated. 
   ```sh
   alphaagent ui --port 19899 --log_dir log/
   ```
-
-### 📊 Performance
-<div align="center">
-      <img src="docs/_static/excess_return.png" alt="Excess Return Comparison" style="width:90%; ">
-</div>
-
-The above figure illustrates our method's excess return performance against the CSI 500 benchmark over the past four years. The results demonstrate the remarkable effectiveness of our approach in generating stable alpha factors, consistently outperforming not only traditional methods but also cutting-edge reasoning models like OpenAI-o1 and DeepSeek-R1 that are currently in the spotlight. 
-
-### 🤖 Prompt Files
-
-#### 💡 IdeaAgent's Prompts: 
-- `alphaagent/scenarios/qlib/prompts_alphaagent.yaml`
-
-#### ⚙️ FactorAgent's Prompts: 
-- `alphaagent/components/coder/factor_coder/prompts_alphaagent.yaml`
 
 
 
