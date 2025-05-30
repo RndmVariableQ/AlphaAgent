@@ -183,3 +183,10 @@ mlruns/
 alphaagent/app/qlib_rd_loop/factor_rdagent.py
 
 alphaagent/scenarios/qlib/experiment/factor_template/*
+alphaagent/app/data_mining/
+alphaagent/app/general_model/
+alphaagent/app/kaggle/
+alphaagent/scenarios/data_mining/
+alphaagent/scenarios/general_model/
+alphaagent/scenarios/kaggle/
+backend/

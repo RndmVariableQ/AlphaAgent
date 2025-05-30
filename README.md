@@ -26,47 +26,6 @@ This repository follows the implementation of [RD-Agent](https://github.com/micr
 
 # ⚡ Quick start
 
-### 🐳 Docker installation.
-Users must ensure Docker is installed before attempting most scenarios. Please refer to the [official 🐳Docker page](https://docs.docker.com/engine/install/) for installation instructions.
-
-
-
-
-### 📈 Data Preparation
-- For A-share market, stock data will be automatically downloaded to `~/.qlib/qlib_data/cn_data`.
-
-- Alternatively, you can mannully download Chinese stock data via baostock and dump into the Qlib format.
-  ```sh
-  # Download or update stock data from 2015-01-01 until NOW from baostock
-  python prepare_cn_data.py
-
-  cd ..
-  # Clone Qlib source code
-  git clone https://github.com/microsoft/qlib.git
-  cd qlib
-
-  # Convert csv to Qlib format. Check correct paths before runing. 
-  python scripts/dump_bin.py dump_all ... \
-  --include_fields open,high,low,close,preclose,volume,amount,turn,pctChg,peTTM,pbMRQ,psTTM,pcfNcfTTM,isST,factor \
-  --csv_path  ~/.qlib/qlib_data/cn_data/raw_data_now \
-  --qlib_dir ~/.qlib/qlib_data/cn_data \
-  --date_field_name date \
-  --symbol_field_name code
-
-  # Collect calendar data
-  python scripts/data_collector/future_calendar_collector.py --qlib_dir ~/.qlib/qlib_data/cn_data/ --region cn
-
-
-  # Download the CSI500/CSI300/CSI100 stock universe
-  python scripts/data_collector/cn_index/collector.py --index_name CSI500 --qlib_dir ~/.qlib/qlib_data/cn_data/ --method parse_instruments
-  ```
-
-- You can modify backtest configuration files which are located at:
-  - Baseline: `alphaagent/scenarios/qlib/experiment/factor_template/conf.yaml`
-  - For Newly proposed factors: `alphaagent/scenarios/qlib/experiment/factor_template/conf_cn_combined.yaml`
-  - For changing train/val/test periods, first remove all cache files in `./git_ignore_folder` and `./pickle_cache`. 
-  - For changing the market, remove cache files in `./git_ignore_folder`, `./pickle_cache`. Then, delete `daily_pv_all.h5` and `daily_pv_debug.h5` in directory `alphaagent/scenarios/qlib/experiment/factor_data_template/`. 
-
 ### 🐍 Create a Conda Environment
 - Create a new conda environment with Python (3.10 and 3.11 are well-tested in our CI):
   ```sh
@@ -80,14 +39,53 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 ### 🛠️ Install locally
 - 
   ```sh
-  # Install AlphaAgent in editable mode.
+  # Install AlphaAgent
   pip install -e .
   ```
-- If you've installed qlib from source during data preparation process, just skip this installation
-  ```sh
-  # Install pyqlib if qlib has not been installed yet
-  pip install pyqlib==0.9.6
+
+### 📈 Data Preparation
+- First, clone Qlib source code for runing backtest locally.
   ```
+  # Clone Qlib source code
+  git clone https://github.com/microsoft/qlib.git
+  cd qlib
+  pip install .
+  cd ..
+  ```
+
+- Then, mannully download Chinese stock data via baostock and dump into the Qlib format.
+  ```sh
+  # Download or update stock data from 2015-01-01 until NOW from baostock
+  python prepare_cn_data.py
+
+  cd qlib
+
+  # Convert csv to Qlib format. Check correct paths before runing. 
+  python scripts/dump_bin.py dump_all ... \
+  --include_fields open,high,low,close,preclose,volume,amount,turn,factor \
+  --csv_path  ~/.qlib/qlib_data/cn_data/raw_data_now \
+  --qlib_dir ~/.qlib/qlib_data/cn_data \
+  --date_field_name date \
+  --symbol_field_name code
+
+  # Collect calendar data
+  python scripts/data_collector/future_calendar_collector.py --qlib_dir ~/.qlib/qlib_data/cn_data/ --region cn
+
+
+  # Download the CSI500/CSI300/CSI100 stock universe
+  python scripts/data_collector/cn_index/collector.py --index_name CSI500 --qlib_dir ~/.qlib/qlib_data/cn_data/ --method parse_instruments
+  ```
+
+
+- Alternatively, stock data (out-dated) will be automatically downloaded to `~/.qlib/qlib_data/cn_data`.
+
+
+- You can modify backtest configuration files which are located at:
+  - Baseline: `alphaagent/scenarios/qlib/experiment/factor_template/conf.yaml`
+  - For Newly proposed factors: `alphaagent/scenarios/qlib/experiment/factor_template/conf_cn_combined.yaml`
+  - For changing train/val/test periods, first remove all cache files in `./git_ignore_folder` and `./pickle_cache`. 
+  - For changing the market, remove cache files in `./git_ignore_folder`, `./pickle_cache`. Then, delete `daily_pv_all.h5` and `daily_pv_debug.h5` in directory `alphaagent/scenarios/qlib/experiment/factor_data_template/`. 
+
 
 ### 💊 Health check
 - We provide a health check that currently checks two things.
@@ -99,25 +97,11 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 
 
 ### ⚙️ Configuration
-- For the official OpenAI API, simply set up your `OPENAI_API_KEY` in the `.env` file.
-- If you're using an unofficial API provider, ensure both `OPENAI_BASE_URL` and `OPENAI_API_KEY` are configured in the `.env` file.
+- For OpenAI compatible API, ensure both `OPENAI_BASE_URL` and `OPENAI_API_KEY` are configured in the `.env` file.
 - add `USE_LOCAL=True` in `.env` file if you want to run this project using local environment instead of docker
 
 
 ### 🚀 Run AlphaAgent
-
-- Before starting your run, ensure that Docker is installed on your machine. You can verify the installation by running the following command:
-
-  ```bash
-  docker --version
-  ```
-- Additionally, ensure that your user has the necessary permissions to execute Docker commands without requiring sudo. To achieve this, add your user to the docker group by running the following command:
-  ```bash
-  sudo usermod -aG docker $USER
-  ```
-
-  After running the command, log out and log back in for the changes to take effect. 
-
 - Run **AlphaAgent** based on [Qlib Backtesting Framework](http://github.com/microsoft/qlib).
   ```sh
   alphaagent mine --potential_direction "<YOUR_MARKET_HYPOTHESIS>"
@@ -127,6 +111,7 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
   ```sh
   dotenv run -- python alphaagent/app/qlib_rd_loop/factor_alphaagent.py --direction "<YOUR_MARKET_HYPOTHESIS>"
   ```
+  After running the command, log out and log back in for the changes to take effect. 
 
 - Multi-factor backtesting
   ```sh
@@ -141,10 +126,9 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
   ```
 
 
-- If you need to rerun the baseline results or update backtest configs, remove the cache and log folders:
+- If you need to rerun the baseline results or update backtest configs, remove the cache folders:
   ```sh
   rm -r ./pickle_cache/*
-  rm -r ./log/*
   rm -r ./git_ignore_folder/*
   ```
 
@@ -153,12 +137,6 @@ Users must ensure Docker is installed before attempting most scenarios. Please r
 
   ```sh
   alphaagent ui --port 19899 --log_dir log/
-  ```
-
-- Activate the alpha mining entrance from the ui. 
-
-  ```sh
-  uvicorn backend.main:app --reload --port 9000
   ```
 
 ### 📊 Performance
