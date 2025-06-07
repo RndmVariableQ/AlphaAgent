@@ -16,17 +16,8 @@ import subprocess
 from importlib.resources import path as rpath
 
 import fire
-
-from alphaagent.app.data_mining.model import main as med_model
-from alphaagent.app.general_model.general_model import (
-    extract_models_and_implement as general_model,
-)
-from alphaagent.app.kaggle.loop import main as kaggle_main
-# from alphaagent.app.qlib_rd_loop.factor import main as fin_factor
-# from alphaagent.app.qlib_rd_loop.factor_from_report import main as fin_factor_report
 from alphaagent.app.qlib_rd_loop.factor_mining import main as mine
 from alphaagent.app.qlib_rd_loop.factor_backtest import main as backtest
-# from alphaagent.app.qlib_rd_loop.model import main as fin_model
 from alphaagent.app.utils.health_check import health_check
 from alphaagent.app.utils.info import collect_info
 
@@ -51,11 +42,6 @@ def app():
         {
             "mine": mine,
             "backtest": backtest,
-            # "fin_factor_report": fin_factor_report,
-            # "fin_model": fin_model,
-            # "med_model": med_model,
-            # "general_model": general_model,
-            # "kaggle": kaggle_main,
             "ui": ui,
             "health_check": health_check,
             "collect_info": collect_info,

@@ -87,19 +87,10 @@ This repository follows the implementation of [RD-Agent](https://github.com/micr
   - For changing the market, remove cache files in `./git_ignore_folder`, `./pickle_cache`. Then, delete `daily_pv_all.h5` and `daily_pv_debug.h5` in directory `alphaagent/scenarios/qlib/experiment/factor_data_template/`. 
 
 
-### 💊 Health check
-- We provide a health check that currently checks two things.
-  - whether the docker installation was successful.
-  - whether the default port is occupied.
-  ```sh
-  alphaagent health_check
-  ```
-
-
 ### ⚙️ Configuration
 - For OpenAI compatible API, ensure both `OPENAI_BASE_URL` and `OPENAI_API_KEY` are configured in the `.env` file.
 - `REASONING_MODEL` is used in the idea agent and factor agent, while `CHAT_MODEL` is for debugging factors and generating feedbacks.
-- Slow-thinking models, such as DeepSeek-R1 are preferred for the `REASONING_MODEL`.
+- Slow-thinking models, such as o3-mini are preferred for the `REASONING_MODEL`.
 - To run the project in a local environment (instead of Docker), add `USE_LOCAL=True` to the `.env` file.
 
 
