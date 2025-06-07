@@ -8,7 +8,6 @@ from typing import Tuple, Union
 import pandas as pd
 from filelock import FileLock
 
-from alphaagent.app.kaggle.conf import KAGGLE_IMPLEMENT_SETTING
 from alphaagent.components.coder.CoSTEER.task import CoSTEERTask
 from alphaagent.components.coder.factor_coder.config import FACTOR_COSTEER_SETTINGS
 from alphaagent.core.exception import CodeFormatError, CustomRuntimeError, NoOutputError
@@ -138,9 +137,6 @@ class FactorFBWorkspace(FBWorkspace):
                         FACTOR_COSTEER_SETTINGS.data_folder,
                     )
                 )
-            elif self.target_task.version == 2:
-                # TODO you can change the name of the data folder for a better understanding
-                source_data_path = Path(KAGGLE_IMPLEMENT_SETTING.local_data_path) / KAGGLE_IMPLEMENT_SETTING.competition
 
             source_data_path.mkdir(exist_ok=True, parents=True)
             code_path = self.workspace_path / f"factor.py"

@@ -24,9 +24,9 @@ from alphaagent.core.scenario import Scenario
 from alphaagent.log.base import Message
 from alphaagent.log.storage import FileStorage
 from alphaagent.log.ui.qlib_report_figure import report_figure
-from alphaagent.scenarios.data_mining.experiment.model_experiment import DMModelScenario
-from alphaagent.scenarios.general_model.scenario import GeneralModelScenario
-from alphaagent.scenarios.kaggle.experiment.scenario import KGScenario
+# from alphaagent.scenarios.data_mining.experiment.model_experiment import DMModelScenario
+# from alphaagent.scenarios.general_model.scenario import GeneralModelScenario
+# from alphaagent.scenarios.kaggle.experiment.scenario import KGScenario
 from alphaagent.scenarios.qlib.experiment.factor_experiment import QlibFactorScenario, QlibAlphaAgentScenario
 from alphaagent.scenarios.qlib.experiment.factor_from_report_experiment import (
     QlibFactorFromReportScenario,
@@ -254,7 +254,7 @@ QLIB_SELECTED_METRICS = [
     "max_drawdown",
 ]
 
-SIMILAR_SCENARIOS = (QlibAlphaAgentScenario, QlibModelScenario, QlibModelScenario, DMModelScenario, QlibFactorScenario, QlibFactorFromReportScenario, KGScenario)
+SIMILAR_SCENARIOS = (QlibAlphaAgentScenario, QlibModelScenario, QlibModelScenario, QlibFactorScenario, QlibFactorFromReportScenario)
 
 
 def filter_log_folders(main_log_path):
@@ -368,9 +368,7 @@ def get_msgs_until(end_func: Callable[[Message], bool] = lambda _: True):
                             and msg.content.based_experiments[-1].result is not None
                         ):
                             sms = msg.content.based_experiments[-1].result
-                            if isinstance(state.scenario, DMModelScenario):
-                                sms.index = ["AUROC"]
-                            elif isinstance(
+                            if isinstance(
                                 state.scenario, (QlibModelScenario, QlibFactorFromReportScenario, QlibFactorScenario)
                             ):
                                 sms = sms.loc[QLIB_SELECTED_METRICS]
@@ -378,16 +376,9 @@ def get_msgs_until(end_func: Callable[[Message], bool] = lambda _: True):
                             state.metric_series.append(sms)
 
                         # common metrics
-                        if msg.content.result is None:
-                            if isinstance(state.scenario, DMModelScenario):
-                                state.metric_series.append(
-                                    pd.Series([None], index=["AUROC"], name=f"Round {state.lround}")
-                                )
-                        else:
+                        if msg.content.result is not None:
                             sms = msg.content.result
-                            if isinstance(state.scenario, DMModelScenario):
-                                sms.index = ["AUROC"]
-                            elif isinstance(
+                            if isinstance(
                                 state.scenario, (QlibModelScenario, QlibFactorFromReportScenario, QlibFactorScenario)
                             ):
                                 sms = sms.loc[QLIB_SELECTED_METRICS]
@@ -732,34 +723,6 @@ def summary_window():
                     else:
                         metrics_window(df, 2, 4, height=600, colors=["red", "blue", "orange", "green"])
 
-    elif isinstance(state.scenario, GeneralModelScenario):
-        with st.container(border=True):
-            st.subheader("Summary📊", divider="rainbow", anchor="_summary")
-            if len(state.msgs[state.lround]["d.evolving code"]) > 0:
-                # pass
-                ws: list[FactorFBWorkspace | ModelFBWorkspace] = state.msgs[state.lround]["d.evolving code"][-1].content
-                # All Tasks
-
-                tab_names = [
-                    w.target_task.factor_name if isinstance(w.target_task, FactorTask) else w.target_task.name
-                    for w in ws
-                ]
-                for j in range(len(ws)):
-                    if state.msgs[state.lround]["d.evolving feedback"][-1].content[j].final_decision:
-                        tab_names[j] += "✔️"
-                    else:
-                        tab_names[j] += "❌"
-
-                wtabs = st.tabs(tab_names)
-                for j, w in enumerate(ws):
-                    with wtabs[j]:
-                        # Evolving Code
-                        for k, v in w.code_dict.items():
-                            with st.expander(f":green[`{k}`]", expanded=False):
-                                st.code(v, language="python")
-
-                        # Evolving Feedback
-                        evolving_feedback_window(state.msgs[state.lround]["d.evolving feedback"][-1].content[j])
 
 
 def tabs_hint():
@@ -855,24 +818,6 @@ def research_window(round: int):
             if eg := state.msgs[round]["r.experiment generation"]:
                 tasks_window(eg[0].content)
 
-        elif isinstance(state.scenario, GeneralModelScenario):
-            # pdf image
-            c1, c2 = st.columns([2, 3])
-            with c1:
-                if pim := state.msgs[round]["r.pdf_image"]:
-                    for i in range(len(pim)):
-                        st.image(pim[i].content, use_container_width=True)
-
-            # loaded model exp
-            with c2:
-                if mem := state.msgs[round]["d.load_experiment"]:
-                    # 'load_experiment' should in 'r' now, but old version trace may in 'd', so we need to check both
-                    # TODO: modify the way to get one message with a specific tag like 'load_experiment' in the future
-                    me: QlibModelExperiment = mem[0].content
-                    tasks_window(me.sub_tasks)
-                elif mem := state.msgs[round]["r.load_experiment"]:
-                    me: QlibModelExperiment = mem[0].content
-                    tasks_window(me.sub_tasks)
 
 
 def feedback_window():
@@ -881,7 +826,7 @@ def feedback_window():
             st.subheader("Eval Agent📝", divider="orange", anchor="_eval")
 
             if state.lround > 0 and isinstance(
-                state.scenario, (QlibModelScenario, QlibFactorScenario, QlibFactorFromReportScenario, KGScenario)
+                state.scenario, (QlibModelScenario, QlibFactorScenario, QlibFactorFromReportScenario)
             ):
                 with st.expander("**Config**", expanded=True):
                     st.markdown(state.scenario.experiment_setting, unsafe_allow_html=True)
@@ -1035,22 +980,22 @@ def feedback_window():
                 )
                 st.markdown(feedback_html, unsafe_allow_html=True)
 
-            if isinstance(state.scenario, KGScenario):
-                if fbe := state.msgs[round]["ef.runner result"]:
-                    submission_path = fbe[0].content.experiment_workspace.workspace_path / "submission.csv"
-                    st.markdown(
-                        f":green[**Exp Workspace**]: {str(fbe[0].content.experiment_workspace.workspace_path.absolute())}"
-                    )
-                    try:
-                        data = submission_path.read_bytes()
-                        st.download_button(
-                            label="**Download** submission.csv",
-                            data=data,
-                            file_name="submission.csv",
-                            mime="text/csv",
-                        )
-                    except Exception as e:
-                        st.markdown(f":red[**Download Button Error**]: {e}")
+            # if isinstance(state.scenario, KGScenario):
+            #     if fbe := state.msgs[round]["ef.runner result"]:
+            #         submission_path = fbe[0].content.experiment_workspace.workspace_path / "submission.csv"
+            #         st.markdown(
+            #             f":green[**Exp Workspace**]: {str(fbe[0].content.experiment_workspace.workspace_path.absolute())}"
+            #         )
+            #         try:
+            #             data = submission_path.read_bytes()
+            #             st.download_button(
+            #                 label="**Download** submission.csv",
+            #                 data=data,
+            #                 file_name="submission.csv",
+            #                 mime="text/csv",
+            #             )
+            #         except Exception as e:
+            #             st.markdown(f":red[**Download Button Error**]: {e}")
 
 
 def evolving_window():
@@ -1130,13 +1075,6 @@ toc = """
 - [**Idea Agent💡**](#_idea)
 - [**Factor Agent⚙️**](#_factor)
 - [**Eval Agent📝**](#_eval)
-"""
-if isinstance(state.scenario, GeneralModelScenario):
-    toc = """
-## [Scenario Description📖](#_scenario)
-### [Summary📊](#_summary)
-### [Research🔍](#_research)
-### [Development🛠️](#_development)
 """
 # Config Sidebar
 with st.sidebar:
@@ -1344,13 +1282,6 @@ if state.scenario is not None:
         r_c = st.container()
         d_c = st.container()
         f_c = st.container()
-    elif isinstance(state.scenario, GeneralModelScenario):
-        show_times(round)
-
-        r_c = st.container()
-        d_c = st.container()
-        f_c = st.container()
-        round = 1
     else:
         st.error("Unknown Scenario!")
         st.stop()
