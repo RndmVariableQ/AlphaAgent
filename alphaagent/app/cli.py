@@ -22,7 +22,7 @@ from alphaagent.app.utils.health_check import health_check
 from alphaagent.app.utils.info import collect_info
 
 
-def ui(port=19899, log_dir="", debug=False):
+def ui(port=19899, log_dir="./log", debug=False):
     """
     start web app to show the log traces.
     """

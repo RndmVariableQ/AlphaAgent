@@ -14,6 +14,8 @@ import streamlit as st
 from plotly.subplots import make_subplots
 from streamlit import session_state as state
 from streamlit_theme import st_theme
+import hashlib
+import json
 
 from alphaagent.components.coder.factor_coder.evaluators import FactorSingleFeedback
 from alphaagent.components.coder.factor_coder.factor import FactorFBWorkspace, FactorTask
@@ -42,6 +44,599 @@ import time
 
 # 设置页面配置
 st.set_page_config(layout="wide", page_title="AlphaAgent", page_icon="🎓", initial_sidebar_state="expanded")
+
+# 用户文件路径
+USERS_FILE = "users.json"
+
+# 默认用户配置
+DEFAULT_USERS = {
+    "admin": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",  # password: hello
+    "user1": "fcf730b6d95236ecd3c9fc2d92d7b6b2bb061514961aec041d6c7a7192f592e4",  # password: secret123
+    "demo": "d3ad9315b7be5dd53b31a273b3b3aba5defe700808305aa16a3062b76658a791",   # password: demo123
+}
+
+def load_users():
+    """从文件加载用户数据"""
+    try:
+        if os.path.exists(USERS_FILE):
+            with open(USERS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            # 如果文件不存在，创建默认用户文件
+            save_users(DEFAULT_USERS)
+            return DEFAULT_USERS.copy()
+    except Exception as e:
+        st.error(f"Failed to load user data: {e}")
+        return DEFAULT_USERS.copy()
+
+def save_users(users_dict):
+    """保存用户数据到文件"""
+    try:
+        with open(USERS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(users_dict, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        st.error(f"Failed to save user data: {e}")
+        return False
+
+def hash_password(password: str) -> str:
+    """对密码进行SHA256哈希"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(username: str, password: str) -> bool:
+    """验证用户名和密码"""
+    users = load_users()
+    if username in users:
+        return users[username] == hash_password(password)
+    return False
+
+def is_valid_username(username: str) -> tuple[bool, str]:
+    """验证用户名格式"""
+    if not username:
+        return False, "Username cannot be empty"
+    if len(username) < 3:
+        return False, "Username must be at least 3 characters"
+    if len(username) > 20:
+        return False, "Username cannot exceed 20 characters"
+    if not username.replace('_', '').replace('-', '').isalnum():
+        return False, "Username can only contain letters, numbers, underscores and hyphens"
+    return True, ""
+
+def is_valid_password(password: str) -> tuple[bool, str]:
+    """验证密码强度"""
+    if not password:
+        return False, "Password cannot be empty"
+    if len(password) < 6:
+        return False, "Password must be at least 6 characters"
+    if len(password) > 50:
+        return False, "Password cannot exceed 50 characters"
+    return True, ""
+
+def user_exists(username: str) -> bool:
+    """检查用户是否已存在"""
+    users = load_users()
+    return username in users
+
+def register_user(username: str, password: str) -> tuple[bool, str]:
+    """注册新用户"""
+    # 验证用户名
+    valid_username, username_msg = is_valid_username(username)
+    if not valid_username:
+        return False, username_msg
+    
+    # 验证密码
+    valid_password, password_msg = is_valid_password(password)
+    if not valid_password:
+        return False, password_msg
+    
+    # 检查用户是否已存在
+    if user_exists(username):
+        return False, "Username already exists, please choose another"
+    
+    # 添加新用户
+    users = load_users()
+    users[username] = hash_password(password)
+    
+    if save_users(users):
+        return True, "Registration successful!"
+    else:
+        return False, "Registration failed, please try again"
+
+def register_page():
+    """注册页面"""
+    st.markdown("""
+    <style>
+    /* 注册页面背景 */
+    .main .block-container {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* 注册页面背景装饰圆圈 - 第一层 */
+    .main .block-container::before {
+        content: '';
+        position: absolute;
+        top: -100%;
+        left: -100%;
+        width: 300%;
+        height: 300%;
+        background: 
+            radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 25%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 35%, transparent 60%),
+            radial-gradient(circle at 60% 20%, rgba(17, 153, 142, 0.3) 0%, rgba(17, 153, 142, 0.1) 30%, transparent 50%),
+            radial-gradient(circle at 30% 80%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 40%, transparent 65%),
+            radial-gradient(circle at 70% 60%, rgba(56, 239, 125, 0.2) 0%, transparent 45%);
+        animation: float 25s ease-in-out infinite;
+        z-index: 0;
+    }
+    
+    /* 注册页面背景装饰圆圈 - 第二层 */
+    .main .block-container::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: 
+            radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 90% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 35%),
+            radial-gradient(circle at 10% 90%, rgba(17, 153, 142, 0.2) 0%, transparent 45%);
+        animation: float-reverse 30s ease-in-out infinite;
+        z-index: 0;
+    }
+    
+    .welcome-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 2rem 0;
+        position: relative;
+        z-index: 2;
+    }
+    .app-logo {
+        font-size: 4rem;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        animation: pulse 2s ease-in-out infinite alternate;
+    }
+    @keyframes pulse {
+        from { transform: scale(1); }
+        to { transform: scale(1.05); }
+    }
+    .app-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .app-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    .register-title {
+        text-align: center;
+        color: #ffffff;
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .password-rules {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        font-size: 0.9em;
+    }
+    .password-rules h4 {
+        color: #ffffff !important;
+        margin-bottom: 1rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    .password-rules p {
+        color: rgba(255, 255, 255, 0.9) !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* 注册页面按钮样式 */
+    .stButton > button {
+        background: linear-gradient(45deg, #11998e, #38ef7d);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-weight: bold;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(17, 153, 142, 0.4);
+        background: linear-gradient(45deg, #38ef7d, #11998e);
+    }
+    
+    /* 注册页面输入框样式 */
+    .stTextInput > div > div > input {
+        background-color: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        color: #333;
+        font-size: 1rem;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #11998e;
+        box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.2);
+        background-color: rgba(255, 255, 255, 1);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # 应用介绍头部
+    st.markdown("""
+    <div class="welcome-header">
+        <div class="app-logo">📝</div>
+        <div class="app-title">AlphaAgent</div>
+        <div class="app-subtitle">Create Your Account</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        # 使用streamlit的原生容器
+        with st.container(border=True):
+            st.markdown('<div class="register-title">📝 User Registration</div>', unsafe_allow_html=True)
+        
+        with st.form("register_form"):
+            username = st.text_input("Username", placeholder="Please enter username (3-20 characters)")
+            password = st.text_input("Password", type="password", placeholder="Please enter password (at least 6 characters)")
+            confirm_password = st.text_input("Confirm Password", type="password", placeholder="Please enter password again")
+            
+            col_register, col_back = st.columns([1, 1])
+            with col_register:
+                register_clicked = st.form_submit_button("✅ Register", use_container_width=True)
+            with col_back:
+                back_clicked = st.form_submit_button("🔙 Back to Login", use_container_width=True)
+            
+            if register_clicked:
+                if not username or not password or not confirm_password:
+                    st.warning("Please fill in all fields! ⚠️")
+                elif password != confirm_password:
+                    st.error("Passwords do not match! ❌")
+                else:
+                    success, message = register_user(username, password)
+                    if success:
+                        st.success(message + " Please go back to login page to sign in.")
+                        # 自动切换回登录页面
+                        state.show_register = False
+                        st.rerun()
+                    else:
+                        st.error(message)
+            
+            if back_clicked:
+                state.show_register = False
+                st.rerun()
+        
+        # 密码规则说明
+        st.markdown("""
+                 <div class="password-rules">
+             <h4>📋 Registration Rules</h4>
+             <p><strong>Username:</strong> 3-20 characters, only letters, numbers, underscores and hyphens allowed</p>
+             <p><strong>Password:</strong> At least 6 characters</p>
+         </div>
+         """, unsafe_allow_html=True)
+
+def login_page():
+    """登录页面"""
+    st.markdown("""
+    <style>
+    /* 登录页面背景 */
+    .main .block-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* 背景装饰圆圈 - 第一层 */
+    .main .block-container::before {
+        content: '';
+        position: absolute;
+        top: -100%;
+        left: -100%;
+        width: 300%;
+        height: 300%;
+        background: 
+            radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 25%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 35%, transparent 60%),
+            radial-gradient(circle at 60% 20%, rgba(102, 126, 234, 0.3) 0%, rgba(102, 126, 234, 0.1) 30%, transparent 50%),
+            radial-gradient(circle at 30% 80%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 40%, transparent 65%),
+            radial-gradient(circle at 70% 60%, rgba(118, 75, 162, 0.2) 0%, transparent 45%);
+        animation: float 25s ease-in-out infinite;
+        z-index: 0;
+    }
+    
+    /* 背景装饰圆圈 - 第二层 */
+    .main .block-container::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: 
+            radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 90% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 35%),
+            radial-gradient(circle at 10% 90%, rgba(102, 126, 234, 0.2) 0%, transparent 45%);
+        animation: float-reverse 30s ease-in-out infinite;
+        z-index: 0;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+        25% { transform: translate(40px, -30px) rotate(90deg) scale(1.1); }
+        50% { transform: translate(-20px, 40px) rotate(180deg) scale(0.9); }
+        75% { transform: translate(30px, 20px) rotate(270deg) scale(1.05); }
+    }
+    
+    @keyframes float-reverse {
+        0%, 100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+        25% { transform: translate(-30px, 40px) rotate(270deg) scale(0.95); }
+        50% { transform: translate(25px, -35px) rotate(180deg) scale(1.1); }
+        75% { transform: translate(-40px, -20px) rotate(90deg) scale(0.9); }
+    }
+    
+    .welcome-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 2rem 0;
+        position: relative;
+        z-index: 2;
+    }
+    .app-logo {
+        font-size: 4rem;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        animation: pulse 2s ease-in-out infinite alternate;
+    }
+    @keyframes pulse {
+        from { transform: scale(1); }
+        to { transform: scale(1.05); }
+    }
+    .app-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .app-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    .login-title {
+        text-align: center;
+        color: #ffffff;
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* 输入框样式优化 */
+    .stTextInput > div > div > input {
+        background-color: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        color: #333;
+        font-size: 1rem;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        background-color: rgba(255, 255, 255, 1);
+    }
+    
+    /* 按钮样式优化 */
+    .stButton > button {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-weight: bold;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        background: linear-gradient(45deg, #764ba2, #667eea);
+    }
+    .stButton > button:active {
+        transform: translateY(0);
+    }
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .demo-info {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .demo-info h4 {
+        color: #ffffff !important;
+        margin-bottom: 1rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    .demo-info p {
+        color: rgba(255, 255, 255, 0.9) !important;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+    .register-link {
+        text-align: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    /* 容器整体样式 */
+    [data-testid="column"] > div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] > div[data-testid="stContainer"] {
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        padding: 2rem;
+        margin-top: 2rem;
+        position: relative;
+        overflow: hidden;
+        z-index: 10;
+    }
+    
+    [data-testid="column"] > div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] > div[data-testid="stContainer"]::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        z-index: -1;
+    }
+    
+    /* 确保所有内容在背景之上 */
+    .welcome-header {
+        position: relative;
+        z-index: 15;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # 添加明显的视觉光圈效果
+    st.markdown("""
+    <!-- 大型光圈装饰 -->
+    <div style="position: fixed; top: 5%; left: 5%; width: 300px; height: 300px; 
+                background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 30%, transparent 70%); 
+                border-radius: 50%; animation: mega-pulse 6s ease-in-out infinite; z-index: 5; pointer-events: none;"></div>
+    <div style="position: fixed; bottom: 10%; right: 10%; width: 250px; height: 250px; 
+                background: radial-gradient(circle, rgba(102,126,234,0.6) 0%, rgba(102,126,234,0.3) 25%, transparent 65%); 
+                border-radius: 50%; animation: mega-pulse 4s ease-in-out infinite 2s; z-index: 5; pointer-events: none;"></div>
+    <div style="position: fixed; top: 50%; left: 80%; width: 180px; height: 180px; 
+                background: radial-gradient(circle, rgba(118,75,162,0.5) 0%, rgba(118,75,162,0.2) 35%, transparent 70%); 
+                border-radius: 50%; animation: mega-pulse 5s ease-in-out infinite 1s; z-index: 5; pointer-events: none;"></div>
+    <style>
+    @keyframes mega-pulse {
+        0%, 100% { transform: scale(0.8) rotate(0deg); opacity: 0.9; }
+        50% { transform: scale(1.3) rotate(180deg); opacity: 0.4; }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # 应用介绍头部
+    st.markdown("""
+    <div class="welcome-header">
+        <div class="app-logo">🎓</div>
+        <div class="app-title">AlphaAgent</div>
+        <div class="app-subtitle">LLM-Driven Quantitative Investment Research Platform</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        # 使用streamlit的原生容器
+        with st.container(border=True):
+            st.markdown('<div class="login-title">User Login</div>', unsafe_allow_html=True)
+        
+        with st.form("login_form"):
+            username = st.text_input("Username", placeholder="Please enter username")
+            password = st.text_input("Password", type="password", placeholder="Please enter password")
+            
+            col_login, col_clear = st.columns([1, 1])
+            with col_login:
+                login_clicked = st.form_submit_button("🚀 Login", use_container_width=True)
+            with col_clear:
+                clear_clicked = st.form_submit_button("🗑️ Clear", use_container_width=True)
+            
+            if login_clicked:
+                if username and password:
+                    if verify_password(username, password):
+                        state.authenticated = True
+                        state.username = username
+                        st.success(f"Welcome back, {username}! 🎉")
+                        st.rerun()
+                    else:
+                        st.error("Invalid username or password! ❌")
+                else:
+                    st.warning("Please enter username and password! ⚠️")
+            
+            if clear_clicked:
+                st.rerun()
+        
+        # 注册链接
+        st.markdown('<div class="register-link">', unsafe_allow_html=True)
+        if st.button("📝 Don't have an account? Click to register", use_container_width=True):
+            state.show_register = True
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # 演示账户信息
+        st.markdown("""
+        <div class="demo-info">
+            <h4>🔍 Demo Accounts</h4>
+            <p><strong>Demo:</strong> demo / demo123</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+def logout():
+    """登出功能"""
+    state.authenticated = False
+    state.username = None
+    st.rerun()
+
+# 初始化认证状态
+if "authenticated" not in state:
+    state.authenticated = False
+if "username" not in state:
+    state.username = None
+if "show_register" not in state:
+    state.show_register = False
+
+# 检查认证状态
+if not state.authenticated:
+    if state.show_register:
+        register_page()
+    else:
+        login_page()
+    st.stop()
+
+
 
 # 添加CSS样式
 st.markdown("""
@@ -235,9 +830,10 @@ if "api_base" not in state:
 
 # 获取log_path参数
 parser = argparse.ArgumentParser(description="AlphaAgent Streamlit App")
-parser.add_argument("--log_dir", type=str, help="Path to the log directory")
+parser.add_argument("--log_dir", required=True, type=str, help="Path to the log directory")
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
+
 if args.log_dir:
     main_log_path = Path(args.log_dir)
     if not main_log_path.exists():
@@ -1079,6 +1675,14 @@ toc = """
 # Config Sidebar
 with st.sidebar:
     st.markdown("# **AlphaAgent**✨")
+    
+    # 用户信息
+    st.markdown("---")
+    st.markdown(f"👤 **Current User:** {state.username}")
+    if st.button("🚪 Logout", use_container_width=True):
+        logout()
+    st.markdown("---")
+    
     st.subheader(":blue[Table of Content]", divider="blue")
     st.markdown(toc)
     st.subheader(":blue[Control Panel]", divider="blue")
