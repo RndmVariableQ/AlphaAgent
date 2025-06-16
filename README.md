@@ -4,6 +4,7 @@
   <!-- <a href="https://arxiv.org/abs/2502.16789"><b>📃Paper Link</b>👁️</a> -->
 </h3>
 
+Official source code of KDD 2025 paper: [AlphaAgent: LLM-Driven Alpha Mining with Regularized Exploration to Counteract Alpha Decay](https://arxiv.org/abs/2502.16789)
 
 
 
@@ -133,3 +134,16 @@ This repository follows the implementation of [RD-Agent](https://github.com/micr
 
 
 
+### 📚 Citation
+If you find this work helpful, please cite our paper:
+```bibtex
+@misc{tang2025alphaagentllmdrivenalphamining,
+      title={AlphaAgent: LLM-Driven Alpha Mining with Regularized Exploration to Counteract Alpha Decay}, 
+      author={Ziyi Tang and Zechuan Chen and Jiarui Yang and Jiayao Mai and Yongsen Zheng and Keze Wang and Jinrui Chen and Liang Lin},
+      year={2025},
+      eprint={2502.16789},
+      archivePrefix={arXiv},
+      primaryClass={cs.CE},
+      url={https://arxiv.org/abs/2502.16789}, 
+}
+```
