@@ -98,7 +98,7 @@ This repository follows the implementation of [RD-Agent](https://github.com/micr
 ### 🚀 Run AlphaAgent
 - Run **AlphaAgent** based on [Qlib Backtesting Framework](http://github.com/microsoft/qlib).
   ```sh
-  alphaagent mine --potential_direction "<YOUR_MARKET_HYPOTHESIS>"
+  alphaagent mine --direction "<YOUR_MARKET_HYPOTHESIS>"
   ```
 
 - Alternatively, run the following command
